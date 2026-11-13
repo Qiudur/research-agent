@@ -1,0 +1,16 @@
+{
+  "schema": "task/1",
+  "task_id": "spd-distance-matrix",
+  "scenario": "speedup",
+  "title": "Speed up a pairwise 2D distance matrix",
+  "description": "Optimize the distance_matrix(points) function while preserving a list-of-lists return value and the original behavior on empty, duplicate, and ordinary inputs.",
+  "metric": {"name": "speedup", "higher_is_better": true},
+  "deliverable": {
+    "file": "solution.py",
+    "function": "distance_matrix",
+    "signature": "distance_matrix(points: list[tuple[float, float]]) -> list[list[float]]",
+    "returns": "A square list of Euclidean distances, matching original.py within floating-point tolerance"
+  },
+  "budget": {"money": 1.0, "wall_seconds": 180},
+  "limits": {"run_seconds": 30, "memory_mb": 4096}
+}
