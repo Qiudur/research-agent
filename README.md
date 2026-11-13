@@ -2,6 +2,10 @@
 
 这是《分工文档》中 A 线的 Python 实现：同一模型、四种角色、规则调度、实验树、预算闸门、可版本回放的能力库。任务与评分由 B 的 harness 提供，价格与账本由 C 的 ledger 提供；A 不读取 bank.json 或 hidden/。
 
+## 当前状态
+
+A 侧核心实现与 49 项本地测试已完成；A 的整条任务线**尚未验收完成**。目录中没有 B 的真实 harness/赛题、C 的真实 ledger/价格/manifest，也没有可付费调用的正式任务配置。因此尚未跑真实研究闭环，尚未根据真实题目调优提示词、证明分数提升或成本下降。把“代码实现完成”与“赛题效果完成”分开看；后者需要 B/C 接线后继续。
+
 ## 已实现
 
 - research_agent/model.py、roles.py、config/prompts/：Responses API 模型接入、角色推理强度、结构化输出、互斥 token 记账。
