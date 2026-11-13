@@ -1,0 +1,28 @@
+{
+  "schema": "pilot_evolution_smoke/1",
+  "run_id": "evolution-20261113-160149-38fa",
+  "input_size": 1500,
+  "repetitions": 5,
+  "round_1": {
+    "best_node": "n0001",
+    "correct": true,
+    "raw_speedup": 5.463581675885676,
+    "library_version_after": "lib-1"
+  },
+  "round_2": {
+    "best_node": "n0001",
+    "correct": true,
+    "raw_speedup": 5.418666195156185,
+    "cited_entry": "exp-0001",
+    "library_version_after": "lib-2"
+  },
+  "experience": {
+    "id": "exp-0001",
+    "uses": 1,
+    "wins": 1,
+    "credibility": 0.6
+  },
+  "model_calls": 0,
+  "model_cost": null,
+  "note": "Scripted roles reused the same known candidate. This verifies cross-run library wiring with real scoring, not autonomous learning or a causal performance gain."
+}
