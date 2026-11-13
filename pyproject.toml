@@ -1,0 +1,19 @@
+[build-system]
+requires = "setuptools>=68"
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "research-agent-a"
+version = "0.1.0"
+description = "Budget-aware research agent core (A workstream)"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+llm = ["openai>=1.0"]
+
+[project.scripts]
+research-agent = "research_agent.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["research_agent*", "library*"]
