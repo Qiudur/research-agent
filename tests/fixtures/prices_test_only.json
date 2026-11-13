@@ -1,0 +1,13 @@
+{
+  "schema": "prices/1",
+  "currency": "TEST",
+  "unit_tokens": 1000000,
+  "models": {
+    "test-scripted": {
+      "input": 1,
+      "cached_input": 1,
+      "output": 1,
+      "reasoning": 1
+    }
+  }
+}

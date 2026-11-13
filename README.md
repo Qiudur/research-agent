@@ -1,10 +1,10 @@
-# Research Agent · A 线
+# Research Agent · A/B/C 最小闭环
 
-这是《分工文档》中 A 线的 Python 实现：同一模型、四种角色、规则调度、实验树、预算闸门、可版本回放的能力库。任务与评分由 B 的 harness 提供，价格与账本由 C 的 ledger 提供；A 不读取 bank.json 或 hidden/。
+这是《分工文档》中 A/B/C 最小闭环的 Python 实现：同一模型、四种角色、规则调度、实验树、预算闸门、可版本回放的能力库；B 提供任务与评分沙箱，C 提供价格账本、报价、holdout 和报告。A 不读取 bank.json 或 hidden/。
 
 ## 当前状态
 
-A 侧核心实现与 51 项本地测试已完成；A 的整条任务线**尚未验收完成**。目录中没有 B 的真实 harness/赛题、C 的真实 ledger/价格/manifest，也没有可付费调用的正式任务配置。因此尚未跑真实研究闭环，尚未根据真实题目调优提示词、证明分数提升或成本下降。把“代码实现完成”与“赛题效果完成”分开看；后者需要 B/C 接线后继续。
+A/B/C 最小闭环已接通：B 的真实 macOS sandbox 评分器、C 的四桶账本/报价/holdout/finalize 与 A 的模型角色和主循环已通过端到端测试。A/B/C 测试共 79 项，另有技能层 6 项、看板 5 项通过。正式研究闭环仍**未验收完成**：当前没有真实模型凭据、正式模型价格、正式预算，也只有 1 道 speedup 练习题，因此不能宣称正式比赛成绩或成本下降。
 
 已新增一个独立的[真实计时试验](pilot/首次试验报告.md)：用实际代码和随机输入测得距离矩阵候选约 4.3 倍提速，并让 A 的主循环记录接受节点。该试验的角色输出是固定的，未调用模型或测量模型成本，不能代替上述真实研究闭环验收。
 
@@ -17,18 +17,23 @@ A 侧核心实现与 51 项本地测试已完成；A 的整条任务线**尚未�
 - library/：经验检索、可信度、条件收窄、版本快照、冻结和历史版本只读。
 - research_agent/cli.py、replay.py：运行一个任务、按保存的种子与能力库版本回放节点。
 - docs/A-决策记录.md：无人值守实施中做出的决定与复盘点。
+- harness.py、harness_worker.py、tasks/：B 的任务加载、macOS 沙箱、随机测速、正确性检查、holdout 门禁和防作弊标记；正式任务 `budget.money` 保持 `null`。
+- ledger.py、evaluation/：C 的 manifest/价格哈希、四桶 token 计价、开工报价、单次 holdout、task_end/run_end、可追溯报告、三遍比较和准入闸门。
+- dashboard/、library/skills.py、skill_layer/：只读离线看板，以及需要跨两个任务实证后才能晋升的技能层。
 
 ## 本地验证
 
-Python 3.11+；测试仅用标准库，不需要 API Key、真实赛题或付费调用：
+Python 3.11+；核心测试不需要 API Key 或真实价格：
 
     python3 -m unittest discover -s tests -v
+    python3 -m unittest discover -s skill_layer/tests -v
+    python3 -m unittest discover -s dashboard/tests -v
 
 安装 live 模型客户端时：
 
     python3 -m pip install -e '.[llm]'
 
-运行前需有 B 的 harness 模块、C 的 ledger 模块与 manifest、真实 config/prices.json、任务预算、模型名和 B/C 提供的起点 dev score/1 文件。环境中设置真实模型所需 API 凭据；不要把 Key 写入仓库。运行单个任务：
+正式运行需有真实 `config/prices.json`、任务预算、模型名、API 凭据，以及 C 创建的 manifest 和 B 提供的起点 dev score/1 文件；不要把 Key 写入仓库。A CLI 运行单任务：
 
     python3 -m research_agent.cli run --run-dir runs/<run_id> --task-id <task_id> --baseline-json <baseline_score.json>
 
@@ -36,7 +41,7 @@ Python 3.11+；测试仅用标准库，不需要 API Key、真实赛题或付费
 
     python3 -m research_agent.cli replay --run-dir runs/<run_id> --task-id <task_id> --node-id n0007
 
-CLI 不负责创建题包、猜价格、生成基线或调用 holdout。正式任务完成后的 holdout 和 task_end 事件由 C 的评估编排执行。当前目录还没有 B/C 的生产实现，因此本仓库测试的是 A 与其接口替身的端到端行为，不代表已有比赛成绩。
+CLI 不负责创建题包、猜价格、生成基线或调用 holdout；C 的 `evaluation.orchestrate.execute_task` 负责把 B dev、A 主循环、回放封存和一次 holdout 串起来。无 API 凭据时可用 `tests/fixtures/prices_test_only.json` 与 `test_only_budget` 做 TEST-only 联调，不能把它当作真实花费。
 
 ## B/C 对接
 

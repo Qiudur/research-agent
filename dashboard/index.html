@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Research Agent · 运行看板</title>
+  <style>
+    :root { color-scheme: light; --ink:#17233e; --muted:#66758f; --line:#dce3ef; --paper:#f4f7fc; --panel:#fff; --navy:#14213b; --blue:#3566da; --green:#168668; --red:#bd4c54; --amber:#bb7a17; }
+    * { box-sizing:border-box; } body { margin:0; font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:var(--paper); color:var(--ink); }
+    header { background:linear-gradient(125deg,#15233f,#263f75); color:#fff; padding:30px max(24px,calc((100vw - 1320px)/2)); }
+    header .eyebrow { font-size:12px; letter-spacing:.17em; text-transform:uppercase; opacity:.7; font-weight:700; }
+    header h1 { font-size:30px; margin:10px 0 8px; letter-spacing:-.03em; }
+    .run-meta { font-size:13px; opacity:.85; display:flex; gap:16px; flex-wrap:wrap; }
+    main { max-width:1368px; margin:auto; padding:24px; }
+    .banner { padding:12px 16px; border-radius:12px; margin-bottom:18px; font-size:13px; background:#fff8e7; border:1px solid #f4dca7; color:#78530d; }
+    .banner.ok { background:#e9f7f2; border-color:#b8e4d5; color:#176b54; }
+    .toolbar { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; margin-bottom:18px; }
+    .toolbar h2 { margin:0; font-size:18px; } select { background:#fff; border:1px solid #cfd8e8; border-radius:9px; color:var(--ink); padding:10px 34px 10px 12px; font:inherit; min-width:260px; }
+    .kpis { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:12px; margin-bottom:18px; }
+    .card,.panel { background:var(--panel); border:1px solid var(--line); border-radius:14px; box-shadow:0 2px 8px rgba(25,45,85,.035); }
+    .card { padding:15px 17px; min-height:100px; } .card .label { color:var(--muted); font-size:12px; font-weight:650; } .card .value { font-size:23px; font-weight:760; margin-top:8px; letter-spacing:-.03em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .card .sub { color:var(--muted); font-size:11px; margin-top:4px; }
+    .grid { display:grid; grid-template-columns:2fr 1fr; gap:16px; } .stack { display:grid; gap:16px; }
+    .panel { padding:18px 20px; min-width:0; } .panel h2 { font-size:16px; margin:0 0 4px; } .panel .hint { color:var(--muted); font-size:12px; margin:0 0 14px; line-height:1.5; }
+    .chart-box { width:100%; overflow:auto; } svg { display:block; width:100%; min-width:620px; }
+    .empty { color:var(--muted); font-size:13px; padding:28px 8px; text-align:center; }
+    .legend { display:flex; gap:13px; color:var(--muted); font-size:11px; flex-wrap:wrap; margin:5px 0 10px; } .dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:5px; }
+    .meter { height:9px; background:#e9edf5; border-radius:20px; overflow:hidden; margin:12px 0 7px; } .meter > span { display:block; height:100%; background:var(--blue); border-radius:20px; }
+    .measure { display:grid; grid-template-columns:66px 1fr 64px; align-items:center; gap:10px; font-size:12px; margin:12px 0; } .measure .track { height:8px; background:#edf1f7; border-radius:12px; overflow:hidden; } .measure .fill { height:100%; border-radius:12px; }
+    table { border-collapse:collapse; width:100%; font-size:12px; } th { color:var(--muted); font-weight:650; text-align:left; border-bottom:1px solid var(--line); padding:8px 6px; } td { border-bottom:1px solid #edf0f5; padding:9px 6px; vertical-align:top; } tr:last-child td { border-bottom:0; }
+    .table-scroll { max-height:350px; overflow:auto; } .pill { display:inline-block; border-radius:20px; background:#eef3fc; color:#355a9e; padding:3px 8px; font-size:11px; font-weight:700; }
+    .muted { color:var(--muted); } .red { color:var(--red); } .green { color:var(--green); } .small { font-size:11px; }
+    .library-list { display:grid; gap:9px; max-height:270px; overflow:auto; } .library-item { background:#f7f9fd; padding:10px 12px; border-radius:9px; font-size:12px; } .library-item strong { display:block; margin-bottom:4px; }
+    footer { color:var(--muted); font-size:11px; padding:18px 2px 4px; }
+    @media (max-width:1000px) { .kpis { grid-template-columns:repeat(3,minmax(0,1fr)); } .grid { grid-template-columns:1fr; } }
+    @media (max-width:620px) { main { padding:14px; } header { padding:24px 16px; } .kpis { grid-template-columns:repeat(2,minmax(0,1fr)); } .card .value { font-size:19px; } }
+  </style>
+</head>
+<body>
+  <header><div class="eyebrow">Research Agent / run intelligence</div><h1>运行看板</h1><div id="run-meta" class="run-meta"></div></header>
+  <main>
+    <div id="price-banner" class="banner"></div>
+    <div class="toolbar"><h2 id="task-title">任务概览</h2><select id="task-select" aria-label="选择任务"></select></div>
+    <section class="kpis" id="kpis"></section>
+    <div class="grid">
+      <div class="stack">
+        <section class="panel"><h2>实验树</h2><p class="hint">显示每个节点的最终快照。颜色表示接受、拒绝、失败或运行中；悬停查看假设和调用角色。</p><div class="legend"><span><i class="dot" style="background:#168668"></i>接受</span><span><i class="dot" style="background:#bd4c54"></i>拒绝</span><span><i class="dot" style="background:#9aa5b8"></i>失败</span><span><i class="dot" style="background:#3566da"></i>进行中</span></div><div class="chart-box" id="tree"></div></section>
+        <section class="panel"><h2 id="score-title">分数走势</h2><p class="hint">dev 分数按评分事件排列；只有账本金额可核实时才按花费绘制。</p><div class="chart-box" id="score-chart"></div></section>
+        <section class="panel"><h2>事件流水</h2><p class="hint">最近 80 条任务级账本事件。点击任务选择器切换。</p><div class="table-scroll" id="events"></div></section>
+      </div>
+      <div class="stack">
+        <section class="panel"><h2>预算与耗时</h2><p class="hint">金额需经价目文件哈希核验；时间按账本事件归类。</p><div id="budget"></div><div id="time-bars"></div></section>
+        <section class="panel"><h2>报价对账</h2><p class="hint">只展示已记录的开工报价及任务结束值。</p><div id="quote"></div></section>
+        <section class="panel"><h2>模型调用</h2><p class="hint">缓存比例 = 缓存输入 /（普通输入 + 缓存输入）。</p><div id="llm"></div></section>
+        <section class="panel"><h2>能力库进化</h2><p class="hint">状态和变更均来自运行所指向的能力库。</p><div id="library"></div></section>
+      </div>
+    </div>
+    <footer>只读导出 · 生成于 __GENERATED_AT__ · 数据来源：manifest.json、ledger.jsonl、tree.jsonl、library/changelog.jsonl</footer>
+  </main>
+  <script id="dashboard-data" type="application/json">__DASHBOARD_DATA__</script>
+  <script>
+  (() => {
+    const data = JSON.parse(document.getElementById('dashboard-data').textContent);
+    const $ = id => document.getElementById(id);
+    const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const n = (value, digits=2) => value === null || value === undefined || !Number.isFinite(Number(value)) ? '未知' : Number(value).toFixed(digits);
+    const fmt = (value, digits=2) => value === null || value === undefined || !Number.isFinite(Number(value)) ? '未知' : new Intl.NumberFormat('zh-CN',{maximumFractionDigits:digits}).format(Number(value));
+    const scoreValue = value => value && typeof value === 'object' ? value.score ?? value.raw ?? value.dev ?? null : value;
+    const colors = {accepted:'#168668',rejected:'#bd4c54',failed:'#9aa5b8',running:'#3566da',queued:'#3566da',succeeded:'#3566da'};
+    const money = value => value === null || value === undefined ? '未知' : `${fmt(value,4)} ${esc(data.run.price.currency || '')}`;
+    const card = (label, value, sub='') => `<div class="card"><div class="label">${esc(label)}</div><div class="value">${value}</div><div class="sub">${esc(sub)}</div></div>`;
+    const empty = message => `<div class="empty">${esc(message)}</div>`;
+    $('run-meta').innerHTML = [data.run.id, data.run.phase || '未标记阶段', data.run.config || '未标记配置', data.run.rep ? `第 ${data.run.rep} 遍` : null, data.run.model || '模型未记录'].filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('');
+    const banner = $('price-banner');
+    banner.classList.toggle('ok', data.run.price.verified && !data.run.price.test_only);
+    banner.textContent = data.run.price.message + (data.run.manifest_present ? '' : '；缺少正式 manifest，当前页面仅供联调查看');
+    $('task-select').innerHTML = data.tasks.map((task,index) => `<option value="${index}">${esc(task.id)}</option>`).join('');
+
+    function tree(nodes) {
+      if (!nodes.length) return empty('尚无实验树');
+      const byId = Object.fromEntries(nodes.map(node => [node.id,node]));
+      const depth = node => { let d=0, cur=node; const seen=new Set(); while(cur && cur.parent && byId[cur.parent] && !seen.has(cur.parent)){seen.add(cur.parent); d++; cur=byId[cur.parent]} return d; };
+      const positions = {}; const row=64;
+      nodes.forEach((node,index) => positions[node.id]={x:80+depth(node)*245,y:39+index*row});
+      const width=Math.max(680,...Object.values(positions).map(p=>p.x+265)), height=Math.max(130,nodes.length*row+20);
+      const lines=nodes.filter(node=>node.parent && positions[node.parent]).map(node=>{ const a=positions[node.parent],b=positions[node.id]; return `<path d="M${a.x+20},${a.y} C${(a.x+b.x)/2},${a.y} ${(a.x+b.x)/2},${b.y} ${b.x-19},${b.y}" fill="none" stroke="#cbd5e5" stroke-width="1.6"/>`; }).join('');
+      const shapes=nodes.map(node=>{ const p=positions[node.id], color=colors[node.status]||'#9aa5b8'; const label=String(node.hypothesis||node.id); const short=label.length>28?label.slice(0,27)+'…':label; const roles=(node.calls||[]).map(c=>`${c.role}/${c.effort}×${c.n}`).join('、'); return `<g><title>${esc(node.id+' · '+label+' · '+node.status+' · '+(node.score??'无分数')+' · '+roles)}</title><circle cx="${p.x}" cy="${p.y}" r="18" fill="${color}"/><text x="${p.x}" y="${p.y+4}" text-anchor="middle" fill="white" font-size="10" font-weight="700">${esc(node.id.slice(-2))}</text><text x="${p.x+29}" y="${p.y-3}" font-size="12" fill="#17233e" font-weight="650">${esc(short)}</text><text x="${p.x+29}" y="${p.y+14}" font-size="11" fill="#66758f">${esc(node.id)} · ${node.score===null?'未评分':n(node.score,3)} · ${esc(node.status)}</text></g>`; }).join('');
+      return `<svg viewBox="0 0 ${width} ${height}" style="min-width:${Math.min(width,1100)}px;height:${height}px" role="img" aria-label="实验树">${lines}${shapes}</svg>`;
+    }
+
+    function scoreChart(task) {
+      const points=task.series.filter(p=>Number.isFinite(Number(p.score)));
+      if (!points.length) return empty('尚无评分事件');
+      const byMoney=task.cost_known && points.some((p,i)=>i>0 && Number(p.spent)>Number(points[i-1].spent));
+      const xs=points.map((p,i)=>byMoney?Number(p.spent):i), ys=points.map(p=>Number(p.score));
+      let xmin=Math.min(...xs),xmax=Math.max(...xs),ymin=Math.min(...ys),ymax=Math.max(...ys);
+      if(xmin===xmax)xmax=xmin+1;if(ymin===ymax){ymin-=.1;ymax+=.1;}const padY=(ymax-ymin)*.14;ymin-=padY;ymax+=padY;
+      const width=820,height=260,left=55,right=24,top=20,bottom=39;
+      const xp=x=>left+(x-xmin)/(xmax-xmin)*(width-left-right), yp=y=>height-bottom-(y-ymin)/(ymax-ymin)*(height-top-bottom);
+      const grid=[0,.25,.5,.75,1].map(t=>{const y=top+t*(height-top-bottom),v=ymax-t*(ymax-ymin);return `<line x1="${left}" x2="${width-right}" y1="${y}" y2="${y}" stroke="#e9eef6"/><text x="${left-8}" y="${y+4}" text-anchor="end" font-size="10" fill="#7d8ba1">${n(v,2)}</text>`}).join('');
+      const path=points.map((p,i)=>`${i?'L':'M'}${xp(xs[i]).toFixed(1)},${yp(ys[i]).toFixed(1)}`).join(' ');
+      const dots=points.map((p,i)=>`<g><title>${esc(p.node_id+'：'+n(p.score,4)+(byMoney?'；花费 '+money(p.spent):''))}</title><circle cx="${xp(xs[i])}" cy="${yp(ys[i])}" r="5" fill="#3566da" stroke="white" stroke-width="2"/></g>`).join('');
+      $('score-title').textContent=byMoney?'分数随花费变化':'分数随实验变化';
+      return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="dev 分数走势">${grid}<path d="${path}" fill="none" stroke="#3566da" stroke-width="2.5"/>${dots}<text x="${width/2}" y="${height-7}" text-anchor="middle" font-size="11" fill="#66758f">${byMoney?esc('累计花费 '+(data.run.price.currency||'')):'实验次序'}</text></svg>`;
+    }
+
+    function timeBars(seconds) {
+      const values=[['模型等待',seconds.llm,'#3566da'],['实验运行',seconds.run,'#168668'],['测速排队',seconds.queue,'#bb7a17']];
+      const max=Math.max(0.001,...values.map(v=>Number(v[1])||0));
+      const bars=values.map(([label,value,color])=>`<div class="measure"><span>${esc(label)}</span><div class="track"><div class="fill" style="width:${Math.max(0,Number(value)||0)/max*100}%;background:${color}"></div></div><span style="text-align:right">${n(value,2)}s</span></div>`).join('');
+      return bars+`<div class="muted small" style="margin-top:13px">总墙钟：${seconds.wall===null?'未知':n(seconds.wall,2)+'s'}</div>`;
+    }
+
+    function renderTask(task) {
+      $('task-title').textContent='任务 · '+task.id;
+      const currency=data.run.price.currency||'';
+      $('kpis').innerHTML=[
+        card('最佳 dev 分数',task.best?n(task.best.score,3):'未知',task.best?task.best.node_id:'无已接受节点'),
+        card('Holdout 分数',scoreValue(task.holdout)===null?'未知':n(scoreValue(task.holdout),3),'仅任务结束后显示'),
+        card('实际花费',money(task.cost),task.cost_known?(data.run.price.test_only?'测试价目':'已核验价目'):'真实成本未知'),
+        card('任务预算',task.budget===null?'未知':money(task.budget),task.budget===null?'待正式计价':'任务级上限'),
+        card('模型调用',fmt(task.llm_calls,0)+' 次',`缓存率 ${task.cache_rate===null?'未知':n(task.cache_rate*100,1)+'%'}`),
+        card('墙钟耗时',task.seconds.wall===null?'未知':n(task.seconds.wall,1)+'s',`${task.nodes.length} 个节点 · ${task.event_count} 条事件`),
+      ].join('');
+      $('tree').innerHTML=tree(task.nodes); $('score-chart').innerHTML=scoreChart(task);
+      const budgetPct=task.cost!==null && task.budget>0?Math.min(100,task.cost/task.budget*100):null;
+      $('budget').innerHTML=budgetPct===null?empty('预算使用率未知'):`<div class="small">已用 ${n(budgetPct,1)}% · ${money(task.cost)} / ${money(task.budget)}</div><div class="meter"><span style="width:${budgetPct}%"></span></div>`;
+      $('time-bars').innerHTML=timeBars(task.seconds);
+      const quote=task.quote || {}; const error=task.quote_error || {};
+      $('quote').innerHTML=!task.quote && !task.quote_error?empty('尚无报价或任务结束事件'):`<table><thead><tr><th>指标</th><th>预测</th><th>实际</th><th>误差</th></tr></thead><tbody><tr><td>金额</td><td>${quote.cost===undefined?'未知':money(quote.cost)}</td><td>${money(task.cost)}</td><td>${error.cost===undefined?'未知':n(error.cost,3)}</td></tr><tr><td>秒数</td><td>${n(quote.seconds,2)}</td><td>${task.seconds.wall===null?'未知':n(task.seconds.wall,2)}</td><td>${n(error.seconds,2)}</td></tr><tr><td>分数</td><td>${n(quote.score,3)}</td><td>${scoreValue(task.holdout)===null?'未知':n(scoreValue(task.holdout),3)}</td><td>${n(error.score,3)}</td></tr></tbody></table>`;
+      const tk=task.tokens; $('llm').innerHTML=`<table><tbody><tr><td>普通输入</td><td>${fmt(tk.input,0)}</td></tr><tr><td>缓存输入</td><td>${fmt(tk.cached_input,0)}</td></tr><tr><td>可见输出</td><td>${fmt(tk.output,0)}</td></tr><tr><td>推理输出</td><td>${fmt(tk.reasoning,0)}</td></tr></tbody></table>`;
+      $('events').innerHTML=task.timeline.length?`<table><thead><tr><th>#</th><th>时间 UTC</th><th>事件</th><th>节点</th><th>信息</th></tr></thead><tbody>${task.timeline.map(e=>`<tr><td>${esc(e.seq)}</td><td>${esc(e.ts||'')}</td><td><span class="pill">${esc(e.kind||'')}</span></td><td>${esc(e.node_id||'—')}</td><td>${esc(e.op||e.reason||'')}${e.score!==undefined&&e.score!==null?' · 分数 '+n(e.score,3):''}</td></tr>`).join('')}</tbody></table>`:empty('尚无账本事件');
+    }
+
+    function renderLibrary() {
+      const lib=data.library; if(!lib.version){$('library').innerHTML=empty('未找到能力库状态');return;}
+      const active=lib.entries.filter(e=>e.status==='active').length;
+      const head=`<div style="font-size:13px;margin-bottom:12px"><strong>${esc(lib.version)}</strong> · ${lib.entries.length} 条目 · ${active} 条可用</div>`;
+      const entries=lib.entries.length?`<div class="library-list">${lib.entries.map(e=>`<div class="library-item"><strong>${esc(e.id)} · ${esc(e.status)} · 可信度 ${n(e.credibility,2)}</strong><div>${esc(e.action||'')}</div><div class="muted">${esc(e.kind||'')} · 使用 ${esc(e.effect?.uses??0)} 次 · 胜 ${esc(e.effect?.wins??0)} 次</div></div>`).join('')}</div>`:empty('能力库目前为空');
+      const changes=lib.changes.length?`<div class="muted small" style="margin:16px 0 6px">最近变更</div><div class="table-scroll"><table><tbody>${lib.changes.slice().reverse().map(c=>`<tr><td>${esc(c.version)}</td><td>${esc(c.op)}</td><td>${esc(c.entry_id)}</td></tr>`).join('')}</tbody></table></div>`:'';
+      $('library').innerHTML=head+entries+changes;
+    }
+    renderLibrary();
+    $('task-select').addEventListener('change',event=>renderTask(data.tasks[Number(event.target.value)]));
+    if(data.tasks.length)renderTask(data.tasks[0]);else { $('task-select').style.display='none';$('kpis').innerHTML=empty('本运行尚无任务结果');$('tree').innerHTML=empty('尚无实验树');$('score-chart').innerHTML=empty('尚无评分事件');$('budget').innerHTML=empty('未知');$('time-bars').innerHTML='';$('quote').innerHTML=empty('未知');$('llm').innerHTML=empty('未知');$('events').innerHTML=empty('尚无账本事件'); }
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "schema": "bank/1",
+  "version": "bank-v1",
+  "frozen": false,
+  "tasks": [
+    {
+      "task_id": "spd-distance-matrix",
+      "tier": "practice",
+      "difficulty": null,
+      "trap": null,
+      "score_formula": "ratio",
+      "baseline_raw": null,
+      "ceiling_raw": null,
+      "naive_cost": null
+    }
+  ]
+}

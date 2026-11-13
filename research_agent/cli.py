@@ -138,6 +138,7 @@ def _run(args: argparse.Namespace) -> dict:
             run_dir=run_dir, task_id=args.task_id, harness=_harness(), ledger=ledger,
             roles=roles, library=library, baseline_score=baseline,
             config=config, hard_caps=hard_caps,
+            on_initial_plan=_quote_callback(ledger),
         ).run()
     for label, path in source_files.items():
         if sha256_file(path) != source_hashes[label]:
@@ -154,6 +155,14 @@ def _run(args: argparse.Namespace) -> dict:
         max_output_tokens=args.max_output_tokens,
     )
     return vars(result)
+
+
+def _quote_callback(ledger):
+    try:
+        from evaluation.quote import make_quote_callback
+    except ImportError as exc:
+        raise RuntimeError("C-owned quote module is missing; install it before running a task") from exc
+    return make_quote_callback(ledger)
 
 
 def _replay(args: argparse.Namespace) -> dict:

@@ -37,6 +37,9 @@ class FakeLedger:
     def spent(self):
         return self.money
 
+    def _events(self):
+        return list(self.events)
+
     def elapsed(self):
         return {"llm": self.llm_seconds, "run": 0.0, "queue": 0.0, "wall": 0.0}
 

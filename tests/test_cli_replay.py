@@ -79,6 +79,11 @@ class CliReplayTests(unittest.TestCase):
     def test_cli_seals_inputs_and_replay_uses_historical_library(self):
         outcome = self._execute_fake_run()
         self.assertEqual(outcome["best_node"], "n0001")
+        kinds = [event["kind"] for event in self.ledger.events]
+        self.assertEqual(kinds.count("quote"), 1)
+        self.assertLess(kinds.index("quote"), kinds.index("experiment"))
+        quote = next(event for event in self.ledger.events if event["kind"] == "quote")
+        self.assertEqual(quote["predicted"]["score"], 0.5)
         context = json.loads((self.run_dir / "tasks/tab-sample/replay_context.json").read_text(encoding="utf-8"))
         self.assertEqual(context["sources"]["baseline"]["sha256"], sha256_file(self.baseline))
         self.assertEqual(context["nodes"]["n0001"]["library_version"], "lib-0")
@@ -171,6 +176,18 @@ class CliReplayTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Sealed replay context"):
             replay_node(run_dir=self.run_dir, task_id="tab-sample", node_id="n0000",
                         harness=self.harness, library_root=self.library_root)
+
+    def test_run_end_timestamp_can_be_filled_after_task_seal(self):
+        self._execute_fake_run()
+        self.manifest["ended_ts"] = "2026-11-14T00:00:00.000Z"
+        self._save_manifest()
+        report = replay_node(
+            run_dir=self.run_dir, task_id="tab-sample", node_id="n0001",
+            harness=self.harness, library_root=self.library_root,
+            require_provenance=True,
+        )
+        self.assertTrue(report["integrity_verified"])
+        self.assertTrue(report["ok"])
 
 
 if __name__ == "__main__":

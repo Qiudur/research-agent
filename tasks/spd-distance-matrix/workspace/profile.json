@@ -1,0 +1,11 @@
+{
+  "schema": "profile/1",
+  "features": ["nested_python_loop"],
+  "summary": {
+    "hotspot": "Nested Python loops calculate every pairwise Euclidean distance",
+    "input_type": "list of 2D float tuples",
+    "output_type": "square list of lists",
+    "benchmark_size": 750,
+    "edge_cases": ["empty", "single point", "duplicates", "negative coordinates"]
+  }
+}
