@@ -88,6 +88,13 @@ class HarnessSandboxTests(unittest.TestCase):
         self.assertEqual(result["exit_code"], 1)
         self.assertIn("network", result["stderr_tail"])
 
+    def test_memory_limit_is_enforced(self):
+        with TemporaryDirectory() as temp:
+            node = Path(temp)
+            (node / "solution.py").write_text("blob = bytearray(100 * 1024 * 1024)\n", encoding="utf-8")
+            result = harness.run_script(TASK, node, ["solution.py"], harness.Limits(5, 32))
+            self.assertTrue(result["oom"])
+
 
 if __name__ == "__main__":
     unittest.main()
