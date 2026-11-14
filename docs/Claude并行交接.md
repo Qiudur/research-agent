@@ -37,3 +37,8 @@
 
   输出中文 Markdown 和 JSON，内容包括：练习、验证、考试三个阶段逐遍的四桶 token、平均归一化分数、失败调用、停止原因和单题最高花费；验证和考试的逐题原始指标；按三遍规则做的三项考试对比；回本点；小参考差（<0.002）题的诊断视图（不改正式成绩）。批次运行中可以加 `--partial`。
 - 测试：`.venv/bin/python -m unittest tests.test_roadshow_report tests.test_summarize_formal_batch tests.test_audit_formal_outputs`，35 项通过。因为同机正在做计时，没有跑全套。
+
+## 下一项并行工作（2026-11-14，正式考试收尾中）
+
+- 路演代码和安全修复已合入主线 `a4b6a7a`。请 Claude 在独立分支更新 `README.md` 与 `docs/项目交付与决策.md` 的过时状态：自研究完成、正式验证三遍拒绝研究版、考试仅运行 naive/default/default_lib 三线；待原始 `batch_report.json` 完成并经独立审计后才填写考试分数和成本。
+- 不要修改正式工作区、一次性标记、原始运行包、`docs/内部Token正式研究报告.md` 或路演生成器。不要启动第二次评分。请交付分支、提交 SHA、文档差异和验证命令；Codex 将核对合并。
