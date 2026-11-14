@@ -9,6 +9,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import re
 from statistics import mean
 
 from ledger import Ledger
@@ -21,6 +22,30 @@ from .report import run_report
 CONFIGS = ("naive", "default", "default_lib", "tuned_lib")
 LABELS = ("朴素版", "默认设置／空库", "默认设置／练过的库", "研究版／练过的库")
 COLORS = ("#71819d", "#3769d3", "#169678", "#aa5cc7")
+
+
+def _verify_formal_attempt_markers(project_root: Path, batch_dir: Path,
+                                   bank_version: str) -> str:
+    """Require both global one-shot markers to name this exact batch and code."""
+    if (not isinstance(bank_version, str)
+            or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", bank_version) is None):
+        raise ValueError("Invalid formal bank version")
+    commits = set()
+    for stage in ("validation", "exam"):
+        path = project_root / "runs" / f"{stage}-{bank_version}.attempt.json"
+        marker = json.loads(path.read_text(encoding="utf-8"))
+        expected_schema = f"{stage}_attempt/1"
+        commit = marker.get("code_commit")
+        if (marker.get("schema") != expected_schema
+                or marker.get("bank_version") != bank_version
+                or Path(marker.get("batch_dir", "")).resolve() != batch_dir
+                or not isinstance(commit, str)
+                or re.fullmatch(r"[0-9a-f]{40}", commit) is None):
+            raise ValueError(f"Formal {stage} one-shot marker differs from batch")
+        commits.add(commit)
+    if len(commits) != 1:
+        raise ValueError("Formal validation and exam used different code commits")
+    return commits.pop()
 
 
 def _finite(value, name, nonnegative=False):
@@ -222,6 +247,10 @@ def build_study_from_batch(batch_dir: Path, *, research_reports=None,
         raise ValueError("Expected batch_plan/1 and batch_report/1")
     if plan.get("label") != batch.get("label") or not plan.get("run_exam"):
         raise ValueError("Batch lacks a completed exam plan")
+    if plan.get("bank_version") != batch.get("bank_version"):
+        raise ValueError("Batch plan and report bank versions differ")
+    formal_commit = (_verify_formal_attempt_markers(project_root, batch_dir,
+                     batch["bank_version"]) if batch["label"] == "FORMAL" else None)
     admission = batch.get("admission")
     if (not isinstance(admission, dict) or admission.get("claim") not in {"admitted", "rejected"}
             or bool(batch.get("tuned_exam_skipped")) != (admission["claim"] == "rejected")):
@@ -245,6 +274,12 @@ def build_study_from_batch(batch_dir: Path, *, research_reports=None,
         report = run_report(run_dir)
         if report["run_id"] != row["run_id"] or report["config"] != row["config"] or report["rep"] != row["rep"]:
             raise ValueError("Validation run identity differs from audited report")
+        if formal_commit is not None:
+            manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+            if (manifest.get("phase") != "validation"
+                    or manifest.get("bank_version") != batch["bank_version"]
+                    or manifest.get("code_commit") != formal_commit):
+                raise ValueError("Validation run differs from its one-shot marker")
         if auto_study_dir is not None and row["config"] == "tuned_lib":
             manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
             tuned_configs.append(manifest.get("agent_config"))
@@ -263,6 +298,12 @@ def build_study_from_batch(batch_dir: Path, *, research_reports=None,
         report = run_report(run_dir)
         if report["run_id"] != row["run_id"] or report["config"] != row["config"] or report["rep"] != row["rep"]:
             raise ValueError("Batch run identity differs from audited report")
+        if formal_commit is not None:
+            manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+            if (manifest.get("phase") != "exam"
+                    or manifest.get("bank_version") != batch["bank_version"]
+                    or manifest.get("code_commit") != formal_commit):
+                raise ValueError("Exam run differs from its one-shot marker")
         if auto_study_dir is not None and row["config"] == "tuned_lib":
             manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
             tuned_configs.append(manifest.get("agent_config"))
