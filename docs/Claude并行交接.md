@@ -15,3 +15,25 @@
 ## 协作方式
 
 请不要直接改共享的 `main`；基于当前 `origin/main` 建独立分支或 worktree。若发现正式批次严重问题，先写简短事实与可复现路径通知用户/本窗口，不要自行重启一次性阶段。
+
+## Claude 交付（2026-11-14 22:15）
+
+- 分支 `agent/final-report-20261114`（本机同一仓库，未推送），基于 `c53a767`。路演集成以提交 `5ae0934` 为准；`74159a4` 是汇总器，`c105139`、`77adfc1` 是被 `5ae0934` 取代的中间版本。没有改 `main`、正式工作区和 `docs/内部Token正式研究报告.md`。
+- 路演生成器新增可选输入。批次完成后在合并后的仓库根目录运行：
+
+      .venv/bin/python scripts/generate_roadshow_report.py \
+        --formal-batch-dir /Users/qizetao/Desktop/research-agent-formal-20261114-v2/runs/batch-internal-20261114-v2 \
+        --auto-study-dir /Users/qizetao/Desktop/research-agent-formal-20261114-v2/runs/auto-internal-20261114-v2
+
+  运行时先只读调用 `scripts/audit_formal_outputs.py`，审计通过后再用 `scripts/summarize_formal_batch.py` 汇总，写出 `docs/evidence/formal-batch-roadshow.json` 和 `docs/路演汇报.html`，两份文件都需要提交。页面展示验证准入、考试线数、各配置三遍分数、每遍平均 token、四桶合计，以及代码提交、配置和价目表的 SHA-256。三种情况：
+  - 没有 `batch_report.json`：保持“待真实账本”。
+  - 审计失败：退出码 1，什么都不写。
+  - 研究版未准入：不显示研究版考试成绩和回本点。
+
+  之后不带参数重生成时，只读取已提交、审计通过且自洽的证据文件。
+- 汇总器（只读，拒绝把输出写进正式工作区）：
+
+      .venv/bin/python scripts/summarize_formal_batch.py --batch-dir <批次目录> --output-dir <正式工作区之外> --research-cost 2094728
+
+  输出中文 Markdown 和 JSON，内容包括：练习、验证、考试三个阶段逐遍的四桶 token、平均归一化分数、失败调用、停止原因和单题最高花费；验证和考试的逐题原始指标；按三遍规则做的三项考试对比；回本点；小参考差（<0.002）题的诊断视图（不改正式成绩）。批次运行中可以加 `--partial`。
+- 测试：`.venv/bin/python -m unittest tests.test_roadshow_report tests.test_summarize_formal_batch tests.test_audit_formal_outputs`，35 项通过。因为同机正在做计时，没有跑全套。
