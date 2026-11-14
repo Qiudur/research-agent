@@ -682,6 +682,7 @@ class ProposalLeverTests(unittest.TestCase):
             ({"failure_feedback": 1}, "failure_feedback"),
             ({"ceiling_excludes_baseline": "yes"}, "ceiling_excludes_baseline"),
             ({"library_brief": {"min_credibility": 0.95, "max_chars": 0}}, "library_brief.min_credibility"),
+            ({"library_brief": {"min_credibility": 0.6, "max_chars": 0}}, "library_brief.min_credibility"),
             ({"library_brief": {"min_credibility": 0.1, "max_chars": 0}}, "library_brief.min_credibility"),
             ({"library_brief": {"min_credibility": 0, "max_chars": 50}}, "library_brief.max_chars"),
             ({"library_brief": {"min_credibility": float("nan"), "max_chars": 0}}, "library_brief.min_credibility"),
@@ -694,7 +695,7 @@ class ProposalLeverTests(unittest.TestCase):
         edges = {"stop_loss": stop(tab=4, spd=8), "hypotheses_per_plan": 8,
                  "role_controls": control(thinking="on", max_output_tokens=2048),
                  "cost_priors": {"spd": 500, "tab": 12000},
-                 "library_brief": {"min_credibility": 0.9, "max_chars": 100}}
+                 "library_brief": {"min_credibility": 0.5, "max_chars": 100}}
         _validate_proposal(proposal_data(edges), self.base())
         edges["stop_loss"], edges["hypotheses_per_plan"] = stop(tab=1, spd=2), 2
         edges["library_brief"] = {"min_credibility": 0.3, "max_chars": 600}

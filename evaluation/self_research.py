@@ -76,7 +76,8 @@ _BOUNDS = {
     "plateau_nodes": (2, 12), "explore_every": (2, 8), "query_k": (1, 12),
     "first_n_no_gain": (1, 4), "consecutive_no_gain": (2, 8),
     "hypotheses_per_plan": (2, 8), "max_output_tokens": (512, 2048),
-    "cost_prior": (500, 12000), "min_credibility": (0.3, 0.9), "max_chars": (100, 600),
+    # New experiences start at credibility 0.5, so a higher brief threshold would hide them all.
+    "cost_prior": (500, 12000), "min_credibility": (0.3, 0.5), "max_chars": (100, 600),
 }
 _LEGACY_KEYS = ("plateau_nodes", "explore_every", "query_k", "behind_schedule", "effort")
 _NEW_KEYS = ("stop_loss", "ceiling_excludes_baseline", "planner_mode", "hypotheses_per_plan",
