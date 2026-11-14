@@ -18,7 +18,7 @@ PROJECT = Path(__file__).resolve().parents[1]
 TASK = "spd-distance-matrix"
 
 
-def setup(root: Path) -> Path:
+def setup(root: Path, *, best_node: str = "n0000") -> Path:
     config = root / "config"
     config.mkdir()
     for name in ("agent.json", "hard_caps.json"):
@@ -31,13 +31,13 @@ def setup(root: Path) -> Path:
                     agent_config_path=config / "agent.json", prices_path=config / "prices_test_only.json",
                     code_commit="a" * 40)
     start_run(run)
-    node = run / "tasks" / TASK / "nodes" / "n0000"
+    node = run / "tasks" / TASK / "nodes" / best_node
     node.mkdir(parents=True)
     (node / "solution.py").write_text("def f(): pass\n")
     ledger = Ledger.open(run, TASK)
     ledger.emit("task_start", budget=1, wall_seconds=60)
     ledger.emit("quote", predicted={"cost": 0.1, "seconds": 2, "score": 0.5}, basis={"source": "test"})
-    ledger.emit("stop", reason="planner", best_node="n0000", dev_score=0)
+    ledger.emit("stop", reason="planner", best_node=best_node, dev_score=0)
     return run
 
 
@@ -70,6 +70,44 @@ class ReturnedHarness:
 
 
 class FinalizeTests(unittest.TestCase):
+    def test_zero_candidate_holdout_reconciles_and_retains_failure_kind(self):
+        with TemporaryDirectory() as temp:
+            run = setup(Path(temp), best_node="n0001")
+            task_dir = run / "tasks" / TASK
+            nodes = [
+                {"schema": "node/1", "node_id": "n0000", "parent": None,
+                 "hypothesis": "Baseline", "status": "accepted",
+                 "score": {"dev": 0}, "cost": 0, "failure": None, "cites": []},
+                {"schema": "node/1", "node_id": "n0001", "parent": "n0000",
+                 "hypothesis": "Candidate", "status": "accepted",
+                 "score": {"dev": 0.3}, "cost": 0, "failure": None, "cites": []},
+            ]
+            (task_dir / "tree.jsonl").write_text("".join(json.dumps(node) + "\n" for node in nodes))
+
+            class ZeroHarness:
+                def __init__(self):
+                    self.calls = 0
+
+                def score(self, task_id, node_dir, split):
+                    self.calls += 1
+                    assert os.environ.get("RA_EVAL") == "1"
+                    assert node_dir.name == "n0001" and split == "holdout"
+                    return {"schema": "score/1", "ok": True, "split": "holdout",
+                            "score": 0.0, "raw": 0.0, "spread": 0.0, "correct": False,
+                            "cheat_flags": [], "error": {"kind": "oom", "message": "candidate OOM"},
+                            "seconds": {"run": 0.2, "queue": 0.0}, "seed": 13}
+
+            scorer = ZeroHarness()
+            result = finish_task(run, TASK, scorer)
+            self.assertEqual(scorer.calls, 1)
+            self.assertEqual(result["task_end"]["holdout_score"], 0.0)
+            self.assertEqual(json.loads((task_dir / "holdout_score.json").read_text())["error"]["kind"], "oom")
+            with self.assertRaisesRegex(ValueError, "already recorded"):
+                finish_task(run, TASK, scorer)
+            self.assertEqual(scorer.calls, 1)
+            finish_run(run)
+            self.assertEqual(run_report(run)["tasks"][0]["holdout_score"], 0.0)
+
     def test_one_holdout_then_task_end_and_run_end(self):
         with TemporaryDirectory() as temp:
             run = setup(Path(temp))

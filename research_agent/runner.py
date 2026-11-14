@@ -346,6 +346,10 @@ class TaskRunner:
         if not score_data.get("ok") or score_data.get("score") is None:
             error = score_data.get("error") or {}
             return None, str(error.get("message", "Scoring failed"))[-2000:]
+        error = score_data.get("error")
+        if (not score_data.get("correct", True) and score_data.get("score") == 0
+                and isinstance(error, dict) and error.get("kind") in {"timeout", "oom", "exception"}):
+            return score_data, None  # The scored candidate failure is final; do not retry it.
         if not score_data.get("correct", True):
             return None, "Correctness check failed"
         return score_data, None

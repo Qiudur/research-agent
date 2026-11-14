@@ -140,6 +140,29 @@ class RunnerTests(unittest.TestCase):
             baseline_score=score(0.1), config=CONFIG, hard_caps=CAPS,
         )
 
+    def test_scored_candidate_exception_is_rejected_without_retry(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            ledger = FakeLedger()
+            library = Library.open(root / "runs/run-test/library")
+            roles = FakeRoles(ledger, [idea("candidate crash")], draft=False)
+
+            class CrashingCandidateHarness(FakeHarness):
+                def score(self, task_id, node_dir, split, seed=None):
+                    return {**score(0.0, spread=0.0, correct=False),
+                            "error": {"kind": "exception", "message": "candidate crashed",
+                                      "trace_tail": "trace"}}
+
+            outcome = self.make_runner(root, CrashingCandidateHarness(root), roles, ledger, library).run()
+            self.assertEqual(outcome.best_node, "n0000")
+            self.assertEqual(roles.calls, [("n0001", False)])
+            nodes = read_jsonl(root / "runs/run-test/tasks/tab-sample/tree.jsonl", "node/1")
+            candidate = [node for node in nodes if node["node_id"] == "n0001"][-1]
+            self.assertEqual((candidate["status"], candidate["attempts"], candidate["score"]["dev"]),
+                             ("rejected", 1, 0.0))
+            saved = json.loads((root / "runs/run-test/tasks/tab-sample/nodes/n0001/score.json").read_text())
+            self.assertEqual(saved["error"]["kind"], "exception")
+
     def test_full_loop_accepts_and_rejects_then_writes_experience(self):
         with TemporaryDirectory() as temp:
             root = Path(temp)

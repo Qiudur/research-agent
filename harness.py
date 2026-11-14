@@ -268,10 +268,18 @@ def _reference_timings(task_id: str, seed: int, size: int, repeats: int) -> list
     return timings
 
 
+def _bank_v2_candidate_failure(node: Path, error: dict) -> bool:
+    """Score only known sandbox failures as zero for bank-v2 candidates."""
+    bank = _read_json(_tasks_root() / "bank.json", "bank/1")
+    return (bank.get("version") == "bank-v2" and node.name != "n0000"
+            and isinstance(error, dict) and error.get("kind") in {"timeout", "oom", "exception"})
+
+
 def _score_error(split: str, seed: int, elapsed: float, queue: float,
-                 error: dict, flags: list[str] | None = None) -> dict:
-    return {"schema": SCORE_SCHEMA, "ok": False, "split": split, "score": None,
-            "raw": None, "spread": 0.0, "correct": False, "cheat_flags": flags or [],
+                 error: dict, node: Path, flags: list[str] | None = None) -> dict:
+    zero = _bank_v2_candidate_failure(node, error)
+    return {"schema": SCORE_SCHEMA, "ok": zero, "split": split, "score": 0.0 if zero else None,
+            "raw": 0.0 if zero else None, "spread": 0.0, "correct": False, "cheat_flags": flags or [],
             "error": error, "seconds": {"run": elapsed, "queue": queue}, "seed": seed}
 
 
@@ -303,14 +311,14 @@ def score(task_id: str, node_dir: Path, split: str, seed: int | None = None) -> 
             flags = payload.get("cheat_flags", [])
             if meta["timed_out"]:
                 return _score_error(split, used_seed, elapsed, queue,
-                                    {"kind": "timeout", "message": "Scoring timed out", "trace_tail": ""}, flags)
+                                    {"kind": "timeout", "message": "Scoring timed out", "trace_tail": ""}, node, flags)
             if meta["oom"]:
                 return _score_error(split, used_seed, elapsed, queue,
-                                    {"kind": "oom", "message": "Scoring exceeded memory", "trace_tail": meta["stderr_tail"]}, flags)
+                                    {"kind": "oom", "message": "Scoring exceeded memory", "trace_tail": meta["stderr_tail"]}, node, flags)
             if not payload.get("ok") or meta["exit_code"] != 0:
                 error = payload.get("error") or {"kind": "exception", "message": "Scoring worker failed",
                                                  "trace_tail": meta["stderr_tail"][-2000:]}
-                return _score_error(split, used_seed, elapsed, queue, error, flags)
+                return _score_error(split, used_seed, elapsed, queue, error, node, flags)
             if flags or not payload.get("correct"):
                 if not flags:
                     flags = [payload.get("reason", "behavior_change")]

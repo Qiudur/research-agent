@@ -220,6 +220,10 @@ def score(task_id: str, node_dir: Path, split: str, seed: int | None = None) -> 
         if failed["ok"]:
             result["raw"] = 0.0
             result["score"] = 0.0
+        elif harness._bank_v2_candidate_failure(Path(node_dir).resolve(), failed.get("error")):
+            result["ok"] = True
+            result["raw"] = 0.0
+            result["score"] = 0.0
     else:
         scores = [(item["raw"] - baseline) / (ceiling - baseline) for item in measurements]
         result["raw"] = statistics.median(item["raw"] for item in measurements)
