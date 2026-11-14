@@ -252,7 +252,7 @@ class BatchTests(unittest.TestCase):
         for prefix in ("tab", "spd"):
             for tier, number in (("practice", 5), ("validation", 2), ("exam", 5)):
                 for index in range(number):
-                    trap = ("leakage" if prefix == "tab" else "cheat_bait") if tier == "exam" and index == 1 else None
+                    trap = "leakage" if prefix == "tab" and tier == "exam" and index == 1 else None
                     if prefix == "spd" and tier == "exam" and index == 0:
                         trap = "stop_loss"
                     rows.append({"task_id": f"{prefix}-{tier}-{index}", "tier": tier,
@@ -261,7 +261,7 @@ class BatchTests(unittest.TestCase):
                                  "baseline_raw": 1.01177 if trap == "stop_loss" else 1.0,
                                  "ceiling_raw": 0.99599 if trap == "stop_loss" else 2.0,
                                  "naive_cost": 0.01})
-        bank = {"schema": "bank/1", "version": "bank-v1", "frozen": True, "tasks": rows}
+        bank = {"schema": "bank/1", "version": "bank-v2", "frozen": True, "tasks": rows}
         by_id = {row["task_id"]: dict(row) for row in rows}
 
         class Harness:
@@ -272,6 +272,11 @@ class BatchTests(unittest.TestCase):
                                    "ceiling_raw": by_id[task_id]["ceiling_raw"]}}
 
         self.assertEqual(len(_bank_tasks(bank, Harness(), formal=True)["exam"]), 10)
+        leakage = next(row for row in rows if row["trap"] == "leakage")
+        leakage["trap"] = None
+        with self.assertRaisesRegex(ValueError, "exam trap: tabular"):
+            _bank_tasks(bank, Harness(), formal=True)
+        leakage["trap"] = "leakage"
         tab_row = next(row for row in rows if row["task_id"].startswith("tab-"))
         tab_row["ceiling_raw"] += 0.01
         with self.assertRaisesRegex(ValueError, "differs from bank"):

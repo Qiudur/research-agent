@@ -193,7 +193,8 @@ def load_formal_evidence(batch_dir: Path, auto_study_dir: Path) -> dict | None:
 
     try:
         audit = audit_formal_outputs(batch_dir, auto_study_dir)
-        summary = summarize(batch_dir, research_cost=float(audit["total_research_cost"]))
+        summary = summarize(batch_dir, research_cost=(
+            None if audit["carry_forward"] else float(audit["total_research_cost"])))
         project = batch_dir.parent.parent
         batch_path = batch_dir / "batch_report.json"
         batch = json.loads(batch_path.read_text(encoding="utf-8"))
@@ -238,14 +239,17 @@ def load_formal_evidence(batch_dir: Path, auto_study_dir: Path) -> dict | None:
             "audit": {key: audit[key] for key in (
                 "ready", "task_budget", "batch_runs", "phase_runs", "study_runs",
                 "study_task_cost", "proposal_cost", "total_research_cost", "admission",
-                "over_budget_tasks")},
+                "over_budget_tasks", "carry_forward", "source_code_commit",
+                "research_cost_applicable")},
             "admission": {"claim": admission["claim"],
                           "score_not_lower_each_rep": admission["score_not_lower_each_rep"],
                           "cost_reduced_on_average": admission["cost_reduced_on_average"],
                           "pairs": summary["validation"]["pairs"]},
             "phases": phases, "comparisons": comparisons,
-            "breakeven": (summary["breakeven"] if admitted else
-                          {"computed": False, "reasons": ["研究版未通过验证准入，未参加考试"]}),
+            "breakeven": (
+                {"computed": False, "reasons": ["bank-v2 沿用 bank-v1 自研究；历史研究成本不计入本批次回本点"]}
+                if audit["carry_forward"] else summary["breakeven"] if admitted else
+                {"computed": False, "reasons": ["研究版未通过验证准入，未参加考试"]}),
             "warnings": summary["warnings"],
         }
     except (ValueError, KeyError, TypeError, OSError) as exc:
@@ -259,8 +263,13 @@ def formal_evidence_ok(data: object) -> bool:
     """Accept only audited, internally consistent FORMAL TOKENS evidence."""
     try:
         admitted = data["admission"]["claim"] == "admitted"
+        audit = data["audit"]
         return (data["schema"] == FORMAL_SCHEMA and data["label"] == "FORMAL"
-                and data["currency"] == "TOKENS" and data["audit"]["ready"] is True
+                and data["currency"] == "TOKENS" and audit["ready"] is True
+                and audit["research_cost_applicable"] is (not audit["carry_forward"])
+                and (not audit["carry_forward"] or
+                     (re.fullmatch(r"[0-9a-f]{40}", audit["source_code_commit"]) is not None
+                      and data["breakeven"]["computed"] is False))
                 and data["admission"]["claim"] in ADMISSION_NAMES
                 and data["audit"]["admission"] == data["admission"]["claim"]
                 and re.fullmatch(r"[0-9a-f]{40}", data["code_commit"]) is not None
@@ -327,8 +336,14 @@ def formal_results(data: dict | None) -> str:
             else:
                 lines.append("研究版回本点：不计算（"
                              + safe("；".join(map(str, breakeven.get("reasons", [])))) + "）。")
-        lines.append(f"自研究总成本 {float(audit['total_research_cost']):,.0f} token"
-                     f"（{int(audit['study_runs'])} 次练习运行加提案调用）。")
+        if audit["carry_forward"]:
+            lines.append(
+                f"沿用 bank-v1 自研究候选（原代码提交 {safe(audit['source_code_commit'][:12])}）；"
+                f"旧研究成本 {float(audit['total_research_cost']):,.0f} token"
+                f"（{int(audit['study_runs'])} 次练习运行加提案调用），不计入 bank-v2 回本点。")
+        else:
+            lines.append(f"自研究总成本 {float(audit['total_research_cost']):,.0f} token"
+                         f"（{int(audit['study_runs'])} 次练习运行加提案调用）。")
         if data.get("warnings"):
             lines.append(f"汇总含 {len(data['warnings'])} 条数据提醒，对外引用前请先核对。")
     except (KeyError, TypeError, ValueError, AttributeError):

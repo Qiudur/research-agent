@@ -423,6 +423,133 @@ def _audit_study(root: Path, study_dir: Path, tasks: list[str], bank_version: st
                   "default_config": evaluations["default"]["candidates"]["default"]["config"]}
 
 
+def _agent_files(root: Path, config_path: Path) -> dict:
+    config_path = _inside(root, config_path)
+    config = _json(config_path)
+    _require(config.get("schema") == "agent/1"
+             and isinstance(config.get("prompts"), dict)
+             and set(config["prompts"]) == set(ROLES),
+             "Carry-forward agent needs four role prompts")
+    return {"config": {"path": str(config_path), "sha256": _sha(config_path)},
+            "prompts": {role: {"path": str(_inside(root, config["prompts"][role])),
+                               "sha256": _sha(_inside(root, config["prompts"][role]))}
+                        for role in ROLES}}
+
+
+def _public_task_files(root: Path, task_id: str) -> dict[str, str]:
+    """Hash only learner-visible task files, never hidden scoring inputs."""
+    _require(not (root / "tasks" / task_id).is_symlink(),
+             f"Carry-forward task contains symlink: {task_id}")
+    task_dir = (root / "tasks" / task_id).resolve()
+    _require(task_dir.parent == root / "tasks", "Carry-forward task path escapes root")
+    _require(task_dir.is_dir(), f"Carry-forward public task directory missing: {task_id}")
+    result = {}
+    for path in task_dir.rglob("*"):
+        relative = path.relative_to(task_dir)
+        if (any(part.lower() in {"hidden", "holdout", "__pycache__"}
+                for part in relative.parts) or "holdout" in path.name.lower()
+                or path.suffix == ".pyc"):
+            continue
+        _require(not path.is_symlink(), f"Carry-forward task contains symlink: {path}")
+        if path.is_file():
+            result[str(relative)] = _sha(path)
+    _require("task.json" in result, f"Carry-forward public task spec missing: {task_id}")
+    return result
+
+
+def audit_carry_forward(root: Path, bank: dict, price_sha: str,
+                        *, candidate_path: Path | None = None,
+                        default_path: Path | None = None,
+                        study_dir: Path | None = None) -> dict:
+    """Verify bank-v2's sealed bank-v1 research before any one-shot attempt.
+
+    The old study is audited at its own root, version and code commit. Its
+    research cost is historical provenance, never a bank-v2 breakeven input.
+    """
+    root = Path(root).resolve()
+    manifest_path = root / "config/bank_v2_carry_forward.json"
+    manifest = _json(manifest_path)
+    _require(manifest.get("schema") == "bank_v2_carry_forward/1"
+             and bank.get("version") == "bank-v2",
+             "Bank-v2 carry-forward manifest or bank version differs")
+    source_name = manifest.get("source_root")
+    _require(isinstance(source_name, str) and Path(source_name).is_absolute(),
+             "Carry-forward source_root must be absolute")
+    source_root = Path(source_name).resolve()
+    _require(source_root != root, "Carry-forward source must be an independent project")
+    source_study = _inside(source_root, manifest.get("source_study_dir"))
+    _require(source_study.parent in (source_root / "runs", source_root / "batches"),
+             "Carry-forward source study path differs")
+    if study_dir is not None:
+        _require(Path(study_dir).expanduser().resolve() == source_study,
+                 "Supplied study is not the sealed carry-forward source")
+    source_commit = manifest.get("source_code_commit")
+    _require(isinstance(source_commit, str) and COMMIT.fullmatch(source_commit),
+             "Carry-forward source commit is invalid")
+    source_bank = _json(source_root / "tasks/bank.json")
+    _require(source_bank.get("schema") == "bank/1"
+             and source_bank.get("frozen") is True
+             and manifest.get("source_bank_version") == source_bank.get("version") == "bank-v1",
+             "Carry-forward source bank identity differs")
+    source_files = manifest.get("source_files")
+    expected_files = {"bank": source_root / "tasks/bank.json",
+                      "prices": source_root / "config/prices.json",
+                      "auto_plan": source_study / "auto_plan.json",
+                      "auto_report": source_study / "auto_self_research_report.json",
+                      "proposal_ledger": source_study / "proposal_ledger.jsonl"}
+    _require(isinstance(source_files, dict) and set(source_files) == set(expected_files),
+             "Carry-forward source files are incomplete")
+    for label, path in expected_files.items():
+        _require(_descriptor(source_root, source_files[label]) == path,
+                 f"Carry-forward source {label} path differs")
+    _require(source_files["prices"]["sha256"] == price_sha,
+             "Carry-forward prices differ from bank-v2")
+    old_tasks = {tier: [item for item in source_bank["tasks"]
+                        if item.get("tier") == tier] for tier in TIERS}
+    new_tasks = {tier: [item for item in bank["tasks"]
+                        if item.get("tier") == tier] for tier in TIERS}
+    _require(all(old_tasks[tier] == new_tasks[tier] for tier in ("practice", "validation")),
+             "Carry-forward practice or validation task entries changed")
+    for tier in ("practice", "validation"):
+        for item in old_tasks[tier]:
+            task_id = item["task_id"]
+            _require(_public_task_files(source_root, task_id)
+                     == _public_task_files(root, task_id),
+                     f"Carry-forward public task files changed: {task_id}")
+    old_exam = {item.get("task_id") for item in old_tasks["exam"]}
+    new_exam = {item.get("task_id") for item in new_tasks["exam"]}
+    _require(old_exam.isdisjoint(new_exam), "Carry-forward bank-v2 reuses bank-v1 exam IDs")
+    source_path, study = _audit_study(
+        source_root, source_study, [item["task_id"] for item in old_tasks["practice"]],
+        "bank-v1", source_commit, price_sha)
+    source_selected = _agent_files(source_root, source_path)
+    copied = manifest.get("carried_candidate")
+    copied_path = _candidate(root, copied)
+    _require(copied["config"]["sha256"] == study["selected_config_sha256"]
+             and source_selected["config"]["sha256"] == copied["config"]["sha256"]
+             and all(source_selected["prompts"][role]["sha256"]
+                     == copied["prompts"][role]["sha256"] for role in ROLES),
+             "Carried candidate differs from audited bank-v1 selection")
+    if candidate_path is not None:
+        _require(_inside(root, candidate_path) == copied_path,
+                 "Batch tuned config differs from carried candidate")
+    carried_default = manifest.get("carried_default")
+    copied_default_path = _candidate(root, carried_default)
+    old_default = _agent_files(source_root, _inside(source_root, study["default_config"]["path"]))
+    new_default = _agent_files(root, copied_default_path)
+    _require(old_default["config"]["sha256"] == new_default["config"]["sha256"]
+             and all(old_default["prompts"][role]["sha256"]
+                     == new_default["prompts"][role]["sha256"] for role in ROLES),
+             "Bank-v2 default differs from audited bank-v1 default")
+    if default_path is not None:
+        _require(_inside(root, default_path) == copied_default_path,
+                 "Batch default config differs from carried default")
+    return {"manifest_path": manifest_path, "manifest_sha256": _sha(manifest_path),
+            "study_dir": source_study, "selected_path": copied_path,
+            "default_path": copied_default_path,
+            "study": study, "source_code_commit": source_commit}
+
+
 def _expected_comparison(base: list[dict], tuned: list[dict], tasks: list[str]) -> dict:
     """Reconstruct the saved three-pair validation comparison from reported scores."""
     base_scores = [mean(task["holdout_score"] for task in row["tasks"]) for row in base]
@@ -456,8 +583,6 @@ def audit_formal_outputs(batch_dir: Path, auto_study_dir: Path) -> dict:
     _require(batch_dir.parent.name in {"runs", "batches"}
              and batch_dir.is_relative_to(root), "Batch must be under project runs/ or batches/")
     study_dir = Path(auto_study_dir).expanduser().resolve()
-    _require(study_dir.parent == root / "runs" or study_dir.parent == root / "batches",
-             "Auto study must be under the same project")
     bank = _json(root / "tasks/bank.json")
     plan = _json(batch_dir / "plan.json")
     batch = _json(batch_dir / "batch_report.json")
@@ -516,12 +641,32 @@ def audit_formal_outputs(batch_dir: Path, auto_study_dir: Path) -> dict:
     local_attempt = _json(batch_dir / "exam_attempt.json")
     _require(local_attempt.get("schema") == "exam_attempt/1"
              and local_attempt.get("label") == "FORMAL", "Batch exam attempt marker differs")
-    chosen_path, study = _audit_study(root, study_dir, expected_tasks["practice"],
-                                      version, commit, price_sha)
+    carry_forward = version == "bank-v2"
+    if carry_forward:
+        carried = audit_carry_forward(
+            root, bank, price_sha, study_dir=study_dir)
+        manifest_path = carried["manifest_path"]
+        _require(sealed.get(str(manifest_path)) == carried["manifest_sha256"],
+                 "Carry-forward manifest is not sealed in batch plan")
+        chosen_path, study = carried["selected_path"], carried["study"]
+        selected_files = _agent_files(root, chosen_path)
+        _require(all(sealed.get(item["path"]) == item["sha256"]
+                     for item in (selected_files["config"], *selected_files["prompts"].values())),
+                 "Carried candidate files are not sealed in batch plan")
+        default_files = _agent_files(root, carried["default_path"])
+        _require(all(sealed.get(item["path"]) == item["sha256"]
+                     for item in (default_files["config"], *default_files["prompts"].values())),
+                 "Carried default files are not sealed in batch plan")
+        default_item = default_files["config"]
+    else:
+        _require(study_dir.parent in (root / "runs", root / "batches"),
+                 "Auto study must be under the same project")
+        chosen_path, study = _audit_study(root, study_dir, expected_tasks["practice"],
+                                          version, commit, price_sha)
+        default_item = study["default_config"]
     _require(str(chosen_path) in sealed and sealed[str(chosen_path)] ==
              study["selected_config_sha256"],
              "Selected config is not sealed in batch plan")
-    default_item = study["default_config"]
     default_path = _inside(root, default_item["path"])
     _require(str(default_path) in sealed and sealed[str(default_path)] ==
              default_item["sha256"], "Default config is not sealed in batch plan")
@@ -615,6 +760,9 @@ def audit_formal_outputs(batch_dir: Path, auto_study_dir: Path) -> dict:
              "Recorded admission differs from validation evidence")
     return {"schema": "formal_output_audit/1", "ready": True,
             "bank_version": version, "code_commit": commit,
+            "carry_forward": carry_forward,
+            "source_code_commit": carried["source_code_commit"] if carry_forward else None,
+            "research_cost_applicable": not carry_forward,
             "currency": "TOKENS", "task_budget": TASK_BUDGET,
             "batch_runs": len(rows), "phase_runs": {tier: len(embedded[tier]) for tier in TIERS},
             "study_runs": study["runs"], "study_task_cost": study["task_cost"],

@@ -305,6 +305,13 @@ def execute_batch(
     sealed_inputs = {str(path): _hash(path) for path in
                      (bank_path, prices_path, *config_paths.values(), *baselines.values())}
     if formal:
+        if bank_version == "bank-v2":
+            from scripts.audit_formal_outputs import audit_carry_forward
+            carried = audit_carry_forward(
+                root, bank, _hash(prices_path),
+                candidate_path=config_paths["tuned_lib"],
+                default_path=config_paths["default"])
+            sealed_inputs[str(carried["manifest_path"])] = carried["manifest_sha256"]
         for path in (root / "config/hard_caps.json", root / "config/triggers.json"):
             sealed_inputs[str(path)] = _hash(path)
         for data in config_data.values():

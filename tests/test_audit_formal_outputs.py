@@ -5,11 +5,12 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import shutil
 from tempfile import TemporaryDirectory
 import unittest
 
 from evaluation.compare import compare_configurations
-from scripts.audit_formal_outputs import audit_formal_outputs
+from scripts.audit_formal_outputs import audit_carry_forward, audit_formal_outputs
 
 
 COMMIT = "a" * 40
@@ -278,6 +279,69 @@ class FormalOutputAuditTests(unittest.TestCase):
         return batch_dir, study_dir, {"tasks": tasks, "study": study_dir,
                                       "batch": batch_dir, "root": root}
 
+    def carry_fixture(self, base: Path) -> tuple[Path, Path, dict]:
+        """Clone saved synthetic outputs into an independent bank-v2 root."""
+        source = (base / "source-v1").resolve()
+        target = (base / "target-v2").resolve()
+        _, source_study, _ = self.fixture(source)
+        for item in _read(source / "tasks/bank.json")["tasks"]:
+            if item["tier"] in ("practice", "validation"):
+                write_json(source / "tasks" / item["task_id"] / "task.json",
+                           {"schema": "task/1", "task_id": item["task_id"]})
+        shutil.copytree(source, target)
+        old_ids = [f"spd-exam-{number}" for number in range(10)]
+        for path in target.rglob("*"):
+            if path.is_file() and path.suffix in (".json", ".jsonl"):
+                content = path.read_text(encoding="utf-8")
+                content = content.replace(str(source), str(target))
+                content = content.replace("bank-v1", "bank-v2")
+                content = content.replace(COMMIT, "b" * 40)
+                for old_id in old_ids:
+                    content = content.replace(old_id, old_id + "-new")
+                path.write_text(content, encoding="utf-8")
+        for path in sorted(target.rglob("spd-exam-*"), key=lambda item: len(item.parts), reverse=True):
+            if path.is_dir() and path.name in old_ids:
+                path.rename(path.with_name(path.name + "-new"))
+        for tier in ("validation", "exam"):
+            marker = target / "runs" / f"{tier}-bank-v1.attempt.json"
+            marker.rename(target / "runs" / f"{tier}-bank-v2.attempt.json")
+        batch = target / "runs/batch"
+        plan = _read(batch / "plan.json")
+        plan["sealed_inputs"][str(target / "tasks/bank.json")] = digest(target / "tasks/bank.json")
+
+        def candidate(name: str) -> dict:
+            config = target / "config" / f"{name}.json"
+            prompts = {role: target / "config" / f"{name}-{role}.md" for role in ROLES}
+            return {"config": {"path": str(config.relative_to(target)),
+                               "sha256": digest(config)},
+                    "prompts": {role: {"path": str(path.relative_to(target)),
+                                       "sha256": digest(path)}
+                                for role, path in prompts.items()}}
+
+        copied = candidate("tuned")
+        default = candidate("default")
+        for item in (*copied["prompts"].values(), *default["prompts"].values()):
+            plan["sealed_inputs"][str(target / item["path"])] = item["sha256"]
+        source_files = {"bank": source / "tasks/bank.json",
+                        "prices": source / "config/prices.json",
+                        "auto_plan": source_study / "auto_plan.json",
+                        "auto_report": source_study / "auto_self_research_report.json",
+                        "proposal_ledger": source_study / "proposal_ledger.jsonl"}
+        manifest = target / "config/bank_v2_carry_forward.json"
+        write_json(manifest, {
+            "schema": "bank_v2_carry_forward/1", "source_root": str(source),
+            "source_study_dir": str(source_study.relative_to(source)),
+            "source_bank_version": "bank-v1", "source_code_commit": COMMIT,
+            "source_files": {name: {"path": str(path.relative_to(source)),
+                                    "sha256": digest(path)}
+                             for name, path in source_files.items()},
+            "carried_candidate": copied, "carried_default": default,
+        })
+        plan["sealed_inputs"][str(manifest)] = digest(manifest)
+        write_json(batch / "plan.json", plan)
+        return batch, source_study, {"source": source, "target": target,
+                                     "manifest": manifest, "candidate": copied}
+
     def test_admitted_and_rejected_batches_are_read_only(self):
         for admitted, expected_exam in ((True, 12), (False, 9)):
             with self.subTest(admitted=admitted), TemporaryDirectory() as temp:
@@ -293,6 +357,85 @@ class FormalOutputAuditTests(unittest.TestCase):
                 self.assertEqual(audit["proposal_cost"], 7.0)
                 self.assertEqual(timestamps, {path: path.stat().st_mtime_ns
                                               for path in timestamps})
+
+    def test_bank_v2_carry_forward_audits_source_and_new_exam(self):
+        with TemporaryDirectory() as temp:
+            batch, study, info = self.carry_fixture(Path(temp))
+            audit = audit_formal_outputs(batch, study)
+            self.assertTrue(audit["ready"])
+            self.assertTrue(audit["carry_forward"])
+            self.assertFalse(audit["research_cost_applicable"])
+            self.assertEqual(audit["source_code_commit"], COMMIT)
+            self.assertEqual(audit["bank_version"], "bank-v2")
+            self.assertEqual(audit["phase_runs"]["exam"], 12)
+            from scripts.generate_roadshow_report import formal_results, load_formal_evidence
+            evidence = load_formal_evidence(batch, study)
+            self.assertFalse(evidence["breakeven"]["computed"])
+            self.assertIn("沿用 bank-v1 自研究候选", formal_results(evidence))
+            self.assertIn("不计入 bank-v2 回本点", formal_results(evidence))
+
+    def test_bank_v2_carry_forward_rejects_unsealed_and_tampered_sources(self):
+        with TemporaryDirectory() as temp:
+            batch, study, info = self.carry_fixture(Path(temp))
+            plan = _read(batch / "plan.json")
+            del plan["sealed_inputs"][str(info["manifest"])]
+            write_json(batch / "plan.json", plan)
+            with self.assertRaisesRegex(ValueError, "manifest is not sealed"):
+                audit_formal_outputs(batch, study)
+        with TemporaryDirectory() as temp:
+            batch, study, info = self.carry_fixture(Path(temp))
+            (study / "proposal_ledger.jsonl").write_text(
+                (study / "proposal_ledger.jsonl").read_text() + "\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "File SHA mismatch"):
+                audit_formal_outputs(batch, study)
+        with TemporaryDirectory() as temp:
+            batch, study, info = self.carry_fixture(Path(temp))
+            prompt = info["target"] / info["candidate"]["prompts"]["planner"]["path"]
+            prompt.write_text(prompt.read_text() + "tamper", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "sealed input changed"):
+                audit_formal_outputs(batch, study)
+        with TemporaryDirectory() as temp:
+            _, _, info = self.carry_fixture(Path(temp))
+            target = info["target"]
+            spec = target / "tasks/spd-practice-0/task.json"
+            spec.write_text(spec.read_text() + "\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "public task files changed"):
+                audit_carry_forward(target, _read(target / "tasks/bank.json"),
+                                    digest(target / "config/prices.json"))
+
+    def test_bank_v2_carry_forward_rejects_exam_reuse_and_wrong_source_commit(self):
+        with TemporaryDirectory() as temp:
+            _, _, info = self.carry_fixture(Path(temp))
+            target = info["target"]
+            bank = _read(target / "tasks/bank.json")
+            for item in bank["tasks"]:
+                if item["tier"] == "exam":
+                    item["task_id"] = item["task_id"].removesuffix("-new")
+            with self.assertRaisesRegex(ValueError, "reuses bank-v1 exam IDs"):
+                audit_carry_forward(target, bank, digest(target / "config/prices.json"))
+        with TemporaryDirectory() as temp:
+            _, _, info = self.carry_fixture(Path(temp))
+            target = info["target"]
+            manifest = _read(info["manifest"])
+            manifest["source_code_commit"] = "c" * 40
+            write_json(info["manifest"], manifest)
+            with self.assertRaisesRegex(ValueError, "Run manifest differs"):
+                audit_carry_forward(target, _read(target / "tasks/bank.json"),
+                                    digest(target / "config/prices.json"))
+
+    def test_bank_v2_manifest_generator_seals_rechecked_source(self):
+        with TemporaryDirectory() as temp:
+            batch, study, info = self.carry_fixture(Path(temp))
+            info["manifest"].unlink()
+            from scripts.seal_bank_v2_carry_forward import seal_bank_v2_carry_forward
+            produced = seal_bank_v2_carry_forward(
+                info["target"], info["source"], study.relative_to(info["source"]),
+                COMMIT, Path("config/tuned.json"), Path("config/default.json"))
+            self.assertEqual(produced, info["manifest"])
+            plan = _read(batch / "plan.json")
+            plan["sealed_inputs"][str(produced)] = digest(produced)
+            write_json(batch / "plan.json", plan)
+            self.assertTrue(audit_formal_outputs(batch, study)["ready"])
 
     def test_task_over_budget_and_report_tampering_fail(self):
         with TemporaryDirectory() as temp:

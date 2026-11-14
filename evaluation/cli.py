@@ -16,7 +16,7 @@ from ledger import Usage, price_usage
 from token_accounting import require_exact_token_accounting
 
 from . import figures
-from .batch import (_agent_signature, _bank_tasks, _json, _verify_code_freeze,
+from .batch import (_agent_signature, _bank_tasks, _hash, _json, _verify_code_freeze,
                     _within, execute_batch)
 from .self_research import _practice_tasks, auto_evaluate_candidates
 
@@ -126,6 +126,11 @@ def formal_preflight(
                 raise ValueError("Naive and default configurations are semantically identical")
             if tuned_signature == default_signature:
                 raise ValueError("Tuned and default configurations are semantically identical")
+            if bank_version == "bank-v2":
+                from scripts.audit_formal_outputs import audit_carry_forward
+                audit_carry_forward(root, bank, _hash(prices_path),
+                                    candidate_path=_within(root, Path(tuned_config)),
+                                    default_path=default_path)
     except (ValueError, OSError, KeyError, TypeError, json.JSONDecodeError) as exc:
         blockers.append(f"Agent configurations: {exc}")
     if tuned_config is not None and isinstance(bank_version, str):
