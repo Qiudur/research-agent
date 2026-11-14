@@ -60,6 +60,32 @@ SOURCES = {
         "Heart Disease", 303, ["small_sample"],
         "Classify presence of heart disease from Cleveland clinical attributes"),
 }
+# Attribution as listed on the pinned UCI dataset pages. Mushroom has no
+# individual creator on its page, so use the repository's dataset citation.
+SOURCE_CITATIONS = {
+    "tab-adult-income": ("Barry Becker and Ronny Kohavi", "10.24432/C5XW20"),
+    "tab-mushroom-edibility": ("", "10.24432/C5959T"),
+    "tab-online-shoppers": ("C. Sakar and Yomi Kastro", "10.24432/C5F88Q"),
+    "tab-breast-cancer-diagnostic": (
+        "William Wolberg, Olvi Mangasarian, Nick Street, and W. Street", "10.24432/C5DW2B"),
+    "tab-heart-disease": (
+        "Andras Janosi, William Steinbrunn, Matthias Pfisterer, and Robert Detrano",
+        "10.24432/C52P4X"),
+}
+
+
+def source_license_block(task_id: str, title: str) -> str:
+    if task_id not in SOURCE_CITATIONS:
+        return ""
+    creators, doi = SOURCE_CITATIONS[task_id]
+    return ("- License on UCI page: Creative Commons Attribution 4.0 International "
+            "(CC BY 4.0), https://creativecommons.org/licenses/by/4.0/.\n"
+            f"- Attribution: {creators + ', ' if creators else ''}{title} [Dataset], "
+            f"UCI Machine Learning Repository, https://doi.org/{doi}.\n"
+            "- Changes: selected/normalized features and deterministic grouped "
+            "train/dev/holdout splits; details below.\n")
+
+
 ADULT_FEATURES = ["age", "workclass", "fnlwgt", "education", "education_num",
                   "marital_status", "occupation", "relationship", "race", "sex",
                   "capital_gain", "capital_loss", "hours_per_week", "native_country"]
@@ -267,8 +293,9 @@ def build(task_id: str, archive_dir: Path | None = None) -> dict:
     (task_root / "split_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     source_doc = (f"# UCI {title} source\n\n- Dataset page: {url.replace('/static/public/', '/dataset/').replace('.zip', '')}\n"
                   f"- Archive: {url}\n- SHA-256: {provenance['archive_sha256']}\n"
-                  f"- Raw file SHA-256 hashes: see split_manifest.json.\n\n"
-                  f"Preparation: scripts/prepare_public_tabular.py, seed {SEED}. "
+                  "- Raw file SHA-256 hashes: see split_manifest.json.\n")
+    source_doc += source_license_block(task_id, title)
+    source_doc += ("\nPreparation: scripts/prepare_public_tabular.py, seed {SEED}. "
                   "Exact feature-vector duplicates stay in one split; train/dev/holdout are "
                   "class-stratified 60/20/20. Hidden holdout is never read during calibration.\n\n"
                   "Baseline: sandboxed default LightGBM. Reference: AutoGluon Tabular "
