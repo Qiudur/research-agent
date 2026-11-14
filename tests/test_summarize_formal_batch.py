@@ -438,6 +438,31 @@ class SummarizeFormalBatchTests(unittest.TestCase):
             markdown = render_markdown(summary)  # unknown counts render as a dash instead of crashing
             self.assertIn("缺少 ledger.jsonl", markdown.split("## 7. 数据提醒")[1])
 
+    def test_partial_mode_marks_unscored_holdout_attempt_without_retrying(self):
+        with TemporaryDirectory() as temp:
+            fx = Fixture(Path(temp) / "project")
+            fx.write_bank()
+            plan = fx.write_plan()
+            now = time.time()
+            os.utime(plan, (now - 3600, now - 3600))
+            fx.write_run("exam", "default", 3, started=now - 1800,
+                         finished=False, with_report=False, done_tasks=1)
+            run_dir = fx.root / "runs" / "run-20261114-130000-0001"
+            task_dir = run_dir / "tasks" / "tab-exam-0"
+            write_json(task_dir / "holdout_attempt.json", {"schema": "holdout_attempt/1", "best_node": "n0001"})
+            (task_dir / "ledger.jsonl").unlink()  # attempt evidence is independent of a complete ledger
+            before = snapshot(fx.root)
+            summary = summarize(fx.batch_dir, partial=True)
+            self.assertEqual(before, snapshot(fx.root))
+            self.assertEqual(summary["progress"]["completed_runs"]["exam"], 0)
+            self.assertEqual(summary["runs"], [])
+            progress = summary["progress"]["running"][0]
+            self.assertEqual(progress["unscored_holdout_attempts"], ["tab-exam-0"])
+            self.assertIn("不得重试", progress["status"])
+            markdown = render_markdown(summary)
+            self.assertIn("holdout 已尝试但无分数", markdown)
+            self.assertIn("未完成", markdown)
+
     def test_partial_mode_without_any_finished_run_is_not_a_failure(self):
         with TemporaryDirectory() as temp:
             fx = Fixture(Path(temp) / "project")

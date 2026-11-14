@@ -427,8 +427,12 @@ def _load_complete(root: Path, batch: dict, warnings: list[str]) -> list[LoadedR
 def _progress(run_dir: Path, manifest: dict) -> dict:
     tasks = manifest.get("tasks") if isinstance(manifest.get("tasks"), list) else []
     done, spent, current = 0, 0.0, None
+    unscored_attempts = []
     for task_id in tasks:
-        path = run_dir / "tasks" / str(task_id) / "ledger.jsonl"
+        task_dir = run_dir / "tasks" / str(task_id)
+        if (task_dir / "holdout_attempt.json").is_file() and not (task_dir / "holdout_score.json").is_file():
+            unscored_attempts.append(task_id)
+        path = task_dir / "ledger.jsonl"
         if not path.is_file():
             continue
         try:
@@ -443,7 +447,7 @@ def _progress(run_dir: Path, manifest: dict) -> dict:
     return {"run_id": run_dir.name, "phase": manifest.get("phase"), "config": manifest.get("config"),
             "rep": manifest.get("rep"), "started_ts": manifest.get("started_ts"),
             "tasks_done": done, "tasks_total": len(tasks), "tokens_so_far": spent,
-            "current_task": current}
+            "current_task": current, "unscored_holdout_attempts": unscored_attempts}
 
 
 def _load_partial(root: Path, plan: dict, since: float,
@@ -475,7 +479,10 @@ def _load_partial(root: Path, plan: dict, since: float,
             continue
         report_path = run_dir / "report.json"
         if not report_path.is_file():
-            running.append({**_progress(run_dir, manifest), "status": "进行中"})
+            progress = _progress(run_dir, manifest)
+            status = ("holdout 已尝试但无分数；不得重试" if progress["unscored_holdout_attempts"]
+                      else "未完成")
+            running.append({**progress, "status": status})
             continue
         try:
             report = _load_json(report_path)
@@ -841,9 +848,9 @@ def _comparison_md(title: str, comp: dict) -> list[str]:
 def render_markdown(summary: dict) -> str:
     out: list[str] = []
     partial = summary["mode"] == "partial"
-    out += [f"# 正式批次结果汇总{'（进行中，仅已写出 report.json 的 run）' if partial else ''}", "",
+    out += [f"# 正式批次结果汇总{'（未完成，仅已写出 report.json 的 run）' if partial else ''}", "",
             f"- 批次：`{summary['batch_dir']}`；{summary['bank_version']}；标签 {summary['label']}；"
-            f"模式：{'进行中（--partial），不是最终结果' if partial else '批次已完成'}。",
+            f"模式：{'未完成（--partial，可能仍进行中或已失败），不是最终结果' if partial else '批次已完成'}。",
             f"- 单位：{summary['unit_note']}",
             f"- 来源 SHA-256：plan.json `{summary['sources']['plan_sha256']}`；"
             f"batch_report.json `{summary['sources']['batch_report_sha256'] or '尚未生成'}`；"

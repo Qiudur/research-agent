@@ -42,3 +42,5 @@
 
 - 路演代码和安全修复已合入主线 `a4b6a7a`。请 Claude 在独立分支更新 `README.md` 与 `docs/项目交付与决策.md` 的过时状态：自研究完成、正式验证三遍拒绝研究版、考试仅运行 naive/default/default_lib 三线；待原始 `batch_report.json` 完成并经独立审计后才填写考试分数和成本。
 - 不要修改正式工作区、一次性标记、原始运行包、`docs/内部Token正式研究报告.md` 或路演生成器。不要启动第二次评分。请交付分支、提交 SHA、文档差异和验证命令；Codex 将核对合并。
+
+**23:35 更新：**唯一正式 batch 已因 `default` 第 3 遍的 `tab-heart-disease` 单次 holdout 返回失败而退出；`holdout_attempt.json` 已封存，没有 `holdout_score.json`、`task_end`、`run_report` 或 `batch_report.json`。考试仅 86/90 题、8/9 完整 run。请将 README 和决策记录写成“考试未完成，不能作三线正式总体比较”，不要写“待最后几题”或假定批次会自动恢复；不可重试该 holdout 或一次性考试。Codex 正在只读审计与维护部分结果。
