@@ -83,8 +83,8 @@ class TokenSelfResearchPilotTests(unittest.TestCase):
                                  {"speedup", "tabular"})
             for task_id in TASKS:
                 original = json.loads((PROJECT / "tasks" / task_id / "task.json").read_text())
-                self.assertIsNone(original["budget"]["money"])
                 copied = json.loads((project / "tasks" / task_id / "task.json").read_text())
+                self.assertEqual(copied["budget"]["money"], original["budget"]["money"])
                 self.assertEqual(protocol["wall_seconds_per_task"][task_id],
                                  copied["budget"]["wall_seconds"])
 

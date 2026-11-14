@@ -92,7 +92,8 @@ class FullStackTests(unittest.TestCase):
             tasks = project / "tasks"
             shutil.copytree(ROOT / "tasks", tasks)
             task_json = tasks / TASK / "task.json"
-            self.assertIsNone(json.loads(task_json.read_text())["budget"]["money"])
+            source_money = json.loads((ROOT / "tasks" / TASK / "task.json").read_text())["budget"]["money"]
+            self.assertEqual(json.loads(task_json.read_text())["budget"]["money"], source_money)
             commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
             run = project / "runs/run-20261114-120000-abcd"
             create_manifest(
@@ -144,7 +145,7 @@ class FullStackTests(unittest.TestCase):
             expected_cost = len(llm_events) * 150 / 1_000_000
             self.assertAlmostEqual(result["task_end"]["total_cost"], expected_cost)
             self.assertAlmostEqual(Ledger.open(run, TASK).spent(), expected_cost)
-            self.assertIsNone(json.loads(task_json.read_text())["budget"]["money"])
+            self.assertEqual(json.loads(task_json.read_text())["budget"]["money"], source_money)
 
 
 if __name__ == "__main__":

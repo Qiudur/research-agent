@@ -51,10 +51,10 @@
 
 ## 4. 只在十道 practice 题做自研究
 
-以下只使用冻结 bank 中的全部 practice 题；三遍同候选并发，候选轮次顺序不变。先用一轮快速探路；若候选无效或质量不稳，只能在新的 study_dir 继续 practice 研究，不能用 validation/exam 调参。study_dir 必须此前不存在。
+以下只使用冻结 bank 中的全部 practice 题；三遍同候选并发，候选轮次顺序不变。预先设两轮候选，避免拆开重跑默认对照；若候选无效或质量不稳，只能在新的 study_dir 继续 practice 研究，不能用 validation/exam 调参。study_dir 必须此前不存在。
 
     AUTO_STUDY="$PWD/runs/auto-internal-$(date -u +%Y%m%d-%H%M%S)"
-    "$PY" -m evaluation.cli auto-research --project-root "$PWD" --model "$MODEL" --prices config/prices.json --code-commit "$CODE_SHA" --default-config config/agent.json --study-dir "$AUTO_STUDY" --rounds 1 --max-output-tokens 2048 --workers 3
+    "$PY" -m evaluation.cli auto-research --project-root "$PWD" --model "$MODEL" --prices config/prices.json --code-commit "$CODE_SHA" --default-config config/agent.json --study-dir "$AUTO_STUDY" --rounds 2 --max-output-tokens 2048 --workers 3
 
 读取 auto_self_research_report.json 的 selection、overall_best_on_practice、三遍分数/token 和所有 proposal_attempts。selection 为 null 时停在练习阶段；不要消耗一次性验证。若有候选，先验证选中配置和四角色提示词 SHA。此命令仅输出配置路径，不输出密钥：
 

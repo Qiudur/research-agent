@@ -40,12 +40,14 @@ class PublicTabularPackageTests(unittest.TestCase):
                 self.assertIn("- Changes:", source)
 
     def test_sources_and_visible_split_integrity(self):
+        bank = json.loads((ROOT / "tasks/bank.json").read_text(encoding="utf-8"))
+        expected_budget = 40_000 if bank["frozen"] else None
         for task_id in TASKS:
             with self.subTest(task_id=task_id):
                 task = harness.load_task(task_id)
                 self.assertEqual(task["scenario"], "tabular")
                 self.assertEqual(task["deliverable"]["function"], "fit_predict")
-                self.assertIsNone(task["budget"]["money"])
+                self.assertEqual(task["budget"]["money"], expected_budget)
                 root = task["workspace"].parent
                 self.assertTrue((root / "SOURCE.md").is_file())
                 manifest = json.loads((root / "split_manifest.json").read_text())

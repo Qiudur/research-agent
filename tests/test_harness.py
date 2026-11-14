@@ -62,7 +62,7 @@ class HarnessContractTests(unittest.TestCase):
         calibration = json.loads((ROOT / "docs/B-提速校准.json").read_text(encoding="utf-8"))
         measurements = {record["task_id"]: record for record in calibration["records"]}
         self.assertEqual(len(measurements), 12)
-        self.assertFalse(bank["frozen"])
+        self.assertIsInstance(bank["frozen"], bool)
         for entry in bank["tasks"]:
             if entry["task_id"] not in measurements:
                 continue
@@ -70,7 +70,11 @@ class HarnessContractTests(unittest.TestCase):
             self.assertEqual(len(measured["seeds"]), 3)
             self.assertEqual(entry["baseline_raw"], statistics.median(measured["baseline_raw"]))
             self.assertEqual(entry["ceiling_raw"], statistics.median(measured["ceiling_raw"]))
-            self.assertIsNone(entry["naive_cost"])
+            if bank["frozen"]:
+                self.assertIsInstance(entry["naive_cost"], (int, float))
+                self.assertGreater(entry["naive_cost"], 0)
+            else:
+                self.assertIsNone(entry["naive_cost"])
         self.assertEqual(next(item["trap"] for item in bank["tasks"]
                               if item["task_id"] == "spd-already-vectorized"), "stop_loss")
 
