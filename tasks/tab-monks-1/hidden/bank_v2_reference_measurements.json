@@ -1,0 +1,23 @@
+{
+  "schema": "tabular_bank_v2_reference/1",
+  "task_id": "tab-monks-1",
+  "split": "dev",
+  "seed": 20261114,
+  "baseline": {
+    "model": "tabular_v2_logistic.py",
+    "auc": 0.7544618712817739,
+    "sandbox_seconds": 1.0017045410349965,
+    "source_sha256": "45f81f3b94bb9b34384946c5720c82763a0854d419958c4eb5b478e65bd5fae1"
+  },
+  "reference": {
+    "model": "tabular_v2_lightgbm.py",
+    "auc": 1.0,
+    "sandbox_seconds": 0.9731182500254363,
+    "source_sha256": "e4ca35f0deedcbefc278fde7763705b2d30b1531577ff7c7ba7264adfcbdfdd3"
+  },
+  "gap": 0.2455381287182261,
+  "min_gap": 0.01,
+  "gap_valid": true,
+  "split_manifest_sha256": "65cb29dbb7f7f142e4b31f3ff0804afdeb91666137b8bb20eeaf1cebb915dec0",
+  "scope": "train/dev only; hidden holdout unopened and unscored"
+}

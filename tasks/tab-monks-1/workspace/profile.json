@@ -1,0 +1,15 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "small_sample",
+    "id_like_column"
+  ],
+  "summary": {
+    "dataset": "UCI MONK's Problems, task 1",
+    "rows_train": 260,
+    "predictors": 6,
+    "positive_rate_train": 0.5,
+    "target": "Predict the binary MONK task-1 class from six categorical attributes",
+    "input": "Public train.csv has y; hidden test rows are feature dictionaries"
+  }
+}

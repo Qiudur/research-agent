@@ -78,7 +78,14 @@ class PublicTabularPackageTests(unittest.TestCase):
                 self.assertEqual(measurement["task_id"], task_id)
                 self.assertEqual(measurement["train_rows"],
                                  json.loads((root / "split_manifest.json").read_text())["split_counts"]["train"])
-                if measurement["gap_valid"]:
+                v2_path = root / "hidden/bank_v2_reference_measurements.json"
+                if v2_path.is_file():
+                    v2 = json.loads(v2_path.read_text())
+                    self.assertEqual(v2["split"], "dev")
+                    self.assertGreaterEqual(v2["gap"], 0.01)
+                    self.assertEqual(task["metric"]["baseline_raw"], v2["baseline"]["auc"])
+                    self.assertEqual(task["metric"]["ceiling_raw"], v2["reference"]["auc"])
+                elif measurement["gap_valid"]:
                     self.assertEqual(task["metric"]["baseline_raw"], measurement["baseline"]["auc"])
                     self.assertEqual(task["metric"]["ceiling_raw"], measurement["reference"]["auc"])
                 else:

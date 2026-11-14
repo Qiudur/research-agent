@@ -1,0 +1,30 @@
+{
+  "source": "https://archive.ics.uci.edu/static/public/70/monk+s+problems.zip",
+  "archive_sha256": "7501acef87251b1d427726d7c381a2488c166fbbf70ac4096e09f05951c30a29",
+  "data_sha256": "e501ada3b21d876ab86f3e1614747bd2edc443a685f229a25e480aa1dea629f6",
+  "seed": 20261115,
+  "features": [
+    "attribute_1",
+    "attribute_2",
+    "attribute_3",
+    "attribute_4",
+    "attribute_5",
+    "attribute_6"
+  ],
+  "total_rows": 432,
+  "split_counts": {
+    "train": 260,
+    "dev": 86,
+    "holdout": 86
+  },
+  "positive_counts": {
+    "train": 130,
+    "dev": 43,
+    "holdout": 43
+  },
+  "feature_hash_overlap": 0,
+  "split_method": "class-stratified 60/20/20 grouped by exact feature vector",
+  "train_only_forbidden_features": [
+    "source_row_id"
+  ]
+}

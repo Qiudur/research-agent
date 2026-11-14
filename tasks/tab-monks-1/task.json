@@ -1,0 +1,30 @@
+{
+  "schema": "task/1",
+  "task_id": "tab-monks-1",
+  "scenario": "tabular",
+  "title": "MONK's Problems, task 1",
+  "description": "Predict the binary MONK task-1 class from six categorical attributes. Fit only on workspace/train.csv. The training CSV alone includes source_row_id, an ID-like leakage lure absent from dev/holdout inference; do not fit on it.",
+  "metric": {
+    "name": "roc_auc",
+    "higher_is_better": true,
+    "baseline_raw": 0.7544618712817739,
+    "ceiling_raw": 1.0
+  },
+  "deliverable": {
+    "file": "solution.py",
+    "function": "fit_predict",
+    "signature": "fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]",
+    "returns": "One finite probability in [0,1] per test row, preserving row order"
+  },
+  "budget": {
+    "money": null,
+    "wall_seconds": 1800
+  },
+  "limits": {
+    "run_seconds": 300,
+    "memory_mb": 4096
+  },
+  "forbidden_features": [
+    "source_row_id"
+  ]
+}

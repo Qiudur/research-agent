@@ -1,0 +1,23 @@
+{
+  "schema": "tabular_bank_v2_reference/1",
+  "task_id": "tab-wine-quality",
+  "split": "dev",
+  "seed": 20261114,
+  "baseline": {
+    "model": "tabular_v2_logistic.py",
+    "auc": 0.8016064257028113,
+    "sandbox_seconds": 1.0157434169668704,
+    "source_sha256": "45f81f3b94bb9b34384946c5720c82763a0854d419958c4eb5b478e65bd5fae1"
+  },
+  "reference": {
+    "model": "tabular_v2_lightgbm.py",
+    "auc": 0.8459483868488308,
+    "sandbox_seconds": 1.0202472090022638,
+    "source_sha256": "e4ca35f0deedcbefc278fde7763705b2d30b1531577ff7c7ba7264adfcbdfdd3"
+  },
+  "gap": 0.044341961146019515,
+  "min_gap": 0.01,
+  "gap_valid": true,
+  "split_manifest_sha256": "556fe821e323e350f53a8e0756eedf7b9405f6df4e15480d4316d876cea519e6",
+  "scope": "train/dev only; hidden holdout unopened and unscored"
+}

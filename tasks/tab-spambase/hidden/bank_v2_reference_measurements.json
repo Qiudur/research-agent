@@ -1,0 +1,23 @@
+{
+  "schema": "tabular_bank_v2_reference/1",
+  "task_id": "tab-spambase",
+  "split": "dev",
+  "seed": 20261114,
+  "baseline": {
+    "model": "tabular_v2_logistic.py",
+    "auc": 0.968381271167195,
+    "sandbox_seconds": 1.460968833998777,
+    "source_sha256": "45f81f3b94bb9b34384946c5720c82763a0854d419958c4eb5b478e65bd5fae1"
+  },
+  "reference": {
+    "model": "tabular_v2_lightgbm.py",
+    "auc": 0.983912931860146,
+    "sandbox_seconds": 1.081796000013128,
+    "source_sha256": "e4ca35f0deedcbefc278fde7763705b2d30b1531577ff7c7ba7264adfcbdfdd3"
+  },
+  "gap": 0.015531660692950977,
+  "min_gap": 0.01,
+  "gap_valid": true,
+  "split_manifest_sha256": "599195fdfcded21d3e44a993ffe0889d6216e0e3d0a874ea8d914d0b4423fd84",
+  "scope": "train/dev only; hidden holdout unopened and unscored"
+}

@@ -1,0 +1,15 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "small_sample",
+    "many_numeric"
+  ],
+  "summary": {
+    "dataset": "UCI Ionosphere",
+    "rows_train": 211,
+    "predictors": 34,
+    "positive_rate_train": 0.6398104265402843,
+    "target": "Classify radar returns as good or bad from 34 signal features",
+    "input": "Public train.csv has y; hidden test rows are feature dictionaries"
+  }
+}
