@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- source-head: 03cf52d8fd9793f0e7dafc07c9b2226a4ac71ebf -->
+<!-- source-head: 2370e7e69ae4077b8fdc0bbb3300d6611fbba3b9 -->
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
@@ -57,8 +57,8 @@
     <h1>自进化<br>Research Agent</h1>
     <p class="lead">让 Research Agent 研究自己。</p>
     <p class="small" style="max-width:1050px;font-size:18px">这是按《分工文档》实现的可审计研究系统：A 负责规划、写解、实验树、预算和能力库；B 提供两类任务与隔离评分；C 负责价格账本、练习/验证/考试编排、自研究、报告和看板。真实模型的 dev token 试点已经运行，正式四线比较尚未执行。TEST 价目、脚本角色和已知参考候选只用于机制联调，不能当作自主提升或真实省钱结论。</p>
-    <p><span class="tag">DEV / TEST ONLY · 正式四线比较未执行</span></p>
-    <p class="small">截至 2026-11-14 17:43 UTC+08:00 · 代码 03cf52d · 按仓库已提交内容生成</p>
+    <p><span class="tag">题库已冻结 · 正式四线待运行</span></p>
+    <p class="small">截至 2026-11-14 18:54 UTC+08:00 · 代码 2370e7e · 按仓库已提交内容生成</p>
   </div><div class="footer"><span>自进化 Research Agent · A / B / C</span><span>01 / 05</span></div></section>
   <section class="slide" id="system"><div class="inner">
     <div class="eyebrow">01 / System</div><h2>从研究到审计，三层闭环</h2>
@@ -67,7 +67,7 @@
       <article class="card"><div class="eyebrow">B / Bench</div><h3>任务与隔离评分</h3><p>提速与表格二分类两类任务，沙箱隔离，并保留 dev 测量。</p></article>
       <article class="card"><div class="eyebrow">C / Control</div><h3>编排与报告</h3><p>价格账本、练习／验证／考试、自研究、报告和只读看板。</p></article>
     </div>
-    <div class="grid" style="margin-top:22px"><div class="card"><span class="metric">24</span><span class="label">入库题 · README</span></div><div class="card"><span class="metric">170</span><span class="label">三组通过测试 · README</span></div><div class="card"><span class="metric">39</span><span class="label">累计源码相关提交</span></div></div>
+    <div class="grid" style="margin-top:22px"><div class="card"><span class="metric">24</span><span class="label">入库题 · README</span></div><div class="card"><span class="metric">170</span><span class="label">三组通过测试 · README</span></div><div class="card"><span class="metric">60</span><span class="label">累计源码相关提交</span></div></div>
   </div><div class="footer"><span>来源：<a href="../README.md">README</a> · <a href="项目交付与决策.md">决策记录</a></span><span>02 / 05</span></div></section>
   <section class="slide" id="evidence"><div class="inner">
     <div class="eyebrow">02 / Evidence</div><h2>真实模型 dev 证据</h2>
@@ -76,19 +76,20 @@
       <article class="card"><div class="label">第二轮自动自研究</div><span class="metric">-34.5%</span><p>候选每遍 token 相对默认版变化；平均归一化分数变化 -0.0223。质量未持平，候选未推广。</p><p class="small"><a href="真实模型自研究试验.md">查看自研究记录 ↗</a></p></article>
       <article class="card"><div class="label">跨题迁移复评</div><span class="metric amber">+0.2851</span><p>归一化分数变化，但每遍 token 变化 +23.3%；结果仍属于 dev，不能证明正式准入。</p><p class="small"><a href="真实模型迁移复评.md">查看迁移记录 ↗</a></p></article>
     </div>
+    <p class="notice">bank-v1 已冻结：24 题、72 次 dev 尝试，69 次正常完成、3 次提前停止，四桶合计 1,573,026 token；校准 holdout 0。完整审计：runs/naive-cost-audit-20261114-1041-agent/audit.json。不是现金价格或正式考试成绩。 <a href="提速朴素成本校准.md">提速明细 ↗</a> · <a href="表格朴素成本校准.md">表格明细 ↗</a></p>
     <p class="notice">TEST 单位对应报告的 token 用量，不代表现金成本。正式验证、考试及四线效果仍待完成。</p>
   </div><div class="footer"><span>数值从仓库已提交证据文档提取</span><span>03 / 05</span></div></section>
   <section class="slide" id="changes"><div class="inner">
     <div class="eyebrow">03 / Repository Delta</div><h2>本轮仓库更新</h2>
     <div class="split"><div>
-      <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:24px"><div class="card"><span class="metric">1</span><span class="label">新增相关提交</span></div><div class="card"><span class="metric">2</span><span class="label">涉及文件</span></div></div>
-      <p class="small">对比上次生成时的源码提交 8efe557 → 03cf52d</p><div class="chips"><span>运行与配置 · 1</span><span>验证与测试 · 1</span></div>
-      <details style="margin-top:24px"><summary>展开变更文件</summary><ul class="files"><li>scripts/generate_roadshow_report.py</li><li>tests/test_roadshow_report.py</li></ul></details>
-    </div><ol class="timeline"><li><strong>Keep project description distinct from slogan</strong><span>2026-11-14 · 03cf52d</span></li></ol></div>
+      <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:24px"><div class="card"><span class="metric">21</span><span class="label">新增相关提交</span></div><div class="card"><span class="metric">59</span><span class="label">涉及文件</span></div></div>
+      <p class="small">对比上次生成时的源码提交 03cf52d → 2370e7e</p><div class="chips"><span>题库与评分 · 30</span><span>验证与测试 · 13</span><span>运行与配置 · 9</span><span>评估与看板 · 5</span><span>文档与证据 · 1</span><span>研究代理与经验库 · 1</span></div>
+      <details style="margin-top:24px"><summary>展开变更文件</summary><ul class="files"><li>&quot;docs/\345\206\205\351\203\250Token\346\255\243\345\274\217\350\277\220\350\241\214\346\211\213\345\206\214.md&quot;</li><li>&quot;docs/\346\217\220\351\200\237\346\234\264\347\264\240\346\210\220\346\234\254\346\240\241\345\207\206.md&quot;</li><li>&quot;docs/\350\241\250\346\240\274\346\234\264\347\264\240\346\210\220\346\234\254\346\240\241\345\207\206.md&quot;</li><li>&quot;docs/\351\241\271\347\233\256\344\272\244\344\273\230\344\270\216\345\206\263\347\255\226.md&quot;</li><li>README.md</li><li>config/prices.json</li><li>evaluation/batch.py</li><li>evaluation/cli.py</li><li>evaluation/figures.py</li><li>evaluation/orchestrate.py</li><li>evaluation/report.py</li><li>research_agent/model.py</li><li>scripts/aggregate_naive_costs.py</li><li>scripts/freeze_internal_bank.py</li><li>scripts/generate_roadshow_report.py</li><li>scripts/prepare_public_tabular.py</li><li>tasks/bank.json</li><li>tasks/spd-already-vectorized/task.json</li><li>tasks/spd-dedupe-order/task.json</li><li>tasks/spd-distance-matrix/task.json</li><li>tasks/spd-edit-distance/task.json</li><li>tasks/spd-group-counts/task.json</li><li>tasks/spd-max-drawdown/task.json</li><li>tasks/spd-membership-filter/task.json</li><li>tasks/spd-prefix-sum/task.json</li><li>tasks/spd-rolling-mean/task.json</li><li>tasks/spd-string-build/task.json</li><li>tasks/spd-top-frequency/task.json</li><li>tasks/spd-weighted-groups/task.json</li><li>tasks/tab-adult-income/SOURCE.md</li><li>tasks/tab-adult-income/task.json</li><li>tasks/tab-australian-credit/task.json</li><li>tasks/tab-bank-marketing/task.json</li><li>tasks/tab-breast-cancer-diagnostic/SOURCE.md</li><li>tasks/tab-breast-cancer-diagnostic/task.json</li><li>tasks/tab-default-credit/task.json</li><li>tasks/tab-german-credit/task.json</li><li>tasks/tab-heart-disease/SOURCE.md</li><li>tasks/tab-heart-disease/task.json</li><li>tasks/tab-htru2/task.json</li><li>tasks/tab-magic-gamma/task.json</li><li>tasks/tab-mushroom-edibility/SOURCE.md</li><li>tasks/tab-mushroom-edibility/task.json</li><li>tasks/tab-online-shoppers/SOURCE.md</li><li>tasks/tab-online-shoppers/task.json</li><li>tasks/tab-phishing-websites/task.json</li><li>tests/test_abc_e2e.py</li><li>tests/test_aggregate_naive_costs.py</li><li>tests/test_evaluation_batch.py</li><li>tests/test_evaluation_cli.py</li><li>tests/test_evaluation_figures.py</li><li>tests/test_evaluation_orchestrate.py</li><li>tests/test_formal_token_report.py</li><li>tests/test_freeze_internal_bank.py</li><li>tests/test_harness.py</li><li>tests/test_model_roles.py</li><li>tests/test_public_tabular_tasks.py</li><li>tests/test_roadshow_report.py</li><li>tests/test_token_self_research_pilot.py</li></ul></details>
+    </div><ol class="timeline"><li><strong>Document frozen bank and gate roadshow evidence</strong><span>2026-11-14 · 2370e7e</span></li><li><strong>Allow unbanked tabular fixtures after bank freeze</strong><span>2026-11-14 · 7c801cf</span></li><li><strong>Merge branch &#x27;agent/tabular-report-20261114&#x27;</strong><span>2026-11-14 · af5b2de</span></li><li><strong>Document tabular naive token calibration evidence</strong><span>2026-11-14 · 83d968e</span></li><li><strong>Freeze measured internal token bank</strong><span>2026-11-14 · 5cb5b29</span></li><li><strong>Keep tests valid after bank freeze and set two research rounds</strong><span>2026-11-14 · b4be633</span></li><li><strong>Merge branch &#x27;agent/freeze-helper-20261114&#x27;</strong><span>2026-11-14 · 85516ce</span></li><li><strong>Document audited internal token study runbook</strong><span>2026-11-14 · 336f9aa</span></li><li><strong>Audit formal token budget replay and one-shot markers</strong><span>2026-11-14 · 7157a4c</span></li><li><strong>Merge branch &#x27;agent/freeze-helper-20261114&#x27;</strong><span>2026-11-14 · f10c2d6</span></li></ol></div>
   </div><div class="footer"><span>提交记录：<a href="https://github.com/QZTnb/research-agent/commits/main/">Git 历史 ↗</a></span><span>04 / 05</span></div></section>
   <section class="slide" id="next"><div class="inner">
     <div class="eyebrow">04 / Decision</div><h2>下一步与边界</h2>
-    <div class="split"><div><div class="notice">正式货币价目未确认；bank 的 naive_cost、difficulty 仍待相同模型的朴素对照实测，frozen=false。因此正式自研究、验证、考试及真实货币成本下降数字都尚未完成。</div><p class="small">上方状态摘自 <a href="../README.md">README 当前限制</a>；请以原始证据和正式预检为准。</p></div><div class="card"><h3>正式验收路径</h3><ol><li>用户已明确比赛没有指定模型或题目预算；本项目先以自选 Qwen 模型及 token 预算验证规划能力。若要报告现金成本，仍需核实网关四桶实际计价和币种；保持凭据不入库。</li><li>朴素配置已在两道练习题各运行一次；仍需更多配对重复、覆盖全部练习题，按同一资源单位测稳定的 naive_cost 并据此定 difficulty；核对所有 24 题任务包、来源许可和 dev 校准，然后冻结 bank-v1 与代码提交。</li><li>真实模型自动自研究已在两道 practice 题完成两轮 dev 试验，并在另两道 practice 题完成一次跨题迁移复评。第二轮候选在原题省 token 但分数下降，在新题分数改善但更贵；尚无兼顾质量与成本的稳健证据。先处理弱 gap…</li></ol><p class="small"><a href="项目交付与决策.md">查看完整决策记录 ↗</a></p></div></div>
+    <div class="split"><div><div class="notice">bank-v1 已根据两组真实 dev 证据冻结：24 题、72 次尝试中 69 次正常完成、3 次提前停止，合计消耗 1,573,026 token，未打开校准 holdout；失败消耗已计入朴素成本。正式自研究、一次性验证和考试仍待运行，因此暂无正式四线效果或回本点结论。</div><p class="small">上方状态摘自 <a href="../README.md">README 当前限制</a>；请以原始证据和正式预检为准。</p></div><div class="card"><h3>正式验收路径</h3><ol><li>在全部 10 道 practice 题上运行两轮自动自研究，三遍配对审计候选分数、token 和配置哈希。</li><li>仅在练习阶段选定候选后做只读预检，启动同一 bank-v1 的唯一一次三遍验证准入。</li><li>按准入结果执行三线或四线考试，核对每题预算、回放和一次性标记，再生成图表与报告。</li></ol><p class="small"><a href="项目交付与决策.md">查看完整决策记录 ↗</a></p></div></div>
     <p class="small">每小时检查仓库；仅当新的源码或文档提交出现时重生成。路演时可用方向键翻页，也可打印为 PDF。</p>
   </div><div class="footer"><span>生成器：scripts/generate_roadshow_report.py</span><span>05 / 05</span></div></section>
   <script>
