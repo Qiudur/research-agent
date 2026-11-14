@@ -319,6 +319,9 @@ def compare_paired_tasks(
             "cost": "total tokens per task", "difference": "candidate minus baseline",
             "interval": f"percentile bootstrap of the mean, {n_boot} resamples, seed {seed}",
             "sign_test": "exact two-sided, ties excluded",
+            "independence": "(task, repetition) pairs are resampled as independent; repetitions of "
+                            "one task share its difficulty, so intervals are optimistic when only "
+                            "a few tasks are used",
         },
         "n_pairs": len(pairs), "pairs": pairs, "unpaired": unpaired, "per_task": per_task,
         "quality": {"overall": quality_overall, "by_scenario": quality_by_scenario,
