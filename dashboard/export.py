@@ -217,7 +217,8 @@ def load_run(run_dir: Path, *, project_root: Path = PROJECT_ROOT, library_root: 
 
 
 def render_html(data: dict) -> str:
-    if data["run"]["price"].get("currency") == "TOKENS" and data["run"]["price"].get("exact_token_accounting") is not True:
+    price = data["run"].get("price") or {}
+    if price.get("currency") == "TOKENS" and price.get("exact_token_accounting") is not True:
         raise ValueError("TOKENS dashboard needs audited exact token accounting")
     serialized = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
     serialized = serialized.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
