@@ -167,7 +167,10 @@ def evidence(repo: Path) -> dict[str, str]:
     next_steps = [excerpt(item, 120) for item in number_list(
         section(decisions, "尚待外部输入与正式验收"), 3
     )]
-    project_intro = first_paragraph(readme)
+    project_intro = next(
+        (plain(block) for block in readme.split("\n\n") if block.startswith("这是按《分工文档》")),
+        first_paragraph(readme),
+    )
     formal_pending = "正式四线比较尚未执行" in readme or "正式验证" in current_limits
     return {
         "intro": project_intro,

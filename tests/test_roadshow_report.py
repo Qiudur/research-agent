@@ -50,6 +50,20 @@ class RoadshowReportTest(unittest.TestCase):
         self.assertIn("Add &lt;script&gt; &amp; evidence", report)
         self.assertNotIn("<strong>Add <script>", report)
 
+    def test_cover_keeps_description_after_tagline(self):
+        (self.repo / "README.md").write_text(
+            "# 自进化 Research Agent 系统\n\n让 Research Agent 研究自己。\n\n"
+            "这是按《分工文档》实现的可审计研究系统。\n", encoding="utf-8"
+        )
+        self.run_git("add", "README.md")
+        self.run_git("commit", "-qm", "Name the project")
+        self.assertTrue(generate(self.repo, self.output))
+        report = self.output.read_text(encoding="utf-8")
+        self.assertIn(
+            '<p class="small" style="max-width:1050px;font-size:18px">'
+            '这是按《分工文档》实现的可审计研究系统。</p>', report
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
