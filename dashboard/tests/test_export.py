@@ -82,6 +82,32 @@ class ExportTests(unittest.TestCase):
         self.assertEqual(task["seconds"]["wall"], 3.8)
         self.assertEqual(task["series"][-1]["spent"], 0.25)
 
+    def test_token_study_and_cash_prices_have_distinct_labels(self) -> None:
+        self.add_manifest_and_prices()
+        prices_path = self.project / "config/prices.json"
+        manifest_path = self.run / "manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        for currency, test_only, internal in (("TOKENS", False, True),
+                                              ("TOKENS", True, False), ("CNY", False, False)):
+            write_json(prices_path, {"schema": "prices/1", "currency": currency,
+                                     "test_only": test_only, "models": {"test-model": {
+                                         "input": 1, "cached_input": 1, "output": 1, "reasoning": 1}}})
+            manifest["prices"] = {"path": "config/prices.json",
+                                  "sha256": hashlib.sha256(prices_path.read_bytes()).hexdigest()}
+            write_json(manifest_path, manifest)
+            info = load_run(self.run, project_root=self.project)["run"]["price"]
+            self.assertTrue(info["verified"])
+            self.assertEqual(info["internal_token_study"], internal)
+            if currency == "TOKENS":
+                self.assertIn("非现金节省、非官方比赛成绩", info["message"])
+                self.assertIn("token", info["accounting_note"])
+            else:
+                self.assertIsNone(info["accounting_note"])
+            if test_only:
+                self.assertIn("仅供联调", info["message"])
+        html = render_html(load_run(self.run, project_root=self.project))
+        self.assertIn("isTokens ? 'token 消耗' : '花费'", html)
+
     def test_missing_cost_evidence_remains_unknown_even_with_prices(self) -> None:
         self.add_manifest_and_prices()
         result = load_run(self.run, project_root=self.project)

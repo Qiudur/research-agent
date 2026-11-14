@@ -299,20 +299,31 @@ def render_html(study):
         marks.append(f'<circle cx="{x(s["score_mean"]):.1f}" cy="{y}" r="8" fill="{color}"/>')
         marks.append(f'<text x="930" y="{y+5}">{s["score_mean"]:.3f} · {s["cost_mean"]:.4f} {escape(study["currency"])}</text>')
     svg = f'<svg viewBox="0 0 1160 330" role="img" aria-label="{len(active)}配置三遍分数与范围">' + ''.join(marks) + '</svg>'
-    notice = 'TEST 联调数据，不代表正式效果或真实花费。' if study["test_only"] else '正式考试数据；数字可追溯到运行账本。'
+    is_tokens = study["currency"] == "TOKENS"
+    notice = ('TEST 联调数据，不代表正式效果或真实花费。' if study["test_only"] else
+              '自选 token 预算的内部冻结题库研究；非现金节省、非官方比赛成绩。数字可追溯到运行账本。' if is_tokens else
+              '正式考试数据；数字可追溯到运行账本。')
+    cost_label = 'token 消耗' if is_tokens else '花费'
+    amount_label = 'token 数' if is_tokens else '金额'
+    quote_error_label = '平均绝对 token 数误差' if is_tokens else '平均绝对金额误差'
+    amount_unit_note = 'token 数以 TOKENS 计。' if is_tokens else '金额以本报告币种计。'
+    research_label = '研究 token 消耗' if is_tokens else '研究成本'
     if study["admission"] and study["admission"]["claim"] == "rejected":
         notice += ' 研究版未通过验证准入，考试只运行其余三条线。'
     roi = study["breakeven"]
     if study["admission"] and study["admission"]["claim"] == "rejected":
-        spent = (f'已审计研究成本 {roi["research_cost"]:.4f} {escape(study["currency"])}；'
-                 if roi["research_cost"] is not None else '研究成本尚无审计报告；')
+        spent = (f'已审计{research_label} {roi["research_cost"]:.4f} {escape(study["currency"])}；'
+                 if roi["research_cost"] is not None else f'{research_label}尚无审计报告；')
         roi_text = spent + '研究版未通过验证准入，未进入考试；不计算研究版回本点。'
     elif roi["research_cost"] is None:
-        roi_text = '研究自己的成本尚无审计报告，回本点未知。'
+        roi_text = (f'{research_label}尚无审计报告，回本点未知。' if is_tokens else
+                    '研究自己的成本尚无审计报告，回本点未知。')
     elif roi["tasks"] is None:
         roi_text = '当前未观察到每题节省，无法计算正的回本点。'
     else:
-        roi_text = f'研究成本 {roi["research_cost"]:.4f} {escape(study["currency"])}；每题节省 {roi["savings_per_task"]:.4f}；数学回本点 {roi["tasks"]} 题。'
+        roi_text = (f'{research_label} {roi["research_cost"]:.4f} {escape(study["currency"])}；'
+                    f'每题节省 {roi["savings_per_task"]:.4f}'
+                    f'{" " + escape(study["currency"]) if is_tokens else ""}；数学回本点 {roi["tasks"]} 题。')
         if not roi["eligible"]:
             roi_text += ' 研究版未满足三遍分数不降的准入规则，不应宣称实际回本。'
     score_min = min(0.0, min(row["score"] for row in study["task_rows"]))
@@ -355,12 +366,12 @@ def render_html(study):
             'table{border-collapse:collapse;width:100%;font-size:12px}th,td{padding:7px;border-bottom:1px solid #dce3ef;text-align:left}'
             '.notice{background:#fff4d7;padding:12px;border-radius:6px}section{margin-top:28px}</style>'
             f'<h1>{len(active)} 配置对照 · {escape(study["phase"])}</h1><p class="notice">{notice}</p>'
-            f'<section><h2>分数与花费</h2>{svg}<p>每行三个空心点对应三遍；线段为范围；实心点为均值。金额为每遍全部任务的均值。</p></section>'
+            f'<section><h2>分数与{cost_label}</h2>{svg}<p>每行三个空心点对应三遍；线段为范围；实心点为均值。{amount_label}为每遍全部任务的均值。</p></section>'
             f'<section><h2>逐题分数走势</h2>{timeline}<p>按任务顺序绘制四种配置的三遍平均分数；纵轴范围 {score_min:.3f}–{score_max:.3f}。</p></section>'
-            f'<section><h2>报价误差</h2>{quote_svg or "<p>没有可核对的报价误差。</p>"}<p>按任务顺序绘制平均绝对金额误差；金额以本报告币种计。</p></section>'
+            f'<section><h2>报价误差</h2>{quote_svg or "<p>没有可核对的报价误差。</p>"}<p>按任务顺序绘制{quote_error_label}；{amount_unit_note}</p></section>'
             f'<section><h2>判定</h2>{comparisons}<p>{roi_text}</p></section>'
             '<section><h2>逐题证据</h2><p>耗时依次为模型 / 运行 / 排队 / 墙钟，单位秒。</p>'
-            '<table><thead><tr><th>配置</th><th>遍数</th><th>任务</th><th>分数</th><th>花费</th><th>耗时</th><th>证据</th></tr></thead><tbody>'
+            f'<table><thead><tr><th>配置</th><th>遍数</th><th>任务</th><th>分数</th><th>{cost_label}</th><th>耗时</th><th>证据</th></tr></thead><tbody>'
             + ''.join(body) + '</tbody></table></section></html>')
 
 

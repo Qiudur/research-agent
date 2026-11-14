@@ -59,6 +59,7 @@ def _safe_project_path(project_root: Path, value: str) -> Path:
 
 def _price_info(manifest: dict | None, project_root: Path) -> dict:
     unknown = {"verified": False, "currency": None, "test_only": False,
+               "internal_token_study": False, "accounting_note": None,
                "message": "价格或 manifest 缺失，真实成本未知"}
     if manifest is None:
         return unknown
@@ -77,9 +78,16 @@ def _price_info(manifest: dict | None, project_root: Path) -> dict:
     if not isinstance(rates, dict) or any(_number(rates.get(key)) is None for key in
                                           ("input", "cached_input", "output", "reasoning")):
         return unknown
+    test_only = bool(prices.get("test_only")) or "fixture" in path.parts
+    is_tokens = prices.get("currency") == "TOKENS"
+    accounting_note = ("自选 token 预算的内部研究；非现金节省、非官方比赛成绩。"
+                       if is_tokens else None)
+    message = "测试价目，仅供联调" if test_only else "价目文件哈希已核验"
+    if is_tokens:
+        message = ("测试 token 计量，仅供联调；" if test_only else "token 计量表哈希已核验；") + accounting_note
     return {"verified": True, "currency": prices.get("currency"),
-            "test_only": bool(prices.get("test_only")) or "fixture" in path.parts,
-            "message": "测试价目，仅供联调" if prices.get("test_only") or "fixture" in path.parts else "价目文件哈希已核验"}
+            "test_only": test_only, "internal_token_study": is_tokens and not test_only,
+            "accounting_note": accounting_note, "message": message}
 
 
 def _compact_node(node: dict) -> dict:

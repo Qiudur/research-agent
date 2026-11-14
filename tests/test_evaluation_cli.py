@@ -9,13 +9,34 @@ from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import patch
 
-from evaluation.cli import baseline_solutions, main
+from evaluation.cli import baseline_solutions, formal_preflight, main
 
 
 SHA = "a" * 40
 
 
 class EvaluationCliTests(unittest.TestCase):
+    def test_formal_preflight_marks_valid_token_accounting_as_internal(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            self.setup_project(root)
+            (root / "config").mkdir()
+            path = root / "config/prices.json"
+            prices = {"schema": "prices/1", "currency": "TOKENS", "unit_tokens": 1,
+                      "test_only": False, "models": {"real-model": {
+                          "input": 1, "cached_input": 1, "output": 1, "reasoning": 1}}}
+            for currency, test_only, expected in (("TOKENS", False, "internal_token_study"),
+                                                   ("TOKENS", True, None), ("CNY", False, None)):
+                prices.update(currency=currency, test_only=test_only)
+                path.write_text(json.dumps(prices), encoding="utf-8")
+                report = formal_preflight(project_root=root, model="real-model", prices_path=path,
+                                          code_commit=SHA, default_config=root / "config/missing.json")
+                self.assertEqual(report["accounting_scope"], expected)
+                if expected:
+                    self.assertIn("非现金节省", report["accounting_note"])
+                else:
+                    self.assertIsNone(report["accounting_note"])
+
     def setup_project(self, root: Path):
         rows = []
         for task_id, tier in (("spd-practice-a", "practice"),

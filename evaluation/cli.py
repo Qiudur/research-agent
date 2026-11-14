@@ -74,6 +74,8 @@ def formal_preflight(
     blockers = []
     bank = None
     bank_version = None
+    accounting_scope = None
+    accounting_note = None
     if sys.platform != "darwin" or not shutil.which("sandbox-exec"):
         blockers.append("macOS sandbox-exec is unavailable")
     for module in ("openai", "numpy", "pandas", "lightgbm", "autogluon"):
@@ -89,8 +91,11 @@ def formal_preflight(
         prices_path = _within(root, Path(prices_path))
         prices = _json(prices_path)
         if prices.get("schema") != "prices/1" or prices.get("currency") in (None, "", "TEST") or prices.get("test_only"):
-            raise ValueError("Real non-TEST prices/1 and currency are required")
+            raise ValueError("A non-TEST price or token-accounting table is required")
         price_usage(prices, model, Usage(input=1))
+        if prices["currency"] == "TOKENS":
+            accounting_scope = "internal_token_study"
+            accounting_note = "自选 token 预算的内部冻结题库研究；非现金节省、非官方比赛成绩。"
     except (ValueError, OSError, KeyError, TypeError, json.JSONDecodeError) as exc:
         blockers.append(f"Price table: {exc}")
     try:
@@ -125,7 +130,8 @@ def formal_preflight(
             "project_root": str(root), "model": model,
             "prices_path": str(prices_path), "code_commit": code_commit,
             "bank_version": bank_version, "mode": "batch" if tuned_config is not None else "auto_research",
-            "exam_requested": bool(exam), "blockers": blockers}
+            "exam_requested": bool(exam), "blockers": blockers,
+            "accounting_scope": accounting_scope, "accounting_note": accounting_note}
 
 
 def _arguments(parser: argparse.ArgumentParser, *, tuned: bool) -> None:
@@ -140,7 +146,7 @@ def _arguments(parser: argparse.ArgumentParser, *, tuned: bool) -> None:
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Formal Research Agent evaluation operator")
+    parser = argparse.ArgumentParser(description="Frozen-bank Research Agent evaluation operator")
     commands = parser.add_subparsers(dest="command", required=True)
     preflight = commands.add_parser("preflight", help="Audit formal four-line readiness")
     _arguments(preflight, tuned=True)
@@ -213,7 +219,9 @@ def main(argv: list[str] | None = None) -> int:
                       "study_dir": str(_within(root, args.study_dir)),
                       "selection": result["selection"],
                       "total_research_cost": result["total_research_cost"],
-                      "currency": result["currency"]}
+                      "currency": result["currency"],
+                      "accounting_scope": readiness.get("accounting_scope"),
+                      "accounting_note": readiness.get("accounting_note")}
         else:
             with _project_environment(root):
                 result = execute_batch(
@@ -227,7 +235,9 @@ def main(argv: list[str] | None = None) -> int:
                       "batch_dir": str(_within(root, args.batch_dir)),
                       "admission": result["admission"],
                       "reports": {tier: len(rows) for tier, rows in result["reports"].items()},
-                      "tuned_exam_skipped": result["tuned_exam_skipped"]}
+                      "tuned_exam_skipped": result["tuned_exam_skipped"],
+                      "accounting_scope": readiness.get("accounting_scope"),
+                      "accounting_note": readiness.get("accounting_note")}
         print(json.dumps(output, ensure_ascii=False, indent=2))
         return 0
     except (ValueError, OSError, KeyError, TypeError, RuntimeError) as exc:

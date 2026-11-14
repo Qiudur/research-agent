@@ -65,6 +65,26 @@ class StudyFiguresTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             build_study(reports)
 
+    def test_token_study_report_avoids_cash_and_official_claims(self):
+        reports = sample_reports()
+        for report in reports:
+            report["phase"] = "exam"
+            report["currency"] = "TOKENS"
+        admission = {"claim": "admitted", "baseline": "default_lib", "candidate": "tuned_lib"}
+        study = build_study(reports, admission=admission)
+        html = render_html(study)
+        self.assertIn("自选 token 预算的内部冻结题库研究", html)
+        self.assertIn("非现金节省、非官方比赛成绩", html)
+        self.assertIn("平均绝对 token 数误差", html)
+        self.assertNotIn("正式考试数据", html)
+        self.assertNotIn("金额为每遍", html)
+        for report in reports:
+            report["currency"] = "CNY"
+        cash_html = render_html(build_study(reports, admission=admission))
+        self.assertIn("正式考试数据", cash_html)
+        self.assertIn("研究自己的成本尚无审计报告", cash_html)
+        self.assertNotIn("内部冻结题库研究", cash_html)
+
     def test_rejected_candidate_has_honest_three_line_report(self):
         reports = [report for report in sample_reports() if report["config"] != "tuned_lib"]
         admission = {"claim": "rejected", "baseline": "default_lib",

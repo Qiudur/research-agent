@@ -1,5 +1,9 @@
 # C 线评估模块
 
+## 自选 token 预算的内部研究口径
+
+当题目未给官方现金预算时，可以在隔离副本建立经授权的内部冻结题库研究：选定可本地部署模型、单题 token 预算和四桶计量表（`currency=TOKENS、test_only=false`）。此协议下 `budget.money` 按 token 计价单位解释，不代表现金；`TOKENS` 仅是计量标签，不是官方比赛成绩。若四桶权重均为 1、`unit_tokens=1`，则记录的消耗是普通输入、缓存输入、可见输出、推理输出四桶之和。实验需保留原有题库冻结、代码冻结、一次性验证/考试和审计门禁；不能把 `test_only=true` 的 dev 试点当作内部正式研究，也不能覆盖原始 `tasks/bank.json` 或 `config/prices.json`。报告和看板会明确写出内部研究标识、非现金与非官方声明。
+
 ## 正式操作命令
 
 先填入真实模型名、config/prices.json 的完整非 TEST 价目、各题正预算，冻结题库并提交代码；安装项目的 llm、speedup、tabular 依赖，在有 macOS sandbox-exec 的机器设置 OPENAI_API_KEY。以下命令只接受正式输入，不提供 TEST 假数据选项；目录名应每次唯一：

@@ -44,11 +44,11 @@
     <div class="grid">
       <div class="stack">
         <section class="panel"><h2>实验树</h2><p class="hint">显示每个节点的最终快照。颜色表示接受、拒绝、失败或运行中；悬停查看假设和调用角色。</p><div class="legend"><span><i class="dot" style="background:#168668"></i>接受</span><span><i class="dot" style="background:#bd4c54"></i>拒绝</span><span><i class="dot" style="background:#9aa5b8"></i>失败</span><span><i class="dot" style="background:#3566da"></i>进行中</span></div><div class="chart-box" id="tree"></div></section>
-        <section class="panel"><h2 id="score-title">分数走势</h2><p class="hint">dev 分数按评分事件排列；只有账本金额可核实时才按花费绘制。</p><div class="chart-box" id="score-chart"></div></section>
+        <section class="panel"><h2 id="score-title">分数走势</h2><p class="hint" id="score-hint">dev 分数按评分事件排列；只有账本金额可核实时才按花费绘制。</p><div class="chart-box" id="score-chart"></div></section>
         <section class="panel"><h2>事件流水</h2><p class="hint">最近 80 条任务级账本事件。点击任务选择器切换。</p><div class="table-scroll" id="events"></div></section>
       </div>
       <div class="stack">
-        <section class="panel"><h2>预算与耗时</h2><p class="hint">金额需经价目文件哈希核验；时间按账本事件归类。</p><div id="budget"></div><div id="time-bars"></div></section>
+        <section class="panel"><h2>预算与耗时</h2><p class="hint" id="budget-hint">金额需经价目文件哈希核验；时间按账本事件归类。</p><div id="budget"></div><div id="time-bars"></div></section>
         <section class="panel"><h2>报价对账</h2><p class="hint">只展示已记录的开工报价及任务结束值。</p><div id="quote"></div></section>
         <section class="panel"><h2>模型调用</h2><p class="hint">缓存比例 = 缓存输入 /（普通输入 + 缓存输入）。</p><div id="llm"></div></section>
         <section class="panel"><h2>能力库进化</h2><p class="hint">状态和变更均来自运行所指向的能力库。</p><div id="library"></div></section>
@@ -66,12 +66,17 @@
     const fmt = (value, digits=2) => value === null || value === undefined || !Number.isFinite(Number(value)) ? '未知' : new Intl.NumberFormat('zh-CN',{maximumFractionDigits:digits}).format(Number(value));
     const scoreValue = value => value && typeof value === 'object' ? value.score ?? value.raw ?? value.dev ?? null : value;
     const colors = {accepted:'#168668',rejected:'#bd4c54',failed:'#9aa5b8',running:'#3566da',queued:'#3566da',succeeded:'#3566da'};
+    const isTokens = data.run.price.currency === 'TOKENS';
+    const costLabel = isTokens ? 'token 消耗' : '花费';
+    const amountLabel = isTokens ? 'token 数' : '金额';
     const money = value => value === null || value === undefined ? '未知' : `${fmt(value,4)} ${esc(data.run.price.currency || '')}`;
     const card = (label, value, sub='') => `<div class="card"><div class="label">${esc(label)}</div><div class="value">${value}</div><div class="sub">${esc(sub)}</div></div>`;
     const empty = message => `<div class="empty">${esc(message)}</div>`;
     $('run-meta').innerHTML = [data.run.id, data.run.phase || '未标记阶段', data.run.config || '未标记配置', data.run.rep ? `第 ${data.run.rep} 遍` : null, data.run.model || '模型未记录'].filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('');
     const banner = $('price-banner');
     banner.classList.toggle('ok', data.run.price.verified && !data.run.price.test_only);
+    $('score-hint').textContent = isTokens ? 'dev 分数按评分事件排列；只有 token 计量可核实时才按消耗绘制。' : 'dev 分数按评分事件排列；只有账本金额可核实时才按花费绘制。';
+    $('budget-hint').textContent = isTokens ? 'token 消耗需经计量表哈希核验；时间按账本事件归类。' : '金额需经价目文件哈希核验；时间按账本事件归类。';
     banner.textContent = data.run.price.message + (data.run.manifest_present ? '' : '；缺少正式 manifest，当前页面仅供联调查看');
     $('task-select').innerHTML = data.tasks.map((task,index) => `<option value="${index}">${esc(task.id)}</option>`).join('');
 
@@ -98,9 +103,9 @@
       const xp=x=>left+(x-xmin)/(xmax-xmin)*(width-left-right), yp=y=>height-bottom-(y-ymin)/(ymax-ymin)*(height-top-bottom);
       const grid=[0,.25,.5,.75,1].map(t=>{const y=top+t*(height-top-bottom),v=ymax-t*(ymax-ymin);return `<line x1="${left}" x2="${width-right}" y1="${y}" y2="${y}" stroke="#e9eef6"/><text x="${left-8}" y="${y+4}" text-anchor="end" font-size="10" fill="#7d8ba1">${n(v,2)}</text>`}).join('');
       const path=points.map((p,i)=>`${i?'L':'M'}${xp(xs[i]).toFixed(1)},${yp(ys[i]).toFixed(1)}`).join(' ');
-      const dots=points.map((p,i)=>`<g><title>${esc(p.node_id+'：'+n(p.score,4)+(byMoney?'；花费 '+money(p.spent):''))}</title><circle cx="${xp(xs[i])}" cy="${yp(ys[i])}" r="5" fill="#3566da" stroke="white" stroke-width="2"/></g>`).join('');
-      $('score-title').textContent=byMoney?'分数随花费变化':'分数随实验变化';
-      return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="dev 分数走势">${grid}<path d="${path}" fill="none" stroke="#3566da" stroke-width="2.5"/>${dots}<text x="${width/2}" y="${height-7}" text-anchor="middle" font-size="11" fill="#66758f">${byMoney?esc('累计花费 '+(data.run.price.currency||'')):'实验次序'}</text></svg>`;
+      const dots=points.map((p,i)=>`<g><title>${esc(p.node_id+'：'+n(p.score,4)+(byMoney?'；'+costLabel+' '+money(p.spent):''))}</title><circle cx="${xp(xs[i])}" cy="${yp(ys[i])}" r="5" fill="#3566da" stroke="white" stroke-width="2"/></g>`).join('');
+      $('score-title').textContent=byMoney?(isTokens?'分数随 token 消耗变化':'分数随花费变化'):'分数随实验变化';
+      return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="dev 分数走势">${grid}<path d="${path}" fill="none" stroke="#3566da" stroke-width="2.5"/>${dots}<text x="${width/2}" y="${height-7}" text-anchor="middle" font-size="11" fill="#66758f">${byMoney?esc((isTokens?'累计 token 消耗 ':'累计花费 ')+(data.run.price.currency||'')):'实验次序'}</text></svg>`;
     }
 
     function timeBars(seconds) {
@@ -116,8 +121,8 @@
       $('kpis').innerHTML=[
         card('最佳 dev 分数',task.best?n(task.best.score,3):'未知',task.best?task.best.node_id:'无已接受节点'),
         card('Holdout 分数',scoreValue(task.holdout)===null?'未知':n(scoreValue(task.holdout),3),'仅任务结束后显示'),
-        card('实际花费',money(task.cost),task.cost_known?(data.run.price.test_only?'测试价目':'已核验价目'):'真实成本未知'),
-        card('任务预算',task.budget===null?'未知':money(task.budget),task.budget===null?'待正式计价':'任务级上限'),
+        card(isTokens?'实际 token 消耗':'实际花费',money(task.cost),task.cost_known?(data.run.price.test_only?(isTokens?'测试 token 计量':'测试价目'):(isTokens?'已核验 token 计量':'已核验价目')):(isTokens?'token 消耗未知':'真实成本未知')),
+        card(isTokens?'任务 token 预算':'任务预算',task.budget===null?'未知':money(task.budget),task.budget===null?(isTokens?'待 token 计量':'待正式计价'):'任务级上限'),
         card('模型调用',fmt(task.llm_calls,0)+' 次',`缓存率 ${task.cache_rate===null?'未知':n(task.cache_rate*100,1)+'%'}`),
         card('墙钟耗时',task.seconds.wall===null?'未知':n(task.seconds.wall,1)+'s',`${task.nodes.length} 个节点 · ${task.event_count} 条事件`),
       ].join('');
@@ -126,7 +131,7 @@
       $('budget').innerHTML=budgetPct===null?empty('预算使用率未知'):`<div class="small">已用 ${n(budgetPct,1)}% · ${money(task.cost)} / ${money(task.budget)}</div><div class="meter"><span style="width:${budgetPct}%"></span></div>`;
       $('time-bars').innerHTML=timeBars(task.seconds);
       const quote=task.quote || {}; const error=task.quote_error || {};
-      $('quote').innerHTML=!task.quote && !task.quote_error?empty('尚无报价或任务结束事件'):`<table><thead><tr><th>指标</th><th>预测</th><th>实际</th><th>误差</th></tr></thead><tbody><tr><td>金额</td><td>${quote.cost===undefined?'未知':money(quote.cost)}</td><td>${money(task.cost)}</td><td>${error.cost===undefined?'未知':n(error.cost,3)}</td></tr><tr><td>秒数</td><td>${n(quote.seconds,2)}</td><td>${task.seconds.wall===null?'未知':n(task.seconds.wall,2)}</td><td>${n(error.seconds,2)}</td></tr><tr><td>分数</td><td>${n(quote.score,3)}</td><td>${scoreValue(task.holdout)===null?'未知':n(scoreValue(task.holdout),3)}</td><td>${n(error.score,3)}</td></tr></tbody></table>`;
+      $('quote').innerHTML=!task.quote && !task.quote_error?empty('尚无报价或任务结束事件'):`<table><thead><tr><th>指标</th><th>预测</th><th>实际</th><th>误差</th></tr></thead><tbody><tr><td>${esc(amountLabel)}</td><td>${quote.cost===undefined?'未知':money(quote.cost)}</td><td>${money(task.cost)}</td><td>${error.cost===undefined?'未知':n(error.cost,3)}</td></tr><tr><td>秒数</td><td>${n(quote.seconds,2)}</td><td>${task.seconds.wall===null?'未知':n(task.seconds.wall,2)}</td><td>${n(error.seconds,2)}</td></tr><tr><td>分数</td><td>${n(quote.score,3)}</td><td>${scoreValue(task.holdout)===null?'未知':n(scoreValue(task.holdout),3)}</td><td>${n(error.score,3)}</td></tr></tbody></table>`;
       const tk=task.tokens; $('llm').innerHTML=`<table><tbody><tr><td>普通输入</td><td>${fmt(tk.input,0)}</td></tr><tr><td>缓存输入</td><td>${fmt(tk.cached_input,0)}</td></tr><tr><td>可见输出</td><td>${fmt(tk.output,0)}</td></tr><tr><td>推理输出</td><td>${fmt(tk.reasoning,0)}</td></tr></tbody></table>`;
       $('events').innerHTML=task.timeline.length?`<table><thead><tr><th>#</th><th>时间 UTC</th><th>事件</th><th>节点</th><th>信息</th></tr></thead><tbody>${task.timeline.map(e=>`<tr><td>${esc(e.seq)}</td><td>${esc(e.ts||'')}</td><td><span class="pill">${esc(e.kind||'')}</span></td><td>${esc(e.node_id||'—')}</td><td>${esc(e.op||e.reason||'')}${e.score!==undefined&&e.score!==null?' · 分数 '+n(e.score,3):''}</td></tr>`).join('')}</tbody></table>`:empty('尚无账本事件');
     }

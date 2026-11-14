@@ -29,7 +29,8 @@ def audit(project_root: Path, model: str | None = None) -> dict:
         bank = json.loads(bank_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         return {"schema": "preflight/1", "ready": False, "blockers": [f"Cannot read bank: {exc}"],
-                "counts": counts, "exam_traps": traps}
+                "counts": counts, "exam_traps": traps,
+                "accounting_scope": None, "accounting_note": None}
     if bank.get("schema") != "bank/1" or not isinstance(bank.get("tasks"), list):
         blockers.append("tasks/bank.json is not a valid bank/1 task list")
         tasks = []
@@ -60,7 +61,7 @@ def audit(project_root: Path, model: str | None = None) -> dict:
         if task.get("task_id") != task_id:
             blockers.append(f"{task_id}: task ID mismatch")
         if not _positive(task.get("budget", {}).get("money")):
-            blockers.append(f"{task_id}: formal monetary budget is unset")
+            blockers.append(f"{task_id}: task accounting budget is unset")
         for field in ("baseline_raw", "ceiling_raw", "naive_cost"):
             value = entry.get(field)
             if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
@@ -79,13 +80,16 @@ def audit(project_root: Path, model: str | None = None) -> dict:
         prices = json.loads((root / "config/prices.json").read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         prices = {}
-    rates = prices.get("models", {}).get(model) if model else None
-    if (prices.get("schema") != "prices/1" or prices.get("currency") in {None, "", "TEST"}
-            or prices.get("test_only") or not isinstance(rates, dict)
-            or any(not isinstance(rates.get(key), (int, float)) or isinstance(rates[key], bool)
-                   or not math.isfinite(rates[key]) or rates[key] < 0
-                   for key in ("input", "cached_input", "output", "reasoning"))):
-        blockers.append("Real model name and complete non-TEST prices are missing")
+    models = prices.get("models")
+    rates = models.get(model) if isinstance(models, dict) and model else None
+    valid_prices = (prices.get("schema") == "prices/1" and prices.get("currency") not in {None, "", "TEST"}
+            and not prices.get("test_only") and isinstance(rates, dict)
+            and type(prices.get("unit_tokens")) is int and prices["unit_tokens"] > 0
+            and all(isinstance(rates.get(key), (int, float)) and not isinstance(rates[key], bool)
+                    and math.isfinite(rates[key]) and rates[key] >= 0
+                    for key in ("input", "cached_input", "output", "reasoning")))
+    if not valid_prices:
+        blockers.append("Model name and complete non-TEST prices or token-accounting rates are missing")
     if not os.environ.get("OPENAI_API_KEY"):
         blockers.append("OPENAI_API_KEY is unavailable")
     if sys.platform != "darwin" or not shutil.which("sandbox-exec"):
@@ -100,7 +104,10 @@ def audit(project_root: Path, model: str | None = None) -> dict:
         if status:
             blockers.append("Git worktree is not frozen and clean")
     return {"schema": "preflight/1", "ready": not blockers, "bank_version": bank.get("version"),
-            "model": model, "counts": counts, "exam_traps": traps, "blockers": blockers}
+            "model": model, "counts": counts, "exam_traps": traps, "blockers": blockers,
+            "accounting_scope": "internal_token_study" if valid_prices and prices["currency"] == "TOKENS" else None,
+            "accounting_note": ("自选 token 预算的内部冻结题库研究；非现金节省、非官方比赛成绩。"
+                                if valid_prices and prices["currency"] == "TOKENS" else None)}
 
 
 def main(argv: list[str] | None = None) -> int:
