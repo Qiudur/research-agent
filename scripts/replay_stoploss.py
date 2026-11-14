@@ -21,8 +21,7 @@ spend still to come. The dev score is the proxy for quality: a stopped task
 "would have improved" when a node accepted after the stopping point raised the
 best dev score. Nothing here calls a model or a scorer.
 
-    python -m scripts.replay_stoploss runs/token-practice10-default-... \
-        --output /tmp/stoploss_replay.json
+    python -m scripts.replay_stoploss runs/token-practice10-default-... --output /tmp/stoploss_replay.json
 """
 
 from __future__ import annotations

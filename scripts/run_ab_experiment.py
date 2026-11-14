@@ -13,10 +13,7 @@ written to disk. --dry-run replaces the model and the sandboxed scorers by
 deterministic synthetic stand-ins so the whole pipeline can be exercised
 offline; its numbers mean nothing.
 
-    python -m scripts.run_ab_experiment \
-        --configs baseline=config/agent_token_pilot_v2.json \
-        --configs stoploss=config/agent_ab_stoploss.json \
-        --reps 3 --workers 3
+    python -m scripts.run_ab_experiment --configs baseline=config/agent_token_pilot_v2.json stoploss=config/agent_ab_stoploss.json --reps 3 --workers 3
     python -m scripts.analyze_ab runs/ab-<stamp>-<id>
 """
 
@@ -77,7 +74,7 @@ def _redact(text: str) -> str:
 # Offline stand-ins for --dry-run.
 
 class DryRunResponses:
-    """Scripted Responses API: three planning rounds of ideas, then an empty plan."""
+    """Scripted Responses API: a plan of three ideas, then two, then an empty plan."""
 
     PLAN_SIZES = (3, 2)
 
@@ -289,8 +286,9 @@ def main(argv: list[str] | None = None) -> int:
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--tasks", nargs="+", default=list(DEFAULT_TASKS),
                         help="practice task ids, run in this order")
-    parser.add_argument("--configs", action="append", required=True, metavar="LABEL=PATH",
-                        help="agent/1 config inside the project; repeat; the first is the baseline")
+    parser.add_argument("--configs", nargs="+", action="extend", required=True, metavar="LABEL=PATH",
+                        help="agent/1 configs inside the project, several after one flag or the "
+                             "flag repeated; the first is the baseline")
     parser.add_argument("--reps", type=int, choices=range(1, MAX_REPS + 1), default=3)
     parser.add_argument("--workers", type=int, choices=range(1, MAX_WORKERS + 1), default=3,
                         help="runs in flight at once; sandbox scoring stays serialized")

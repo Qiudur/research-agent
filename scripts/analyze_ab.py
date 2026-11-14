@@ -8,8 +8,7 @@ paired by (task, repetition), tabular quality as raw AUC lift, speedup quality
 clipped to [-1, 2], cost as total tokens. Writes a JSON file and a one-page
 Markdown summary. Nothing here calls a model or a scorer.
 
-    python -m scripts.analyze_ab runs/ab-20261115-120000-ab12 \
-        --json /tmp/ab.json --markdown /tmp/ab.md
+    python -m scripts.analyze_ab runs/ab-20261115-120000-ab12 --json /tmp/ab.json --markdown /tmp/ab.md
 """
 
 from __future__ import annotations

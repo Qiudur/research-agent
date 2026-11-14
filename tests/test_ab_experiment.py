@@ -175,6 +175,21 @@ class DryRunCampaignTests(unittest.TestCase):
             self.assertEqual(json.loads(json_path.read_text())["schema"], "ab_analysis/1")
             self.assertTrue(markdown_path.read_text().startswith("# A/B 实验摘要"))
 
+    def test_configs_may_follow_one_flag_or_repeat_it(self):
+        base = "baseline=config/agent_token_pilot_v2.json"
+        tuned = "tuned=config/agent_ab_tuned.json"
+        forms = {"space": ["--configs", base, tuned], "repeat": ["--configs", base, "--configs", tuned]}
+        with TemporaryDirectory() as temp:
+            source = make_source(Path(temp).resolve() / "source")
+            for name, configs in forms.items():
+                out = source / "runs" / f"ab-{name}"
+                code, stdout, _ = run_cli(ab, ["--project-root", str(source), "--out", str(out),
+                                               "--dry-run", "--tasks", "spd-distance-matrix",
+                                               "--reps", "1", "--workers", "1", *configs])
+                self.assertEqual(code, 0, stdout)
+                protocol = json.loads((out / "protocol.json").read_text())
+                self.assertEqual(list(protocol["configs"]), ["baseline", "tuned"])
+
     def test_real_mode_wiring_uses_environment_key_and_gateway_only_in_memory(self):
         url = "https://gateway.example/v1"
         captured = []
