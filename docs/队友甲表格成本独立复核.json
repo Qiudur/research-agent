@@ -1,0 +1,821 @@
+{
+  "schema": "member_a_tabular_cost_audit/1",
+  "source_zip_sha256": "4c47ac6bc39eb16140ec3214355d14aa70ec458cce9884fa04f9a130cd94c3d4",
+  "source_tar_sha256": "14f4f1dd17411a28d6bbc88ebfabccdbb922cca7e163b7c758662370f0ab1d52",
+  "campaign_id": "naive-token-calibration-20261114-101039-fbc8",
+  "aborted_campaign_id": "naive-token-calibration-20261114-092722-ebb3",
+  "aborted_campaign_statuses": {
+    "completed": 3,
+    "incomplete": 1,
+    "started": 2
+  },
+  "code_commit": "8340996aa4b851dd93f5f2478b68a3babd6ad9f4",
+  "model": "qwen3.5-27b",
+  "base_url": "https://ai-gateway.theunifiedcare.com/v1",
+  "bank_version": "bank-v1",
+  "attempts_audited": 36,
+  "completed": 35,
+  "incomplete": 1,
+  "recorded_tokens": 1025623,
+  "model_calls": 184,
+  "holdout_attempts": 0,
+  "unmetered_usage": [
+    {
+      "task_id": "tab-default-credit",
+      "rep": 2,
+      "reason": "HTTP 400 DataInspectionFailed; gateway returned no usage"
+    }
+  ],
+  "cross_campaign_gate": "Calibration commits differ outside docs/",
+  "applied_to_bank": false,
+  "tasks": [
+    {
+      "task_id": "tab-adult-income",
+      "tier": "practice",
+      "attempts": [
+        {
+          "task_id": "tab-adult-income",
+          "rep": 1,
+          "run_id": "run-20261114-101039-3dae",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 28251,
+          "token_buckets": {
+            "input": 17269,
+            "cached_input": 0,
+            "output": 3143,
+            "reasoning": 7839
+          },
+          "dev_score": 0.0,
+          "model_calls": 6,
+          "holdout_attempts": 0
+        },
+        {
+          "task_id": "tab-adult-income",
+          "rep": 2,
+          "run_id": "run-20261114-101039-d87e",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 28129,
+          "token_buckets": {
+            "input": 16788,
+            "cached_input": 0,
+            "output": 3473,
+            "reasoning": 7868
+          },
+          "dev_score": 0.0,
+          "model_calls": 6,
+          "holdout_attempts": 0
+        },
+        {
+          "task_id": "tab-adult-income",
+          "rep": 3,
+          "run_id": "run-20261114-101039-48fc",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 29466,
+          "token_buckets": {
+            "input": 17341,
+            "cached_input": 0,
+            "output": 3877,
+            "reasoning": 8248
+          },
+          "dev_score": 0.35237639373807417,
+          "model_calls": 6,
+          "holdout_attempts": 0
+        }
+      ],
+      "completed": 3,
+      "recorded_tokens": 85846,
+      "recorded_cost_per_completed": 28615.333333333332,
+      "bank_naive_cost_at_review": 30362.666666666668,
+      "reported_usage_complete": true
+    },
+    {
+      "task_id": "tab-mushroom-edibility",
+      "tier": "practice",
+      "attempts": [
+        {
+          "task_id": "tab-mushroom-edibility",
+          "rep": 1,
+          "run_id": "run-20261114-101458-615f",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 34526,
+          "token_buckets": {
+            "input": 24921,
+            "cached_input": 0,
+            "output": 2637,
+            "reasoning": 6968
+          },
+          "dev_score": 0.0,
+          "model_calls": 7,
+          "holdout_attempts": 0
+        },
+        {
+          "task_id": "tab-mushroom-edibility",
+          "rep": 2,
+          "run_id": "run-20261114-101458-c774",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 30058,
+          "token_buckets": {
+            "input": 23130,
+            "cached_input": 0,
+            "output": 2861,
+            "reasoning": 4067
+          },
+          "dev_score": 0.5948074058310275,
+          "model_calls": 6,
+          "holdout_attempts": 0
+        },
+        {
+          "task_id": "tab-mushroom-edibility",
+          "rep": 3,
+          "run_id": "run-20261114-101458-d819",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 31700,
+          "token_buckets": {
+            "input": 21484,
+            "cached_input": 0,
+            "output": 2440,
+            "reasoning": 7776
+          },
+          "dev_score": 0.0,
+          "model_calls": 6,
+          "holdout_attempts": 0
+        }
+      ],
+      "completed": 3,
+      "recorded_tokens": 96284,
+      "recorded_cost_per_completed": 32094.666666666668,
+      "bank_naive_cost_at_review": 30666.333333333332,
+      "reported_usage_complete": true
+    },
+    {
+      "task_id": "tab-online-shoppers",
+      "tier": "practice",
+      "attempts": [
+        {
+          "task_id": "tab-online-shoppers",
+          "rep": 1,
+          "run_id": "run-20261114-101834-f14a",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 28652,
+          "token_buckets": {
+            "input": 18593,
+            "cached_input": 0,
+            "output": 1554,
+            "reasoning": 8505
+          },
+          "dev_score": 0.0,
+          "model_calls": 5,
+          "holdout_attempts": 0
+        },
+        {
+          "task_id": "tab-online-shoppers",
+          "rep": 2,
+          "run_id": "run-20261114-101834-4360",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 28499,
+          "token_buckets": {
+            "input": 15825,
+            "cached_input": 0,
+            "output": 2200,
+            "reasoning": 10474
+          },
+          "dev_score": 0.0,
+          "model_calls": 4,
+          "holdout_attempts": 0
+        },
+        {
+          "task_id": "tab-online-shoppers",
+          "rep": 3,
+          "run_id": "run-20261114-101834-bde7",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 31196,
+          "token_buckets": {
+            "input": 22754,
+            "cached_input": 0,
+            "output": 2393,
+            "reasoning": 6049
+          },
+          "dev_score": 0.0,
+          "model_calls": 6,
+          "holdout_attempts": 0
+        }
+      ],
+      "completed": 3,
+      "recorded_tokens": 88347,
+      "recorded_cost_per_completed": 29449.0,
+      "bank_naive_cost_at_review": 31917.0,
+      "reported_usage_complete": true
+    },
+    {
+      "task_id": "tab-phishing-websites",
+      "tier": "practice",
+      "attempts": [
+        {
+          "task_id": "tab-phishing-websites",
+          "rep": 1,
+          "run_id": "run-20261114-102327-2e19",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 30034,
+          "token_buckets": {
+            "input": 23675,
+            "cached_input": 0,
+            "output": 2506,
+            "reasoning": 3853
+          },
+          "dev_score": 0.0,
+          "model_calls": 6,
+          "holdout_attempts": 0
+        },
+        {
+          "task_id": "tab-phishing-websites",
+          "rep": 2,
+          "run_id": "run-20261114-102327-0a7e",
+          "status": "completed",
+          "stop_reason": "ceiling",
+          "tokens": 21765,
+          "token_buckets": {
+            "input": 16049,
+            "cached_input": 0,
+            "output": 1890,
+            "reasoning": 3826
+          },
+          "dev_score": 4.6923076923092735,
+          "model_calls": 5,
+          "holdout_attempts": 0
+        },
+        {
+          "task_id": "tab-phishing-websites",
+          "rep": 3,
+          "run_id": "run-20261114-102327-64d8",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 29379,
+          "token_buckets": {
+            "input": 22545,
+            "cached_input": 0,
+            "output": 1765,
+            "reasoning": 5069
+          },
+          "dev_score": 0.0,
+          "model_calls": 6,
+          "holdout_attempts": 0
+        }
+      ],
+      "completed": 3,
+      "recorded_tokens": 81178,
+      "recorded_cost_per_completed": 27059.333333333332,
+      "bank_naive_cost_at_review": 32042.0,
+      "reported_usage_complete": true
+    },
+    {
+      "task_id": "tab-german-credit",
+      "tier": "practice",
+      "attempts": [
+        {
+          "task_id": "tab-german-credit",
+          "rep": 1,
+          "run_id": "run-20261114-102622-ce24",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 31388,
+          "token_buckets": {
+            "input": 20174,
+            "cached_input": 0,
+            "output": 2814,
+            "reasoning": 8400
+          },
+          "dev_score": 0.9020771513353111,
+          "model_calls": 5,
+          "holdout_attempts": 0
+        },
+        {
+          "task_id": "tab-german-credit",
+          "rep": 2,
+          "run_id": "run-20261114-102622-1dc9",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 31941,
+          "token_buckets": {
+            "input": 24349,
+            "cached_input": 0,
+            "output": 4036,
+            "reasoning": 3556
+          },
+          "dev_score": 0.8887240356083089,
+          "model_calls": 6,
+          "holdout_attempts": 0
+        },
+        {
+          "task_id": "tab-german-credit",
+          "rep": 3,
+          "run_id": "run-20261114-102622-7e1e",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 35990,
+          "token_buckets": {
+            "input": 15798,
+            "cached_input": 0,
+            "output": 2615,
+            "reasoning": 17577
+          },
+          "dev_score": 0.9569732937685456,
+          "model_calls": 4,
+          "holdout_attempts": 0
+        }
+      ],
+      "completed": 3,
+      "recorded_tokens": 99319,
+      "recorded_cost_per_completed": 33106.333333333336,
+      "bank_naive_cost_at_review": 31913.666666666668,
+      "reported_usage_complete": true
+    },
+    {
+      "task_id": "tab-breast-cancer-diagnostic",
+      "tier": "validation",
+      "attempts": [
+        {
+          "task_id": "tab-breast-cancer-diagnostic",
+          "rep": 1,
+          "run_id": "run-20261114-103303-b82d",
+          "status": "completed",
+          "stop_reason": "ceiling",
+          "tokens": 16814,
+          "token_buckets": {
+            "input": 13056,
+            "cached_input": 0,
+            "output": 1266,
+            "reasoning": 2492
+          },
+          "dev_score": 3.200000000000013,
+          "model_calls": 4,
+          "holdout_attempts": 0
+        },
+        {
+          "task_id": "tab-breast-cancer-diagnostic",
+          "rep": 2,
+          "run_id": "run-20261114-103303-27f2",
+          "status": "completed",
+          "stop_reason": "ceiling",
+          "tokens": 17322,
+          "token_buckets": {
+            "input": 13052,
+            "cached_input": 0,
+            "output": 1602,
+            "reasoning": 2668
+          },
+          "dev_score": 3.200000000000013,
+          "model_calls": 4,
+          "holdout_attempts": 0
+        },
+        {
+          "task_id": "tab-breast-cancer-diagnostic",
+          "rep": 3,
+          "run_id": "run-20261114-103303-66e7",
+          "status": "completed",
+          "stop_reason": "ceiling",
+          "tokens": 21452,
+          "token_buckets": {
+            "input": 13049,
+            "cached_input": 0,
+            "output": 1295,
+            "reasoning": 7108
+          },
+          "dev_score": 3.200000000000013,
+          "model_calls": 4,
+          "holdout_attempts": 0
+        }
+      ],
+      "completed": 3,
+      "recorded_tokens": 55588,
+      "recorded_cost_per_completed": 18529.333333333332,
+      "bank_naive_cost_at_review": 22450.666666666668,
+      "reported_usage_complete": true
+    },
+    {
+      "task_id": "tab-magic-gamma",
+      "tier": "validation",
+      "attempts": [
+        {
+          "task_id": "tab-magic-gamma",
+          "rep": 1,
+          "run_id": "run-20261114-103530-df9e",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 31508,
+          "token_buckets": {
+            "input": 26157,
+            "cached_input": 0,
+            "output": 2099,
+            "reasoning": 3252
+          },
+          "dev_score": 0.0,
+          "model_calls": 6,
+          "holdout_attempts": 0
+        },
+        {
+          "task_id": "tab-magic-gamma",
+          "rep": 2,
+          "run_id": "run-20261114-103530-4a8b",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 31251,
+          "token_buckets": {
+            "input": 25992,
+            "cached_input": 0,
+            "output": 1866,
+            "reasoning": 3393
+          },
+          "dev_score": 0.0,
+          "model_calls": 6,
+          "holdout_attempts": 0
+        },
+        {
+          "task_id": "tab-magic-gamma",
+          "rep": 3,
+          "run_id": "run-20261114-103530-b2ca",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 29389,
+          "token_buckets": {
+            "input": 21687,
+            "cached_input": 0,
+            "output": 1884,
+            "reasoning": 5818
+          },
+          "dev_score": 0.0,
+          "model_calls": 5,
+          "holdout_attempts": 0
+        }
+      ],
+      "completed": 3,
+      "recorded_tokens": 92148,
+      "recorded_cost_per_completed": 30716.0,
+      "bank_naive_cost_at_review": 34307.5,
+      "reported_usage_complete": true
+    },
+    {
+      "task_id": "tab-bank-marketing",
+      "tier": "exam",
+      "attempts": [
+        {
+          "task_id": "tab-bank-marketing",
+          "rep": 1,
+          "run_id": "run-20261114-103821-059b",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 29458,
+          "token_buckets": {
+            "input": 19397,
+            "cached_input": 0,
+            "output": 2745,
+            "reasoning": 7316
+          },
+          "dev_score": 0.6522605419504379,
+          "model_calls": 6,
+          "holdout_attempts": 0
+        },
+        {
+          "task_id": "tab-bank-marketing",
+          "rep": 2,
+          "run_id": "run-20261114-103821-3312",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 30997,
+          "token_buckets": {
+            "input": 16725,
+            "cached_input": 0,
+            "output": 3081,
+            "reasoning": 11191
+          },
+          "dev_score": 0.44783364729749103,
+          "model_calls": 5,
+          "holdout_attempts": 0
+        },
+        {
+          "task_id": "tab-bank-marketing",
+          "rep": 3,
+          "run_id": "run-20261114-103821-9958",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 28943,
+          "token_buckets": {
+            "input": 19074,
+            "cached_input": 0,
+            "output": 3547,
+            "reasoning": 6322
+          },
+          "dev_score": 0.9338139400086739,
+          "model_calls": 6,
+          "holdout_attempts": 0
+        }
+      ],
+      "completed": 3,
+      "recorded_tokens": 89398,
+      "recorded_cost_per_completed": 29799.333333333332,
+      "bank_naive_cost_at_review": 27604.0,
+      "reported_usage_complete": true
+    },
+    {
+      "task_id": "tab-heart-disease",
+      "tier": "exam",
+      "attempts": [
+        {
+          "task_id": "tab-heart-disease",
+          "rep": 1,
+          "run_id": "run-20261114-104230-1a88",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 30244,
+          "token_buckets": {
+            "input": 21684,
+            "cached_input": 0,
+            "output": 1940,
+            "reasoning": 6620
+          },
+          "dev_score": 0.0,
+          "model_calls": 5,
+          "holdout_attempts": 0
+        },
+        {
+          "task_id": "tab-heart-disease",
+          "rep": 2,
+          "run_id": "run-20261114-104230-d585",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 29542,
+          "token_buckets": {
+            "input": 23219,
+            "cached_input": 0,
+            "output": 2961,
+            "reasoning": 3362
+          },
+          "dev_score": 0.5555555555555518,
+          "model_calls": 5,
+          "holdout_attempts": 0
+        },
+        {
+          "task_id": "tab-heart-disease",
+          "rep": 3,
+          "run_id": "run-20261114-104230-3707",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 30250,
+          "token_buckets": {
+            "input": 17600,
+            "cached_input": 0,
+            "output": 1801,
+            "reasoning": 10849
+          },
+          "dev_score": 0.44444444444444825,
+          "model_calls": 4,
+          "holdout_attempts": 0
+        }
+      ],
+      "completed": 3,
+      "recorded_tokens": 90036,
+      "recorded_cost_per_completed": 30012.0,
+      "bank_naive_cost_at_review": 28901.333333333332,
+      "reported_usage_complete": true
+    },
+    {
+      "task_id": "tab-htru2",
+      "tier": "exam",
+      "attempts": [
+        {
+          "task_id": "tab-htru2",
+          "rep": 1,
+          "run_id": "run-20261114-104631-5fc9",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 28511,
+          "token_buckets": {
+            "input": 22819,
+            "cached_input": 0,
+            "output": 2542,
+            "reasoning": 3150
+          },
+          "dev_score": 0.7207792207792292,
+          "model_calls": 5,
+          "holdout_attempts": 0
+        },
+        {
+          "task_id": "tab-htru2",
+          "rep": 2,
+          "run_id": "run-20261114-104631-526c",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 30224,
+          "token_buckets": {
+            "input": 23574,
+            "cached_input": 0,
+            "output": 3062,
+            "reasoning": 3588
+          },
+          "dev_score": 0.5763425763425799,
+          "model_calls": 5,
+          "holdout_attempts": 0
+        },
+        {
+          "task_id": "tab-htru2",
+          "rep": 3,
+          "run_id": "run-20261114-104631-3f6b",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 31731,
+          "token_buckets": {
+            "input": 23439,
+            "cached_input": 0,
+            "output": 2927,
+            "reasoning": 5365
+          },
+          "dev_score": 0.5856440856440929,
+          "model_calls": 5,
+          "holdout_attempts": 0
+        }
+      ],
+      "completed": 3,
+      "recorded_tokens": 90466,
+      "recorded_cost_per_completed": 30155.333333333332,
+      "bank_naive_cost_at_review": 30999.666666666668,
+      "reported_usage_complete": true
+    },
+    {
+      "task_id": "tab-default-credit",
+      "tier": "exam",
+      "attempts": [
+        {
+          "task_id": "tab-default-credit",
+          "rep": 1,
+          "run_id": "run-20261114-104942-bb5f",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 34630,
+          "token_buckets": {
+            "input": 20539,
+            "cached_input": 0,
+            "output": 5219,
+            "reasoning": 8872
+          },
+          "dev_score": 0.8955504733231129,
+          "model_calls": 4,
+          "holdout_attempts": 0
+        },
+        {
+          "task_id": "tab-default-credit",
+          "rep": 2,
+          "run_id": "run-20261114-104942-042c",
+          "status": "incomplete",
+          "stop_reason": "error",
+          "tokens": 0,
+          "token_buckets": {
+            "input": 0,
+            "cached_input": 0,
+            "output": 0,
+            "reasoning": 0
+          },
+          "dev_score": 0.0,
+          "model_calls": 1,
+          "holdout_attempts": 0
+        },
+        {
+          "task_id": "tab-default-credit",
+          "rep": 3,
+          "run_id": "run-20261114-104942-38de",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 32520,
+          "token_buckets": {
+            "input": 25733,
+            "cached_input": 0,
+            "output": 2314,
+            "reasoning": 4473
+          },
+          "dev_score": 0.0,
+          "model_calls": 6,
+          "holdout_attempts": 0
+        }
+      ],
+      "completed": 2,
+      "recorded_tokens": 67150,
+      "recorded_cost_per_completed": 33575.0,
+      "bank_naive_cost_at_review": 29736.666666666668,
+      "reported_usage_complete": false
+    },
+    {
+      "task_id": "tab-australian-credit",
+      "tier": "exam",
+      "attempts": [
+        {
+          "task_id": "tab-australian-credit",
+          "rep": 1,
+          "run_id": "run-20261114-105341-1464",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 31901,
+          "token_buckets": {
+            "input": 23149,
+            "cached_input": 0,
+            "output": 3423,
+            "reasoning": 5329
+          },
+          "dev_score": 0.8230088495575246,
+          "model_calls": 5,
+          "holdout_attempts": 0
+        },
+        {
+          "task_id": "tab-australian-credit",
+          "rep": 2,
+          "run_id": "run-20261114-105341-8f4b",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 28259,
+          "token_buckets": {
+            "input": 17951,
+            "cached_input": 0,
+            "output": 2184,
+            "reasoning": 8124
+          },
+          "dev_score": 0.40707964601769847,
+          "model_calls": 4,
+          "holdout_attempts": 0
+        },
+        {
+          "task_id": "tab-australian-credit",
+          "rep": 3,
+          "run_id": "run-20261114-105341-1e58",
+          "status": "completed",
+          "stop_reason": "budget_cap",
+          "tokens": 29703,
+          "token_buckets": {
+            "input": 22745,
+            "cached_input": 0,
+            "output": 2642,
+            "reasoning": 4316
+          },
+          "dev_score": 0.3628318584070831,
+          "model_calls": 5,
+          "holdout_attempts": 0
+        }
+      ],
+      "completed": 3,
+      "recorded_tokens": 89863,
+      "recorded_cost_per_completed": 29954.333333333332,
+      "bank_naive_cost_at_review": 27566.666666666668,
+      "reported_usage_complete": true
+    }
+  ],
+  "aborted_campaign_attempts": [
+    {
+      "task_id": "tab-adult-income",
+      "rep": 1,
+      "status": "completed",
+      "total_tokens": 12250,
+      "stop_reason": "time"
+    },
+    {
+      "task_id": "tab-adult-income",
+      "rep": 2,
+      "status": "completed",
+      "total_tokens": 31409,
+      "stop_reason": "budget_cap"
+    },
+    {
+      "task_id": "tab-adult-income",
+      "rep": 3,
+      "status": "completed",
+      "total_tokens": 25438,
+      "stop_reason": "ceiling"
+    },
+    {
+      "task_id": "tab-mushroom-edibility",
+      "rep": 1,
+      "status": "started",
+      "total_tokens": null,
+      "stop_reason": null
+    },
+    {
+      "task_id": "tab-mushroom-edibility",
+      "rep": 2,
+      "status": "started",
+      "total_tokens": null,
+      "stop_reason": null
+    },
+    {
+      "task_id": "tab-mushroom-edibility",
+      "rep": 3,
+      "status": "incomplete",
+      "total_tokens": 15513,
+      "stop_reason": "error"
+    }
+  ]
+}
