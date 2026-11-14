@@ -181,6 +181,19 @@ class RoadshowReportTest(unittest.TestCase):
         self.assertNotIn("正式四线比较未执行", report)
         self.assertNotIn("验证与考试数字待对应真实账本审计后填入", report)
 
+    def test_interrupted_exam_is_not_shown_as_pending_or_complete(self):
+        path = self.repo / "docs" / "内部Token正式研究报告.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("# 冻结题库内部 token 研究报告\n\n## 一次性 exam：holdout 中止、无完整成绩\n",
+                        encoding="utf-8")
+        self.run_git("add", "docs/内部Token正式研究报告.md")
+        self.run_git("commit", "-qm", "Record interrupted formal exam")
+        self.assertTrue(generate(self.repo, self.output))
+        report = self.output.read_text(encoding="utf-8")
+        self.assertIn("一次性正式考试中止 · 无完整三线成绩", report)
+        self.assertIn("完整三线成绩、总成本和回本点不可报告", report)
+        self.assertNotIn("正式批次已完成 · 独立审计通过", report)
+
     V2_README = (
         "# Demo\n\n这是按《分工文档》实现的可审计研究系统。"
         "首次内部练习批次没有有效候选；修复后的 v2 正在独立工作区运行，"

@@ -8,7 +8,8 @@ Optional formal input: --formal-batch-dir with --auto-study-dir audits a
 finished formal batch read-only (scripts/audit_formal_outputs.py), writes the
 condensed evidence to docs/evidence/formal-batch-roadshow.json and shows real
 scores, four-bucket tokens, admission, exam line count, commit and config SHA.
-A running batch keeps the pending wording; a failed audit writes nothing.
+An incomplete batch uses the committed report's non-final status; a failed
+audit of a finished batch writes nothing.
 Later runs without these options read the committed evidence file.
 """
 
@@ -177,7 +178,7 @@ class FormalAuditError(ValueError):
 def load_formal_evidence(batch_dir: Path, auto_study_dir: Path) -> dict | None:
     """Audit a finished formal batch and condense it for the roadshow page.
 
-    Returns None while batch_report.json is absent (the batch is still running).
+    Returns None while batch_report.json is absent (running or interrupted).
     Raises FormalAuditError when scripts/audit_formal_outputs.py rejects any
     saved report, ledger, marker or sealed input; callers then render nothing.
     """
@@ -344,6 +345,7 @@ def formal_results(data: dict | None) -> str:
 
 def evidence(repo: Path, formal: dict | None = None) -> dict[str, str]:
     readme = committed_text(repo, "README.md")
+    formal_report = committed_text(repo, "docs/内部Token正式研究报告.md")
     concurrency = committed_text(repo, "docs/真实模型并发基准.md")
     study = section(committed_text(repo, "docs/真实模型自研究试验.md"), "第二轮：逐题证据提案")
     transfer = committed_text(repo, "docs/真实模型迁移复评.md")
@@ -408,6 +410,7 @@ def evidence(repo: Path, formal: dict | None = None) -> dict[str, str]:
         "正式自研究、一次性验证和考试仍待运行",
         "验证与考试尚未启动",
     ))
+    exam_interrupted = "## 一次性 exam：holdout 中止、无完整成绩" in formal_report
     try:
         prices = json.loads(committed_text(repo, "config/prices.json"))
     except (ValueError, TypeError):
@@ -431,6 +434,8 @@ def evidence(repo: Path, formal: dict | None = None) -> dict[str, str]:
     results = formal_results(formal)
     if results:
         pass  # freshly audited formal results replace the pending wording
+    elif exam_interrupted:
+        accounting_notice += "一次性正式考试在 holdout 评分中止，完整三线成绩、总成本和回本点不可报告；详见内部 token 正式研究报告。"
     elif v2_pending:
         accounting_notice += "v2 自研究、验证与考试数字均待对应真实账本审计后填入。"
     elif formal_pending:
@@ -439,6 +444,7 @@ def evidence(repo: Path, formal: dict | None = None) -> dict[str, str]:
         "intro": project_intro,
         "formal_results": results,
         "status": ("内部 token 正式批次已完成 · 独立审计通过" if results else
+                   "一次性正式考试中止 · 无完整三线成绩" if exam_interrupted else
                    "内部 token v2 练习研究进行中 · 验证／考试待真实账本" if v2_pending else
                    "题库已冻结 · 正式四线待运行" if calibration and formal_pending else
                    "DEV / TEST ONLY · 正式四线比较未执行" if formal_pending else
@@ -542,7 +548,7 @@ HTML = Template("""<!doctype html>
       <article class="card"><div class="label">跨题迁移复评</div><span class="metric amber">$transfer_score</span><p>归一化分数变化，但每遍 token 变化 $transfer_tokens；结果仍属于 dev，不能证明正式准入。</p><p class="small"><a href="真实模型迁移复评.md">查看迁移记录 ↗</a></p></article>
     </div>
     $calibration_notice
-    $formal_results
+$formal_results
     <p class="notice">$accounting_notice</p>
   </div><div class="footer"><span>数值从仓库已提交证据文档提取</span><span>03 / 05</span></div></section>
   <section class="slide" id="changes"><div class="inner">
@@ -655,7 +661,7 @@ def main() -> None:
             print(f"formal audit failed; nothing written: {exc}", file=sys.stderr)
             raise SystemExit(1)
         if formal is None:
-            print("formal batch has no batch_report.json yet; keeping the pending wording",
+            print("formal batch has no batch_report.json; showing non-final repository status",
                   file=sys.stderr)
     print("updated" if generate(repo, output, formal) else "unchanged", output)
 
