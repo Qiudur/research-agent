@@ -10,9 +10,12 @@ import time
 from types import SimpleNamespace
 import unittest
 
-from evaluation.self_research import (_FORBIDDEN_NOTE, auto_evaluate_candidates,
-                                      evaluate_candidates, verify_auto_selected,
-                                      verify_selected)
+import copy
+
+from evaluation.self_research import (_FORBIDDEN_NOTE, _PROPOSAL_SCHEMA, _effective_settings,
+                                      _materialize_proposal, _validate_proposal,
+                                      auto_evaluate_candidates, evaluate_candidates,
+                                      verify_auto_selected, verify_selected)
 from evaluation.figures import _auto_research_cost
 from ledger import Ledger, Usage
 from library import Library
@@ -24,12 +27,39 @@ from tests.test_abc_e2e import FakeResponses
 
 PROJECT = Path(__file__).resolve().parents[1]
 PRACTICE = ("spd-practice-a", "spd-practice-b")
+ROLE_NAMES = ("planner", "executor", "diagnoser", "summarizer")
+# The new optional levers, all left unset (the schema requires every key).
+UNCHANGED_LEVERS = {
+    "stop_loss": {"tab": {"first_n_no_gain": 0}, "spd": {"consecutive_no_gain": 0}},
+    "ceiling_excludes_baseline": False, "planner_mode": "standard",
+    "hypotheses_per_plan": 0, "failure_feedback": False,
+    "cost_priors": {"spd": 0, "tab": 0},
+    "role_controls": {role: {"thinking": "unchanged", "max_output_tokens": 0}
+                      for role in ROLE_NAMES},
+    "experience_writer": "model",
+    "library_brief": {"min_credibility": 0, "max_chars": 0},
+}
+
+
+def proposal_data(settings_update=None, notes=None, drop=()):
+    """A complete valid proposal; drop removes keys to build legacy-shaped ones."""
+    settings = {"plateau_nodes": 4, "explore_every": 3, "query_k": 6,
+                "behind_schedule": {"spent_ratio": .5, "progress_ratio": .5},
+                "effort": {"planner": "high", "executor": "low",
+                           "diagnoser": "high", "summarizer": "medium"},
+                **copy.deepcopy(UNCHANGED_LEVERS), **(settings_update or {})}
+    for key in drop:
+        settings.pop(key)
+    return {"settings": settings,
+            "prompt_append": {**{role: "" for role in ROLE_NAMES}, **(notes or {})},
+            "rationale": "Use fewer calls on similar practice tasks"}
 
 
 class FakeProposalResponses:
-    def __init__(self):
+    def __init__(self, levers=None):
         self.calls = 0
         self.payloads = []
+        self.levers = levers or {}
 
     def create(self, **kwargs):
         self.calls += 1
@@ -39,7 +69,8 @@ class FakeProposalResponses:
             "settings": {"plateau_nodes": 4, "explore_every": 3, "query_k": 6,
                          "behind_schedule": {"spent_ratio": .5, "progress_ratio": .5},
                          "effort": {"planner": "high", "executor": "low",
-                                    "diagnoser": "high", "summarizer": "medium"}},
+                                    "diagnoser": "high", "summarizer": "medium"},
+                         **{**copy.deepcopy(UNCHANGED_LEVERS), **copy.deepcopy(self.levers)}},
             "prompt_append": {"planner": "Prefer low-cost hypotheses.",
                               "executor": "", "diagnoser": "", "summarizer": ""},
             "rationale": "Use fewer calls on similar practice tasks",
@@ -503,6 +534,192 @@ class SelfResearchTests(unittest.TestCase):
                     expected_tuned_config={"path": "config/other.json",
                                            "sha256": descriptor["sha256"]})
             self.assertFalse((root / "tasks/spd-validation-secret").exists())
+
+
+LEVER_KEYS = tuple(UNCHANGED_LEVERS)
+CONFIGURED_LEVERS = {
+    "stop_loss": {"tab": {"first_n_no_gain": 2}, "spd": {"consecutive_no_gain": 4}},
+    "ceiling_excludes_baseline": True, "planner_mode": "lean", "hypotheses_per_plan": 3,
+    "failure_feedback": True, "cost_priors": {"spd": 4000, "tab": 0},
+    "role_controls": {**UNCHANGED_LEVERS["role_controls"],
+                      "executor": {"thinking": "off", "max_output_tokens": 1536}},
+    "experience_writer": "script",
+    "library_brief": {"min_credibility": 0.5, "max_chars": 300},
+}
+
+
+class ProposalLeverTests(unittest.TestCase):
+    """Cost levers added to the proposal: ranges, legacy proposals and agent/1 output."""
+
+    def base(self) -> dict:
+        return json.loads((PROJECT / "config/agent.json").read_text())
+
+    def project(self, root: Path, base: dict | None = None) -> Path:
+        (root / "config/prompts").mkdir(parents=True)
+        for role in ROLE_NAMES:
+            shutil.copyfile(PROJECT / "config/prompts" / f"{role}.md",
+                            root / "config/prompts" / f"{role}.md")
+        path = root / "config/agent.json"
+        path.write_text(json.dumps(base or self.base()), encoding="utf-8")
+        return path
+
+    def test_schema_requires_every_key_for_strict_structured_output(self):
+        def walk(schema, path="$"):
+            if schema.get("type") == "object":
+                self.assertEqual(schema["required"], list(schema["properties"]), path)
+                self.assertIs(schema["additionalProperties"], False, path)
+                for key, child in schema["properties"].items():
+                    walk(child, f"{path}.{key}")
+        walk(_PROPOSAL_SCHEMA)
+        settings = _PROPOSAL_SCHEMA["properties"]["settings"]["properties"]
+        self.assertTrue(set(LEVER_KEYS) <= set(settings))
+        self.assertEqual(set(settings["role_controls"]["properties"]), set(ROLE_NAMES))
+
+    def test_old_configs_read_as_every_lever_unset(self):
+        effective = _effective_settings(self.base())
+        self.assertEqual({key: effective[key] for key in LEVER_KEYS}, UNCHANGED_LEVERS)
+        configured = self.base()
+        configured.update(stop_loss={"tab": {"first_n_no_gain": 2}}, planner_mode="lean",
+                          role_controls={"executor": {"thinking": False, "max_output_tokens": 1536}},
+                          library_brief={"min_credibility": 0.5, "max_chars": 300},
+                          cost_priors={"tab": 3000})
+        effective = _effective_settings(configured)
+        self.assertEqual(effective["stop_loss"], {"tab": {"first_n_no_gain": 2},
+                                                  "spd": {"consecutive_no_gain": 0}})
+        self.assertEqual(effective["role_controls"]["executor"],
+                         {"thinking": "off", "max_output_tokens": 1536})
+        self.assertEqual(effective["role_controls"]["planner"],
+                         {"thinking": "unchanged", "max_output_tokens": 0})
+        self.assertEqual(effective["cost_priors"], {"spd": 0, "tab": 3000})
+        self.assertEqual(effective["planner_mode"], "lean")
+
+    def test_legacy_five_key_proposal_is_still_valid_and_adds_no_lever_keys(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            path = self.project(root)
+            legacy = proposal_data(drop=LEVER_KEYS, notes={"planner": "Prefer cheap ideas."})
+            settings, _, _ = _validate_proposal(legacy, self.base())
+            self.assertEqual({key: settings[key] for key in LEVER_KEYS}, UNCHANGED_LEVERS)
+            generated = json.loads(_materialize_proposal(
+                root, root / "study", 1, path, legacy).read_text())
+            self.assertEqual(generated["plateau_nodes"], 4)
+            self.assertFalse(set(LEVER_KEYS) & set(generated))
+
+    def test_levers_are_written_in_agent_config_shape_without_unset_values(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            path = self.project(root)
+            generated = json.loads(_materialize_proposal(
+                root, root / "study", 1, path, proposal_data(CONFIGURED_LEVERS)).read_text())
+            self.assertEqual(generated["stop_loss"],
+                             {"tab": {"first_n_no_gain": 2}, "spd": {"consecutive_no_gain": 4}})
+            self.assertEqual((generated["planner_mode"], generated["hypotheses_per_plan"],
+                              generated["experience_writer"]), ("lean", 3, "script"))
+            self.assertIs(generated["failure_feedback"], True)
+            self.assertIs(generated["ceiling_excludes_baseline"], True)
+            self.assertEqual(generated["cost_priors"], {"spd": 4000})
+            self.assertEqual(generated["role_controls"],
+                             {"executor": {"thinking": False, "max_output_tokens": 1536}})
+            self.assertEqual(generated["library_brief"], {"min_credibility": 0.5, "max_chars": 300})
+            only_one = json.loads(_materialize_proposal(
+                root, root / "study", 2, path,
+                proposal_data({"failure_feedback": True})).read_text())
+            self.assertEqual(sorted(set(only_one) & set(LEVER_KEYS)), ["failure_feedback"])
+
+    def test_turning_a_configured_lever_off_removes_its_key(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            base = self.base()
+            base.update(stop_loss={"tab": {"first_n_no_gain": 2}}, cost_priors={"tab": 3000},
+                        role_controls={"executor": {"thinking": False}}, hypotheses_per_plan=4,
+                        library_brief={"max_chars": 300}, planner_mode="lean")
+            path = self.project(root, base)
+            generated = json.loads(_materialize_proposal(
+                root, root / "study", 1, path, proposal_data()).read_text())
+            self.assertFalse({"stop_loss", "cost_priors", "role_controls", "hypotheses_per_plan",
+                              "library_brief"} & set(generated))
+            self.assertEqual(generated["planner_mode"], "standard")  # explicit, not inherited
+
+    def test_values_outside_the_allowed_ranges_are_rejected(self):
+        def stop(tab=0, spd=0):
+            return {"tab": {"first_n_no_gain": tab}, "spd": {"consecutive_no_gain": spd}}
+        def control(**fields):
+            return {**UNCHANGED_LEVERS["role_controls"],
+                    "executor": {"thinking": "unchanged", "max_output_tokens": 0, **fields}}
+        cases = [
+            ({"stop_loss": stop(tab=5)}, "stop_loss.tab.first_n_no_gain"),
+            ({"stop_loss": stop(tab=-1)}, "stop_loss.tab.first_n_no_gain"),
+            ({"stop_loss": stop(spd=1)}, "stop_loss.spd.consecutive_no_gain"),
+            ({"stop_loss": stop(spd=9)}, "stop_loss.spd.consecutive_no_gain"),
+            ({"stop_loss": {"tab": {"first_n_no_gain": 2}}}, "stop_loss"),
+            ({"hypotheses_per_plan": 1}, "hypotheses_per_plan"),
+            ({"hypotheses_per_plan": 9}, "hypotheses_per_plan"),
+            ({"hypotheses_per_plan": True}, "hypotheses_per_plan"),
+            ({"role_controls": control(max_output_tokens=256)}, "role_controls.executor.max_output_tokens"),
+            ({"role_controls": control(max_output_tokens=4096)}, "role_controls.executor.max_output_tokens"),
+            ({"role_controls": control(thinking="maybe")}, "role_controls.executor.thinking"),
+            ({"role_controls": {"executor": {"thinking": "off", "max_output_tokens": 0}}}, "role_controls"),
+            ({"cost_priors": {"spd": 100, "tab": 0}}, "cost_priors.spd"),
+            ({"cost_priors": {"spd": 0, "tab": 50000}}, "cost_priors.tab"),
+            ({"planner_mode": "fast"}, "planner_mode"),
+            ({"experience_writer": "human"}, "experience_writer"),
+            ({"failure_feedback": 1}, "failure_feedback"),
+            ({"ceiling_excludes_baseline": "yes"}, "ceiling_excludes_baseline"),
+            ({"library_brief": {"min_credibility": 0.95, "max_chars": 0}}, "library_brief.min_credibility"),
+            ({"library_brief": {"min_credibility": 0.1, "max_chars": 0}}, "library_brief.min_credibility"),
+            ({"library_brief": {"min_credibility": 0, "max_chars": 50}}, "library_brief.max_chars"),
+            ({"library_brief": {"min_credibility": float("nan"), "max_chars": 0}}, "library_brief.min_credibility"),
+            ({"unknown_lever": 1}, "unauthorized fields"),
+        ]
+        for update, fragment in cases:
+            with self.subTest(update=update):
+                with self.assertRaisesRegex(ValueError, fragment.replace(".", r"\.")):
+                    _validate_proposal(proposal_data(update), self.base())
+        edges = {"stop_loss": stop(tab=4, spd=8), "hypotheses_per_plan": 8,
+                 "role_controls": control(thinking="on", max_output_tokens=2048),
+                 "cost_priors": {"spd": 500, "tab": 12000},
+                 "library_brief": {"min_credibility": 0.9, "max_chars": 100}}
+        _validate_proposal(proposal_data(edges), self.base())
+        edges["stop_loss"], edges["hypotheses_per_plan"] = stop(tab=1, spd=2), 2
+        edges["library_brief"] = {"min_credibility": 0.3, "max_chars": 600}
+        _validate_proposal(proposal_data(edges), self.base())
+
+    def test_no_op_proposals_are_rejected_but_one_lever_is_enough(self):
+        base = self.base()
+        same = {"settings": _effective_settings(base),
+                "prompt_append": {role: "" for role in ROLE_NAMES}, "rationale": "Nothing"}
+        with self.assertRaisesRegex(ValueError, "no-op"):
+            _validate_proposal(same, base)
+        changed = copy.deepcopy(same)
+        changed["settings"]["failure_feedback"] = True
+        settings, _, _ = _validate_proposal(changed, base)
+        self.assertIs(settings["failure_feedback"], True)
+
+    def test_automatic_research_runs_a_lever_candidate_and_shows_the_proposer_the_levers(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            baselines, candidates, _ = SelfResearchTests().setup_project(root)
+            responses = FakeProposalResponses(levers=CONFIGURED_LEVERS)
+            runner = SelfResearchTests()
+            result = auto_evaluate_candidates(
+                project_root=root, study_dir=root / "batches/auto-study", harness=object(),
+                default_config=candidates["default"], baseline_solutions=baselines,
+                prices_path=root / "config/prices_test_only.json", model="test-scripted",
+                code_commit="a" * 40, rounds=1, max_output_tokens=1024, test_only_budget=1.0,
+                proposal_client=SimpleNamespace(responses=responses),
+                task_executor=runner.fake_executor([]),
+            )
+            shown = responses.payloads[0]["default_settings"]
+            self.assertEqual({key: shown[key] for key in LEVER_KEYS}, UNCHANGED_LEVERS)
+            row = responses.payloads[0]["practice_breakdown"][0]["tasks"][0]
+            self.assertEqual(row["reached_reference_runs"], 0)
+            self.assertIsNone(row["mean_tokens_to_reference"])
+            self.assertEqual(row["mean_tokens_after_best"], 300)
+            generated = json.loads(verify_auto_selected(result).read_text())
+            self.assertEqual(generated["stop_loss"]["spd"], {"consecutive_no_gain": 4})
+            self.assertEqual(generated["role_controls"]["executor"]["max_output_tokens"], 1536)
+            self.assertEqual(generated["planner_mode"], "lean")
+            self.assertEqual(result["proposal_attempts"][0]["status"], "evaluated")
 
 
 if __name__ == "__main__":
