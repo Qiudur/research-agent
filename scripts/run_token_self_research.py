@@ -21,6 +21,7 @@ import subprocess
 from threading import local
 from time import monotonic
 from typing import Iterator
+from urllib.parse import urlsplit
 
 import harness
 from evaluation.orchestrate import execute_task
@@ -34,6 +35,20 @@ from .run_token_pilot import (BASE_URL, BUDGET_TOKENS, MAX_OUTPUT_TOKENS, MODEL,
 
 TASKS = ("spd-membership-filter", "tab-german-credit")
 PRICE_NAME = "prices_real_token_test.json"
+
+
+def all_practice_task_ids(source: Path) -> tuple[str, ...]:
+    """Select exactly the five speedup and five tabular practice tasks in bank order."""
+    bank = json.loads((source / "tasks/bank.json").read_text(encoding="utf-8"))
+    task_ids = tuple(entry["task_id"] for entry in bank["tasks"]
+                     if entry["tier"] == "practice")
+    if len(task_ids) != 10 or len(set(task_ids)) != 10:
+        raise ValueError("The practice study requires ten distinct practice tasks")
+    scenarios = [json.loads((source / "tasks" / task_id / "task.json").read_text(encoding="utf-8"))["scenario"]
+                 for task_id in task_ids]
+    if scenarios.count("speedup") != 5 or scenarios.count("tabular") != 5:
+        raise ValueError("The practice study requires five tasks in each scenario")
+    return task_ids
 
 
 def _utc_now() -> str:
@@ -50,7 +65,8 @@ def _sha(path: Path) -> str:
 
 
 def prepare_project(source: Path, campaign: Path, *,
-                    task_ids: tuple[str, ...] = TASKS, proposal_rounds: int = 1) -> Path:
+                    task_ids: tuple[str, ...] = TASKS, proposal_rounds: int = 1,
+                    max_workers: int = 3) -> Path:
     """Copy only practice inputs; never alter the official bank or tasks."""
     source = source.resolve()
     project = campaign / "project"
@@ -59,9 +75,9 @@ def prepare_project(source: Path, campaign: Path, *,
     (project / "tasks").mkdir()
     bank = json.loads((source / "tasks/bank.json").read_text(encoding="utf-8"))
     selected = [entry for entry in bank["tasks"] if entry["task_id"] in task_ids]
-    if (len(task_ids) != 2 or len(set(task_ids)) != 2 or len(selected) != len(task_ids)
+    if (not task_ids or len(set(task_ids)) != len(task_ids) or len(selected) != len(task_ids)
             or any(entry["tier"] != "practice" for entry in selected)):
-        raise ValueError("The token pilot requires two distinct practice tasks")
+        raise ValueError("The token study requires distinct practice tasks only")
     bank["tasks"] = selected
     _write(project / "tasks/bank.json", bank)
     source_tasks = {}
@@ -87,7 +103,7 @@ def prepare_project(source: Path, campaign: Path, *,
         "label": "REAL MODEL DEV; TEST UNIT = ONE REPORTED TOKEN; NOT MONEY",
         "model": MODEL, "tasks": list(task_ids), "proposal_rounds": proposal_rounds,
         "repetitions_per_candidate": 3,
-        "max_workers": 3,
+        "max_workers": max_workers,
         "budget_tokens_per_task": BUDGET_TOKENS,
         "wall_seconds_per_task": wall_seconds_per_task,
         "reserve_tokens_per_call": RESERVE_TOKENS,
@@ -117,8 +133,22 @@ def _project_override(project: Path) -> Iterator[None]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--default-only", action="store_true",
-                        help="Three parallel default repetitions; no proposal or candidate")
+                        help="Three default repetitions; no proposal or candidate")
+    parser.add_argument("--all-practice", action="store_true",
+                        help="Use all ten practice tasks instead of the two-task pilot")
+    parser.add_argument("--base-url",
+                        help="OpenAI-compatible Responses API base URL")
+    parser.add_argument("--workers", type=int, choices=(1, 2, 3), default=3)
     args = parser.parse_args(argv)
+    if args.all_practice and not args.base_url:
+        raise SystemExit("--all-practice requires an explicit --base-url")
+    if args.all_practice and not args.default_only:
+        raise SystemExit("--all-practice currently requires --default-only; do not start automatic proposals")
+    base_url = args.base_url or BASE_URL
+    parsed_url = urlsplit(base_url)
+    if (parsed_url.scheme != "https" or not parsed_url.netloc or parsed_url.username
+            or parsed_url.password or parsed_url.query or parsed_url.fragment):
+        raise SystemExit("--base-url must be an HTTPS URL without credentials or query parameters")
     if not os.environ.get("OPENAI_API_KEY"):
         raise SystemExit("OPENAI_API_KEY must be injected in the process environment")
     if subprocess.check_output(["git", "status", "--porcelain=v1", "--untracked-files=all"],
@@ -126,12 +156,19 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit("Commit source changes before the token self-research pilot")
     code_commit = subprocess.check_output(["git", "rev-parse", "HEAD"],
                                           cwd=PROJECT, text=True).strip()
-    prefix = "token-parallel-default" if args.default_only else "token-self-research"
+    task_ids = all_practice_task_ids(PROJECT) if args.all_practice else TASKS
+    if args.all_practice:
+        prefix = "token-practice10-default" if args.default_only else "token-practice10-self-research"
+    else:
+        prefix = "token-parallel-default" if args.default_only else "token-self-research"
     campaign = PROJECT / "runs" / f"{prefix}-{_stamp()}-{secrets.token_hex(2)}"
     project = prepare_project(PROJECT, campaign,
-                              proposal_rounds=0 if args.default_only else 1)
+                              task_ids=task_ids,
+                              proposal_rounds=0 if args.default_only else 1,
+                              max_workers=args.workers)
     protocol = json.loads((campaign / "protocol.json").read_text(encoding="utf-8"))
     protocol["code_commit"] = code_commit
+    protocol["base_url"] = base_url
     protocol["study_type"] = "parallel_default_benchmark" if args.default_only else "auto_self_research"
     _write(campaign / "protocol.json", protocol)
     from openai import OpenAI
@@ -140,7 +177,7 @@ def main(argv: list[str] | None = None) -> int:
     def task_transport():
         if not hasattr(worker_state, "client"):
             worker_state.client = OpenAI(api_key=os.environ["OPENAI_API_KEY"],
-                                         base_url=BASE_URL, timeout=180.0, max_retries=0)
+                                         base_url=base_url, timeout=180.0, max_retries=0)
         return worker_state.client
 
     def roles_factory(name: str, rep: int, task_id: str, run_dir: Path) -> RoleAgents:
@@ -164,10 +201,10 @@ def main(argv: list[str] | None = None) -> int:
         with _project_override(project):
             common = dict(project_root=project, harness=harness,
                           baseline_solutions={task_id: project / "tasks" / task_id / "workspace/original.py"
-                                              for task_id in TASKS},
+                                              for task_id in task_ids},
                           prices_path=project / "config" / PRICE_NAME, model=MODEL,
                           code_commit=code_commit, test_only_budget=BUDGET_TOKENS,
-                          max_workers=3, roles_factory=roles_factory,
+                          max_workers=args.workers, roles_factory=roles_factory,
                           task_executor=token_execute)
             if args.default_only:
                 result = evaluate_candidates(
@@ -176,7 +213,7 @@ def main(argv: list[str] | None = None) -> int:
                     **common)
             else:
                 proposal_transport = OpenAI(api_key=os.environ["OPENAI_API_KEY"],
-                                            base_url=BASE_URL, timeout=180.0, max_retries=0)
+                                            base_url=base_url, timeout=180.0, max_retries=0)
                 result = auto_evaluate_candidates(
                     study_dir=project / "runs/auto-study",
                     default_config=project / "config/agent_token_pilot_v2.json",
