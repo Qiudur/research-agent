@@ -26,9 +26,11 @@ PRACTICE = ("spd-practice-a", "spd-practice-b")
 class FakeProposalResponses:
     def __init__(self):
         self.calls = 0
+        self.payloads = []
 
     def create(self, **kwargs):
         self.calls += 1
+        self.payloads.append(json.loads(kwargs["input"]))
         assert kwargs["max_output_tokens"] <= 4096
         proposal = {
             "settings": {"plateau_nodes": 4, "explore_every": 3, "query_k": 6,
@@ -242,6 +244,14 @@ class SelfResearchTests(unittest.TestCase):
                 task_executor=self.fake_executor([]),
             )
             self.assertEqual(fake.calls, 3)
+            first_breakdown = fake.payloads[0]["practice_breakdown"]
+            self.assertEqual([row["candidate"] for row in first_breakdown], ["default"])
+            self.assertEqual({task["task_id"] for task in first_breakdown[0]["tasks"]},
+                             set(PRACTICE))
+            self.assertTrue(all(task["runs"] == 3 and task["stop_reasons"] == {"planner": 3}
+                                for task in first_breakdown[0]["tasks"]))
+            self.assertFalse(any("validation" in task["task_id"] or "exam" in task["task_id"]
+                                 for group in first_breakdown for task in group["tasks"]))
             self.assertEqual(result["label"], "TEST ONLY")
             self.assertEqual(result["selection"]["candidate"], "auto-01")
             self.assertEqual(len(result["reports"]), 6)

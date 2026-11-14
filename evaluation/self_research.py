@@ -8,6 +8,7 @@ research budget, but existing positive per-task budgets still apply formally.
 from __future__ import annotations
 
 from copy import deepcopy
+from collections import Counter
 import hashlib
 import json
 import math
@@ -18,7 +19,7 @@ from statistics import mean
 from typing import Any, Callable, Mapping
 
 from library import Library
-from ledger import Usage, price_usage
+from ledger import Ledger, Usage, price_usage
 from research_agent.model import ModelClient
 
 from .batch import _agent_signature, _hash, _json, _run_path, _verify_code_freeze, _within
@@ -39,7 +40,9 @@ _PROPOSAL_PROMPT = (
     "You tune a research agent using practice results only. Propose bounded "
     "settings and short strategy appendices. Preserve all existing role prompt "
     "text. Never request hidden data, validation or exam tasks, price changes, "
-    "bank changes, hard-cap changes, or removal of safety rules."
+    "bank changes, hard-cap changes, or removal of safety rules. Use the "
+    "per-practice-task score, spend, stop reasons and variability to target "
+    "the actual budget losses rather than only the overall average."
 )
 
 
@@ -150,6 +153,52 @@ def verify_selected(study_report: Mapping) -> Path:
         if _hash(path) != file["sha256"]:
             raise ValueError(f"Selected candidate file changed: {path}")
     return Path(descriptor["config"]["path"])
+
+
+def _proposal_practice_breakdown(root: Path, evaluations: Mapping[str, dict],
+                                 ranking: list[dict]) -> list[dict]:
+    """Summarize only already-scored practice runs for bounded proposal input."""
+    breakdown = []
+    recent = ranking if len(ranking) <= 3 else [ranking[0], *ranking[-2:]]
+    for candidate in recent:
+        name = candidate["candidate"]
+        by_task: dict[str, list[dict]] = {}
+        for report in evaluations[name]["reports"]:
+            run_dir = root / "runs" / report["run_id"]
+            for task in report["tasks"]:
+                events = Ledger.open(run_dir, task["task_id"])._events()
+                stops = [event for event in events if event["kind"] == "stop"]
+                starts = [event for event in events if event["kind"] == "task_start"]
+                if len(stops) != 1 or len(starts) != 1:
+                    raise ValueError("Practice task lacks one start and stop event")
+                by_task.setdefault(task["task_id"], []).append({
+                    "score": float(task["holdout_score"]),
+                    "cost": float(task["total_cost"]),
+                    "experiments": int(task["experiments"]),
+                    "stop": stops[0]["reason"],
+                    "budget": float(starts[0]["budget"]),
+                    "baseline_best": task["best_node"] == "n0000",
+                    "cost_by_role": task["cost_by_role"],
+                })
+        tasks = []
+        for task_id, rows in sorted(by_task.items()):
+            tasks.append({
+                "task_id": task_id, "runs": len(rows),
+                "budget": rows[0]["budget"],
+                "mean_holdout_score": mean(row["score"] for row in rows),
+                "holdout_score_range": [min(row["score"] for row in rows),
+                                           max(row["score"] for row in rows)],
+                "mean_cost": mean(row["cost"] for row in rows),
+                "cost_range": [min(row["cost"] for row in rows),
+                               max(row["cost"] for row in rows)],
+                "mean_experiments": mean(row["experiments"] for row in rows),
+                "stop_reasons": dict(sorted(Counter(row["stop"] for row in rows).items())),
+                "baseline_best_runs": sum(row["baseline_best"] for row in rows),
+                "mean_cost_by_role": {role: mean(row["cost_by_role"].get(role, 0.0)
+                                                 for row in rows) for role in _ROLES},
+            })
+        breakdown.append({"candidate": name, "tasks": tasks})
+    return breakdown
 
 
 def _validate_proposal(data: dict, base_config: dict) -> tuple[dict, dict, str]:
@@ -470,6 +519,7 @@ def auto_evaluate_candidates(
                                  ("effort", "plateau_nodes", "explore_every",
                                   "query_k", "behind_schedule")},
             "prior_results": ranking,
+            "practice_breakdown": _proposal_practice_breakdown(root, evaluations, ranking),
             "instruction": "Improve average practice score per recorded currency unit",
         }
         try:
