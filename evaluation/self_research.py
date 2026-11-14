@@ -29,6 +29,7 @@ from .batch import (_SerializedHarness, _agent_signature, _hash, _json, _run_pat
                     _verify_code_freeze, _within)
 from .finalize import finish_run, start_run
 from .manifest import create_manifest
+from .metrics import task_metrics
 from .orchestrate import execute_task
 from .proposal import ProposalLedger
 from .report import run_report
@@ -51,13 +52,52 @@ _PROPOSAL_PROMPT = (
     "Do not discuss evaluation setup, access to other data, protected files, "
     "or rule changes in any generated text. Use per-task scores, costs, stop "
     "reasons and variability to target observed losses. Preserve the original "
-    "prompts and safety rules."
+    "prompts and safety rules. Settings state the complete target "
+    "configuration; default_settings shows the current values. Reasoning "
+    "effort has little effect on this model, so prefer the cost levers: "
+    "stop_loss ends a task early (tab: stop after the first N completed "
+    "experiments when none was accepted, N 1-4; spd: stop after K completed "
+    "experiments in a row without an accepted one, K 2-8), hypotheses_per_plan "
+    "caps the ideas per planning call (2-8), planner_mode lean shortens "
+    "planning, role_controls can switch thinking off for a role and cap its "
+    "max_output_tokens (512-2048), cost_priors seeds per-experiment token "
+    "estimates (500-12000), library_brief limits ability-brief credibility "
+    "(0.3-0.9) and length (100-600 characters), failure_feedback and "
+    "ceiling_excludes_baseline are switches, and experience_writer chooses "
+    "model or script. A value of 0 (or unchanged for thinking) leaves that "
+    "optional setting unset; only use a lever when practice results show a "
+    "loss it can reduce."
 )
+
+# Inclusive bounds of every tunable number. The optional levers (everything but
+# the first three) additionally accept 0, and thinking accepts "unchanged",
+# meaning the setting is not set.
+_BOUNDS = {
+    "plateau_nodes": (2, 12), "explore_every": (2, 8), "query_k": (1, 12),
+    "first_n_no_gain": (1, 4), "consecutive_no_gain": (2, 8),
+    "hypotheses_per_plan": (2, 8), "max_output_tokens": (512, 2048),
+    "cost_prior": (500, 12000), "min_credibility": (0.3, 0.9), "max_chars": (100, 600),
+}
+_LEGACY_KEYS = ("plateau_nodes", "explore_every", "query_k", "behind_schedule", "effort")
+_NEW_KEYS = ("stop_loss", "ceiling_excludes_baseline", "planner_mode", "hypotheses_per_plan",
+             "failure_feedback", "cost_priors", "role_controls", "experience_writer",
+             "library_brief")
+_PLANNER_MODES = ("standard", "lean")
+_EXPERIENCE_WRITERS = ("model", "script")
+_THINKING = ("unchanged", "on", "off")
+# Value a new key has when an older agent/1 config does not mention it.
+_NEW_DEFAULTS = {"ceiling_excludes_baseline": False, "planner_mode": "standard",
+                 "failure_feedback": False, "experience_writer": "model"}
 
 
 def _object(properties: dict) -> dict:
     return {"type": "object", "properties": properties,
             "required": list(properties), "additionalProperties": False}
+
+
+def _optional(kind: str, key: str) -> dict:
+    low, high = _BOUNDS[key]
+    return {"type": kind, "description": f"0 leaves this unset; otherwise {low} to {high}"}
 
 
 _PROPOSAL_SCHEMA = _object({
@@ -69,6 +109,23 @@ _PROPOSAL_SCHEMA = _object({
                                     "progress_ratio": {"type": "number"}}),
         "effort": _object({role: {"type": "string", "enum": ["low", "medium", "high"]}
                            for role in _ROLES}),
+        "stop_loss": _object({
+            "tab": _object({"first_n_no_gain": _optional("integer", "first_n_no_gain")}),
+            "spd": _object({"consecutive_no_gain": _optional("integer", "consecutive_no_gain")}),
+        }),
+        "ceiling_excludes_baseline": {"type": "boolean"},
+        "planner_mode": {"type": "string", "enum": list(_PLANNER_MODES)},
+        "hypotheses_per_plan": _optional("integer", "hypotheses_per_plan"),
+        "failure_feedback": {"type": "boolean"},
+        "cost_priors": _object({"spd": _optional("integer", "cost_prior"),
+                                "tab": _optional("integer", "cost_prior")}),
+        "role_controls": _object({role: _object({
+            "thinking": {"type": "string", "enum": list(_THINKING)},
+            "max_output_tokens": _optional("integer", "max_output_tokens"),
+        }) for role in _ROLES}),
+        "experience_writer": {"type": "string", "enum": list(_EXPERIENCE_WRITERS)},
+        "library_brief": _object({"min_credibility": _optional("number", "min_credibility"),
+                                  "max_chars": _optional("integer", "max_chars")}),
     }),
     "prompt_append": _object({role: {"type": "string",
                                     "description": "Positive task strategy, under 160 characters; no evaluation or access discussion"}
@@ -183,7 +240,10 @@ def _proposal_practice_breakdown(root: Path, evaluations: Mapping[str, dict],
                 starts = [event for event in events if event["kind"] == "task_start"]
                 if len(stops) != 1 or len(starts) != 1:
                     raise ValueError("Practice task lacks one start and stop event")
+                efficiency = task_metrics(run_dir / "tasks" / task["task_id"])
                 by_task.setdefault(task["task_id"], []).append({
+                    "tokens_to_reference": efficiency["tokens_to_reference"],
+                    "tokens_after_best": efficiency["tokens_after_best"],
                     "score": float(task["holdout_score"]),
                     "cost": float(task["total_cost"]),
                     "experiments": int(task["experiments"]),
@@ -194,7 +254,14 @@ def _proposal_practice_breakdown(root: Path, evaluations: Mapping[str, dict],
                 })
         tasks = []
         for task_id, rows in sorted(by_task.items()):
+            reached = [row["tokens_to_reference"] for row in rows
+                       if row["tokens_to_reference"] is not None]
+            after_best = [row["tokens_after_best"] for row in rows
+                          if row["tokens_after_best"] is not None]
             tasks.append({
+                "reached_reference_runs": len(reached),
+                "mean_tokens_to_reference": mean(reached) if reached else None,
+                "mean_tokens_after_best": mean(after_best) if after_best else None,
                 "task_id": task_id, "runs": len(rows),
                 "budget": rows[0]["budget"],
                 "mean_holdout_score": mean(row["score"] for row in rows),
@@ -213,18 +280,123 @@ def _proposal_practice_breakdown(root: Path, evaluations: Mapping[str, dict],
     return breakdown
 
 
+def _effective_settings(config: Mapping) -> dict:
+    """Every tunable setting of an agent/1 config in the proposal's own shape.
+
+    Keys an older config does not mention take their old behavior; optional
+    settings that are absent read as 0 / "unchanged", the proposal's way of
+    saying "not set". New keys default to the old behavior, so older configs
+    and older five-key proposals keep working.
+    """
+    stop = config.get("stop_loss") or {}
+    priors = config.get("cost_priors") or {}
+    controls = config.get("role_controls") or {}
+    brief = config.get("library_brief") or {}
+
+    def thinking(role: str) -> str:
+        value = (controls.get(role) or {}).get("thinking")
+        return "unchanged" if value is None else ("on" if value else "off")
+
+    return {
+        **{key: deepcopy(config[key]) for key in _LEGACY_KEYS},
+        "stop_loss": {
+            "tab": {"first_n_no_gain": int((stop.get("tab") or {}).get("first_n_no_gain", 0) or 0)},
+            "spd": {"consecutive_no_gain": int((stop.get("spd") or {}).get("consecutive_no_gain", 0) or 0)}},
+        "ceiling_excludes_baseline": bool(config.get(
+            "ceiling_excludes_baseline", _NEW_DEFAULTS["ceiling_excludes_baseline"])),
+        "planner_mode": config.get("planner_mode", _NEW_DEFAULTS["planner_mode"]),
+        "hypotheses_per_plan": int(config.get("hypotheses_per_plan", 0) or 0),
+        "failure_feedback": bool(config.get("failure_feedback", _NEW_DEFAULTS["failure_feedback"])),
+        "cost_priors": {"spd": int(priors.get("spd", 0) or 0), "tab": int(priors.get("tab", 0) or 0)},
+        "role_controls": {role: {
+            "thinking": thinking(role),
+            "max_output_tokens": int((controls.get(role) or {}).get("max_output_tokens", 0) or 0)}
+            for role in _ROLES},
+        "experience_writer": config.get("experience_writer", _NEW_DEFAULTS["experience_writer"]),
+        "library_brief": {"min_credibility": float(brief.get("min_credibility", 0.0) or 0.0),
+                          "max_chars": int(brief.get("max_chars", 0) or 0)},
+    }
+
+
+def _exact_keys(value: Any, keys: set, name: str) -> dict:
+    if not isinstance(value, dict) or set(value) != keys:
+        raise ValueError(f"Proposal {name} has unauthorized or missing fields")
+    return value
+
+
+def _bounded_int(value: Any, key: str, name: str, *, optional: bool = False) -> int:
+    lower, upper = _BOUNDS[key]
+    if type(value) is not int or not (lower <= value <= upper or (optional and value == 0)):
+        raise ValueError(f"Proposal {name} is outside allowed bounds")
+    return value
+
+
+def _checked_bool(value: Any, name: str) -> bool:
+    if type(value) is not bool:
+        raise ValueError(f"Proposal {name} must be true or false")
+    return value
+
+
+def _checked_choice(value: Any, choices: tuple, name: str) -> str:
+    if not isinstance(value, str) or value not in choices:
+        raise ValueError(f"Proposal {name} is not an allowed choice")
+    return value
+
+
+def _validate_new_settings(settings: dict) -> None:
+    """Bounds of the optional levers; each present key must be complete."""
+    if "stop_loss" in settings:
+        stop = _exact_keys(settings["stop_loss"], {"tab", "spd"}, "stop_loss")
+        _bounded_int(_exact_keys(stop["tab"], {"first_n_no_gain"}, "stop_loss.tab")["first_n_no_gain"],
+                     "first_n_no_gain", "stop_loss.tab.first_n_no_gain", optional=True)
+        _bounded_int(_exact_keys(stop["spd"], {"consecutive_no_gain"}, "stop_loss.spd")["consecutive_no_gain"],
+                     "consecutive_no_gain", "stop_loss.spd.consecutive_no_gain", optional=True)
+    if "ceiling_excludes_baseline" in settings:
+        _checked_bool(settings["ceiling_excludes_baseline"], "ceiling_excludes_baseline")
+    if "planner_mode" in settings:
+        _checked_choice(settings["planner_mode"], _PLANNER_MODES, "planner_mode")
+    if "hypotheses_per_plan" in settings:
+        _bounded_int(settings["hypotheses_per_plan"], "hypotheses_per_plan",
+                     "hypotheses_per_plan", optional=True)
+    if "failure_feedback" in settings:
+        _checked_bool(settings["failure_feedback"], "failure_feedback")
+    if "cost_priors" in settings:
+        priors = _exact_keys(settings["cost_priors"], {"spd", "tab"}, "cost_priors")
+        for scenario in ("spd", "tab"):
+            _bounded_int(priors[scenario], "cost_prior", f"cost_priors.{scenario}", optional=True)
+    if "role_controls" in settings:
+        controls = _exact_keys(settings["role_controls"], set(_ROLES), "role_controls")
+        for role in _ROLES:
+            control = _exact_keys(controls[role], {"thinking", "max_output_tokens"},
+                                  f"role_controls.{role}")
+            _checked_choice(control["thinking"], _THINKING, f"role_controls.{role}.thinking")
+            _bounded_int(control["max_output_tokens"], "max_output_tokens",
+                         f"role_controls.{role}.max_output_tokens", optional=True)
+    if "experience_writer" in settings:
+        _checked_choice(settings["experience_writer"], _EXPERIENCE_WRITERS, "experience_writer")
+    if "library_brief" in settings:
+        brief = _exact_keys(settings["library_brief"], {"min_credibility", "max_chars"}, "library_brief")
+        credibility, (lower, upper) = brief["min_credibility"], _BOUNDS["min_credibility"]
+        if (isinstance(credibility, bool) or not isinstance(credibility, (int, float))
+                or not math.isfinite(credibility) or not (credibility == 0 or lower <= credibility <= upper)):
+            raise ValueError("Proposal library_brief.min_credibility is outside allowed bounds")
+        _bounded_int(brief["max_chars"], "max_chars", "library_brief.max_chars", optional=True)
+
+
 def _validate_proposal(data: dict, base_config: dict) -> tuple[dict, dict, str]:
+    """Check a proposal and return its complete settings (unset new keys = base)."""
     if not isinstance(data, dict) or set(data) != {"settings", "prompt_append", "rationale"}:
         raise ValueError("Proposal must contain only settings, prompt_append and rationale")
     settings, notes, rationale = data["settings"], data["prompt_append"], data["rationale"]
-    if not isinstance(settings, dict) or set(settings) != {
-            "plateau_nodes", "explore_every", "query_k", "behind_schedule", "effort"}:
+    if (not isinstance(settings, dict) or not set(_LEGACY_KEYS) <= set(settings)
+            or set(settings) - set(_LEGACY_KEYS) - set(_NEW_KEYS)):
         raise ValueError("Proposal settings have unauthorized fields")
-    for key, lower, upper in (("plateau_nodes", 2, 12), ("explore_every", 2, 8),
-                              ("query_k", 1, 12)):
+    for key in ("plateau_nodes", "explore_every", "query_k"):
         value = settings[key]
+        lower, upper = _BOUNDS[key]
         if type(value) is not int or not lower <= value <= upper:
             raise ValueError(f"Proposal {key} is outside allowed bounds")
+    _validate_new_settings(settings)
     behind = settings["behind_schedule"]
     if not isinstance(behind, dict) or set(behind) != {"spent_ratio", "progress_ratio"}:
         raise ValueError("Proposal behind_schedule has unauthorized fields")
@@ -244,10 +416,57 @@ def _validate_proposal(data: dict, base_config: dict) -> tuple[dict, dict, str]:
             raise ValueError(f"Unsafe or oversized strategy appendix for {role}")
     if not isinstance(rationale, str) or len(rationale) > 500 or chr(0) in rationale:
         raise ValueError("Proposal rationale is invalid")
-    if all(settings[key] == base_config[key] for key in
-           ("plateau_nodes", "explore_every", "query_k", "behind_schedule", "effort")) and not any(notes.values()):
+    effective = _effective_settings(base_config)
+    complete = {**effective, **deepcopy(settings)}  # a legacy proposal leaves new keys unchanged
+    if complete == effective and not any(notes.values()):
         raise ValueError("Proposal is a no-op")
-    return settings, notes, rationale
+    return complete, notes, rationale
+
+
+def _set_or_drop(config: dict, key: str, value: Any) -> None:
+    """Store a non-empty optional setting; an empty one removes the key (old behavior)."""
+    if value:
+        config[key] = value
+    else:
+        config.pop(key, None)
+
+
+def _apply_new_settings(generated: dict, settings: dict, effective: dict) -> None:
+    """Write only the new keys the proposal changes, in agent/1 config shape.
+
+    Unset optional values (0 / "unchanged") are never written, so a candidate
+    that does not use a lever stays byte-compatible with configs that predate it.
+    """
+    for key in ("ceiling_excludes_baseline", "planner_mode", "failure_feedback",
+                "experience_writer"):
+        if settings[key] != effective[key]:
+            generated[key] = settings[key]
+    if settings["hypotheses_per_plan"] != effective["hypotheses_per_plan"]:
+        _set_or_drop(generated, "hypotheses_per_plan", settings["hypotheses_per_plan"])
+    if settings["stop_loss"] != effective["stop_loss"]:
+        stop = {}
+        if settings["stop_loss"]["tab"]["first_n_no_gain"]:
+            stop["tab"] = {"first_n_no_gain": settings["stop_loss"]["tab"]["first_n_no_gain"]}
+        if settings["stop_loss"]["spd"]["consecutive_no_gain"]:
+            stop["spd"] = {"consecutive_no_gain": settings["stop_loss"]["spd"]["consecutive_no_gain"]}
+        _set_or_drop(generated, "stop_loss", stop)
+    if settings["cost_priors"] != effective["cost_priors"]:
+        _set_or_drop(generated, "cost_priors",
+                     {name: value for name, value in settings["cost_priors"].items() if value})
+    if settings["role_controls"] != effective["role_controls"]:
+        controls = {}
+        for role, control in settings["role_controls"].items():
+            entry = {}
+            if control["thinking"] != "unchanged":
+                entry["thinking"] = control["thinking"] == "on"
+            if control["max_output_tokens"]:
+                entry["max_output_tokens"] = control["max_output_tokens"]
+            if entry:
+                controls[role] = entry
+        _set_or_drop(generated, "role_controls", controls)
+    if settings["library_brief"] != effective["library_brief"]:
+        _set_or_drop(generated, "library_brief",
+                     {name: value for name, value in settings["library_brief"].items() if value})
 
 
 def _materialize_proposal(root: Path, study_dir: Path, round_number: int,
@@ -255,8 +474,9 @@ def _materialize_proposal(root: Path, study_dir: Path, round_number: int,
     base = _json(base_path)
     settings, notes, _ = _validate_proposal(data, base)
     generated = deepcopy(base)
-    for key, value in settings.items():
-        generated[key] = value
+    for key in _LEGACY_KEYS:
+        generated[key] = settings[key]
+    _apply_new_settings(generated, settings, _effective_settings(base))
     directory = study_dir / "candidates" / f"auto-{round_number:02d}"
     directory.mkdir(parents=True, exist_ok=False)
     for role in _ROLES:
@@ -572,9 +792,7 @@ def auto_evaluate_candidates(
         response = None
         payload = {
             "practice_tasks": practice,
-            "default_settings": {key: _json(default_config)[key] for key in
-                                 ("effort", "plateau_nodes", "explore_every",
-                                  "query_k", "behind_schedule")},
+            "default_settings": _effective_settings(_json(default_config)),
             "prior_results": ranking,
             "practice_breakdown": _proposal_practice_breakdown(root, evaluations, ranking),
             "instruction": "Improve average practice score per recorded currency unit",
