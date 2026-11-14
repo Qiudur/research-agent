@@ -3,15 +3,24 @@
 The report changes only when a non-report commit reaches HEAD. This makes an
 hourly scheduled run cheap and prevents report-only commits from feeding back
 into the next report.
+
+Optional formal input: --formal-batch-dir with --auto-study-dir audits a
+finished formal batch read-only (scripts/audit_formal_outputs.py), writes the
+condensed evidence to docs/evidence/formal-batch-roadshow.json and shows real
+scores, four-bucket tokens, admission, exam line count, commit and config SHA.
+A running batch keeps the pending wording; a failed audit writes nothing.
+Later runs without these options read the committed evidence file.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import html
 import json
 import re
 import subprocess
+import sys
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
@@ -23,6 +32,15 @@ ROOT = Path(__file__).resolve().parents[1]
 REPORT = "docs/路演汇报.html"
 SOURCE_HEAD = re.compile(r"<!-- source-head: ([0-9a-f]{40}) -->")
 EXCLUDE_REPORT = ":(exclude)" + REPORT
+FORMAL_EVIDENCE = "docs/evidence/formal-batch-roadshow.json"
+FORMAL_SCHEMA = "roadshow_formal/1"
+PHASE_NAMES = {"validation": "验证", "exam": "考试"}
+CONFIG_NAMES = {"naive": "朴素版", "default": "默认设置／空库",
+                "default_lib": "默认设置／练过的库", "tuned_lib": "研究版／练过的库"}
+COMPARISON_NAMES = {"default_vs_naive": "默认 vs 朴素", "default_lib_vs_default": "练过的库 vs 空库",
+                    "tuned_lib_vs_default_lib": "研究版 vs 练过的库"}
+CLAIM_NAMES = {"better": "有明确优势", "no_clear_difference": "无明确差异"}
+ADMISSION_NAMES = {"admitted": "已准入", "rejected": "未准入"}
 
 
 def git(repo: Path, *args: str, check: bool = True) -> str:
@@ -152,7 +170,187 @@ def calibration_evidence(repo: Path) -> str:
             f"校准 holdout 0。完整审计：{audit_path}。不是现金价格或正式考试成绩。")
 
 
-def evidence(repo: Path) -> dict[str, str]:
+class FormalAuditError(ValueError):
+    """A finished formal batch exists but its saved outputs fail the read-only audit."""
+
+
+def load_formal_evidence(batch_dir: Path, auto_study_dir: Path) -> dict | None:
+    """Audit a finished formal batch and condense it for the roadshow page.
+
+    Returns None while batch_report.json is absent (the batch is still running).
+    Raises FormalAuditError when scripts/audit_formal_outputs.py rejects any
+    saved report, ledger, marker or sealed input; callers then render nothing.
+    """
+    batch_dir = Path(batch_dir).expanduser().resolve()
+    auto_study_dir = Path(auto_study_dir).expanduser().resolve()
+    if not (batch_dir / "batch_report.json").is_file():
+        return None
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from scripts.audit_formal_outputs import audit_formal_outputs
+    from scripts.summarize_formal_batch import BUCKETS, summarize
+
+    try:
+        audit = audit_formal_outputs(batch_dir, auto_study_dir)
+        summary = summarize(batch_dir, research_cost=float(audit["total_research_cost"]))
+        project = batch_dir.parent.parent
+        batch_path = batch_dir / "batch_report.json"
+        batch = json.loads(batch_path.read_text(encoding="utf-8"))
+        config_sha: dict[str, str] = {}
+        price_sha: set[str] = set()
+        for row in batch["runs"]:
+            manifest = json.loads((project / "runs" / row["run_id"] / "manifest.json")
+                                  .read_text(encoding="utf-8"))
+            sha = manifest["agent_config"]["sha256"]
+            if config_sha.setdefault(row["config"], sha) != sha:
+                raise ValueError(f"Configuration changed between runs: {row['config']}")
+            price_sha.add(manifest["prices"]["sha256"])
+        if len(price_sha) != 1:
+            raise ValueError("Batch runs used different price tables")
+        admitted = audit["admission"] == "admitted"
+        phases = {}
+        for phase in ("validation", "exam"):
+            rows = {}
+            for config, item in summary["config_summary"][phase].items():
+                if phase == "exam" and config == "tuned_lib" and not admitted:
+                    continue
+                buckets = {key: 0 for key in BUCKETS}
+                for run in summary["runs"]:
+                    if run["phase"] == phase and run["config"] == config:
+                        for key in BUCKETS:
+                            buckets[key] += int(run["buckets"][key])
+                rows[config] = {"scores": item["scores"], "score_mean": item["score_mean"],
+                                "tokens_mean": item["tokens_mean"], "tokens_sum": item["tokens_sum"],
+                                "buckets": buckets}
+            phases[phase] = rows
+        kept = ("available", "claim", "mean_score_gap", "paired_differences", "within_config_noise",
+                "baseline_mean_cost", "candidate_mean_cost", "mean_cost_change_pct", "reason")
+        comparisons = {key: {name: item[name] for name in kept if name in item}
+                       for key, item in summary["exam"]["comparisons"].items()}
+        admission = summary["validation"]["admission"]
+        evidence = {
+            "schema": FORMAL_SCHEMA, "label": "FORMAL", "currency": "TOKENS",
+            "bank_version": audit["bank_version"], "code_commit": audit["code_commit"],
+            "prices_sha256": price_sha.pop(), "config_sha256": config_sha,
+            "selected_config_sha256": audit["selected_config_sha256"],
+            "batch_report_sha256": hashlib.sha256(batch_path.read_bytes()).hexdigest(),
+            "audit": {key: audit[key] for key in (
+                "ready", "task_budget", "batch_runs", "phase_runs", "study_runs",
+                "study_task_cost", "proposal_cost", "total_research_cost", "admission",
+                "over_budget_tasks")},
+            "admission": {"claim": admission["claim"],
+                          "score_not_lower_each_rep": admission["score_not_lower_each_rep"],
+                          "cost_reduced_on_average": admission["cost_reduced_on_average"],
+                          "pairs": summary["validation"]["pairs"]},
+            "phases": phases, "comparisons": comparisons,
+            "breakeven": (summary["breakeven"] if admitted else
+                          {"computed": False, "reasons": ["研究版未通过验证准入，未参加考试"]}),
+            "warnings": summary["warnings"],
+        }
+    except (ValueError, KeyError, TypeError, OSError) as exc:
+        raise FormalAuditError(str(exc)) from exc
+    if not formal_evidence_ok(evidence):
+        raise FormalAuditError("Audited batch could not be condensed into roadshow evidence")
+    return evidence
+
+
+def formal_evidence_ok(data: object) -> bool:
+    """Accept only audited, internally consistent FORMAL TOKENS evidence."""
+    try:
+        admitted = data["admission"]["claim"] == "admitted"
+        return (data["schema"] == FORMAL_SCHEMA and data["label"] == "FORMAL"
+                and data["currency"] == "TOKENS" and data["audit"]["ready"] is True
+                and data["admission"]["claim"] in ADMISSION_NAMES
+                and data["audit"]["admission"] == data["admission"]["claim"]
+                and re.fullmatch(r"[0-9a-f]{40}", data["code_commit"]) is not None
+                and bool(data["phases"]["validation"])
+                and set(data["phases"]["exam"]) == set(CONFIG_NAMES if admitted else
+                                                       ("naive", "default", "default_lib"))
+                and data["audit"]["phase_runs"]["exam"] == (12 if admitted else 9))
+    except (KeyError, TypeError):
+        return False
+
+
+def committed_formal(repo: Path) -> dict | None:
+    try:
+        data = json.loads(committed_text(repo, FORMAL_EVIDENCE))
+    except ValueError:
+        return None
+    return data if formal_evidence_ok(data) else None
+
+
+def formal_results(data: dict | None) -> str:
+    """HTML for audited formal evidence; empty unless the evidence is complete and usable."""
+    if data is None or not formal_evidence_ok(data):
+        return ""
+    try:
+        admitted = data["admission"]["claim"] == "admitted"
+        audit, runs, sha = data["audit"], data["audit"]["phase_runs"], data["config_sha256"]
+        rows = []
+        for phase in ("validation", "exam"):
+            for config, item in data["phases"][phase].items():
+                buckets = item["buckets"]
+                scores = " / ".join(f"{float(value):.4f}" for value in item["scores"])
+                rows.append(
+                    f"<tr><td>{PHASE_NAMES[phase]}</td><td>{safe(CONFIG_NAMES[config])}</td>"
+                    f"<td>{float(item['score_mean']):.4f}</td><td>{safe(scores)}</td>"
+                    f"<td>{float(item['tokens_mean']):,.0f}</td>"
+                    f"<td>{int(buckets['input']):,} / {int(buckets['cached_input']):,} / "
+                    f"{int(buckets['output']):,} / {int(buckets['reasoning']):,}</td></tr>")
+        lines = [
+            f"独立审计通过（scripts/audit_formal_outputs.py）：{safe(data['bank_version'])}，"
+            f"代码提交 {safe(data['code_commit'][:12])}，共 {int(audit['batch_runs'])} 个 run"
+            f"（练习 {int(runs['practice'])} / 验证 {int(runs['validation'])} / 考试 {int(runs['exam'])}），"
+            f"单题上限 {int(audit['task_budget']):,} token，超限 {int(audit['over_budget_tasks'])} 题。",
+            f"配置 SHA-256：朴素版 {safe(sha['naive'][:12])}…；默认设置 {safe(sha['default'][:12])}…；"
+            f"研究版 {safe(data['selected_config_sha256'][:12])}…；价目表 {safe(data['prices_sha256'][:12])}…。",
+            f"验证准入：{ADMISSION_NAMES[data['admission']['claim']]}（三遍分数均不低于练过的库："
+            f"{'是' if data['admission']['score_not_lower_each_rep'] else '否'}；平均 token 更低："
+            f"{'是' if data['admission']['cost_reduced_on_average'] else '否'}）；"
+            f"考试 {len(data['phases']['exam'])} 条线各三遍。",
+        ]
+        if not admitted:
+            lines.append("研究版未通过准入、未参加考试：不展示研究版考试成绩，也不计算回本点。")
+        for key, name in COMPARISON_NAMES.items():
+            if key == "tuned_lib_vs_default_lib" and not admitted:
+                continue
+            comparison = data["comparisons"][key]
+            if not comparison.get("available"):
+                lines.append(f"考试 {name}：未比较（{safe(comparison.get('reason', ''))}）。")
+                continue
+            change = comparison.get("mean_cost_change_pct")
+            lines.append(
+                f"考试 {name}：{safe(CLAIM_NAMES.get(comparison['claim'], comparison['claim']))}；"
+                f"三遍平均分差 {float(comparison['mean_score_gap']):+.4f}；"
+                + (f"每遍平均 token 变化 {float(change):+.1f}%。" if change is not None
+                   else "每遍平均 token 变化未计算。"))
+        if admitted:
+            breakeven = data["breakeven"]
+            if breakeven.get("computed"):
+                lines.append(
+                    f"研究版数学回本点 {int(breakeven['breakeven_tasks'])} 题"
+                    f"（研究总成本 {float(breakeven['research_cost_tokens']):,.0f} token，"
+                    f"考试每题平均少用 {float(breakeven['savings_per_task_tokens']):,.1f} token）。")
+            else:
+                lines.append("研究版回本点：不计算（"
+                             + safe("；".join(map(str, breakeven.get("reasons", [])))) + "）。")
+        lines.append(f"自研究总成本 {float(audit['total_research_cost']):,.0f} token"
+                     f"（{int(audit['study_runs'])} 次练习运行加提案调用）。")
+        if data.get("warnings"):
+            lines.append(f"汇总含 {len(data['warnings'])} 条数据提醒，对外引用前请先核对。")
+    except (KeyError, TypeError, ValueError, AttributeError):
+        return ""
+    return (
+        '<div class="card"><div class="label">正式批次结果 · 已通过独立审计</div>'
+        '<table class="results"><thead><tr><th>阶段</th><th>配置</th><th>三遍平均归一化分数</th>'
+        '<th>各遍分数</th><th>每遍平均 token</th><th>四桶合计（三遍）input / cached / output / reasoning</th>'
+        '</tr></thead><tbody>' + "".join(rows) + '</tbody></table>'
+        + "".join(f'<p class="small">{line}</p>' for line in lines)
+        + '<p class="small">全部成本为内部 TOKENS，不是现金价格或官方比赛成绩。来源：'
+        + safe(FORMAL_EVIDENCE) + '（生成时从已保存批次输出只读审计并汇总）。</p></div>')
+
+
+def evidence(repo: Path, formal: dict | None = None) -> dict[str, str]:
     readme = committed_text(repo, "README.md")
     concurrency = committed_text(repo, "docs/真实模型并发基准.md")
     study = section(committed_text(repo, "docs/真实模型自研究试验.md"), "第二轮：逐题证据提案")
@@ -235,13 +433,18 @@ def evidence(repo: Path) -> dict[str, str]:
         )
     else:
         accounting_notice = "TEST 联调不能代表真实模型成本、现金价格或官方成绩。"
-    if v2_pending:
+    results = formal_results(formal if formal is not None else committed_formal(repo))
+    if results:
+        pass  # committed formal results replace the pending wording
+    elif v2_pending:
         accounting_notice += "v2 自研究、验证与考试数字均待对应真实账本审计后填入。"
     elif formal_pending:
         accounting_notice += "验证与考试数字待对应真实账本审计后填入。"
     return {
         "intro": project_intro,
-        "status": ("内部 token v2 练习研究进行中 · 验证／考试待真实账本" if v2_pending else
+        "formal_results": results,
+        "status": ("内部 token 正式批次已完成 · 独立审计通过" if results else
+                   "内部 token v2 练习研究进行中 · 验证／考试待真实账本" if v2_pending else
                    "题库已冻结 · 正式四线待运行" if calibration and formal_pending else
                    "DEV / TEST ONLY · 正式四线比较未执行" if formal_pending else
                    "阶段状态请以 README 为准"),
@@ -306,6 +509,10 @@ HTML = Template("""<!doctype html>
     .nav { position: fixed; z-index: 20; right: 22px; top: 50%; transform: translateY(-50%); display: grid; gap: 12px; }
     .nav a { display: block; width: 12px; height: 12px; border: 1px solid var(--muted); border-radius: 50%; background: #ffffff20; }
     .nav a:hover, .nav a:focus { background: var(--cyan); }
+    .results { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: clamp(14px, 1.3vw, 18px); }
+    .results th, .results td { padding: .45em .7em; border-bottom: 1px solid var(--line); text-align: right; }
+    .results th:first-child, .results td:first-child, .results th:nth-child(2), .results td:nth-child(2) { text-align: left; }
+    .results th { color: var(--muted); font-weight: 700; }
     details { color: var(--muted); font-size: 15px; }
     details summary { cursor: pointer; color: var(--cyan); }
     .files { columns: 2; max-height: 28vh; overflow: auto; padding-left: 20px; overflow-wrap: anywhere; }
@@ -340,6 +547,7 @@ HTML = Template("""<!doctype html>
       <article class="card"><div class="label">跨题迁移复评</div><span class="metric amber">$transfer_score</span><p>归一化分数变化，但每遍 token 变化 $transfer_tokens；结果仍属于 dev，不能证明正式准入。</p><p class="small"><a href="真实模型迁移复评.md">查看迁移记录 ↗</a></p></article>
     </div>
     $calibration_notice
+    $formal_results
     <p class="notice">$accounting_notice</p>
   </div><div class="footer"><span>数值从仓库已提交证据文档提取</span><span>03 / 05</span></div></section>
   <section class="slide" id="changes"><div class="inner">
@@ -369,8 +577,9 @@ HTML = Template("""<!doctype html>
 """)
 
 
-def build(repo: Path, head: str, commits: list[tuple[str, str, str]], files: list[str], label: str) -> str:
-    facts = evidence(repo)
+def build(repo: Path, head: str, commits: list[tuple[str, str, str]], files: list[str], label: str,
+          formal: dict | None = None) -> str:
+    facts = evidence(repo, formal)
     categories = Counter(category(path) for path in files)
     category_html = "".join(f"<span>{safe(name)} · {count}</span>" for name, count in categories.most_common())
     file_html = "".join(f"<li>{safe(path)}</li>" for path in files)
@@ -396,13 +605,13 @@ def build(repo: Path, head: str, commits: list[tuple[str, str, str]], files: lis
         transfer_score=safe(facts["transfer_score"]), transfer_tokens=safe(facts["transfer_tokens"]),
         limits=safe(facts["limits"]), next_items=next_html,
         accounting_notice=safe(facts["accounting_notice"]),
-        calibration_notice=calibration_html,
+        calibration_notice=calibration_html, formal_results=facts["formal_results"],
         period_commits=len(commits), file_count=len(files), period_label=safe(label),
         categories=category_html, files=file_html, commit_items=commit_html,
     )
 
 
-def generate(repo: Path, output: Path) -> bool:
+def generate(repo: Path, output: Path, formal: dict | None = None) -> bool:
     head = git(repo, "rev-parse", "HEAD")
     older = previous_head(output)
     if older and is_ancestor(repo, older):
@@ -412,10 +621,15 @@ def generate(repo: Path, output: Path) -> bool:
         revision = "HEAD"
         label = "首次基线：汇总当前仓库全部已提交历史"
     commits = source_commits(repo, revision)
-    if older and not commits:
+    if older and not commits and formal is None:
         return False
+    if formal is not None:
+        target = repo / FORMAL_EVIDENCE
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(json.dumps(formal, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+                          encoding="utf-8")
     files = changed_files(repo, revision)
-    content = build(repo, head, commits, files, label)
+    content = build(repo, head, commits, files, label, formal)
     output.parent.mkdir(parents=True, exist_ok=True)
     if output.exists() and output.read_text(encoding="utf-8") == content:
         return False
@@ -427,10 +641,26 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=ROOT)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--formal-batch-dir", type=Path,
+                        help="finished formal batch to audit and show (needs --auto-study-dir)")
+    parser.add_argument("--auto-study-dir", type=Path,
+                        help="self-research directory that selected the batch's tuned config")
     args = parser.parse_args()
+    if (args.formal_batch_dir is None) != (args.auto_study_dir is None):
+        parser.error("--formal-batch-dir and --auto-study-dir must be given together")
     repo = args.repo.resolve()
     output = args.output.resolve() if args.output else repo / REPORT
-    print("updated" if generate(repo, output) else "unchanged", output)
+    formal = None
+    if args.formal_batch_dir is not None:
+        try:
+            formal = load_formal_evidence(args.formal_batch_dir, args.auto_study_dir)
+        except FormalAuditError as exc:
+            print(f"formal audit failed; nothing written: {exc}", file=sys.stderr)
+            raise SystemExit(1)
+        if formal is None:
+            print("formal batch has no batch_report.json yet; keeping the pending wording",
+                  file=sys.stderr)
+    print("updated" if generate(repo, output, formal) else "unchanged", output)
 
 
 if __name__ == "__main__":
