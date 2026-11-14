@@ -150,10 +150,14 @@ def _parser() -> argparse.ArgumentParser:
     research.add_argument("--study-dir", type=Path, required=True)
     research.add_argument("--rounds", type=int, default=3)
     research.add_argument("--max-output-tokens", type=int, default=2048)
+    research.add_argument("--workers", type=int, default=1,
+                          help="Independent repetitions in parallel (1-3)")
     batch = commands.add_parser("batch", help="Run four-line practice and one validation; optionally exam")
     _arguments(batch, tuned=True)
     batch.add_argument("--batch-dir", type=Path, required=True)
     batch.add_argument("--exam", action="store_true")
+    batch.add_argument("--workers", type=int, default=1,
+                       help="Independent runs in parallel (1-4); sandbox calls stay serialized")
     chart = commands.add_parser("figures", help="Render the audited batch study")
     chart.add_argument("--batch-dir", type=Path, required=True)
     chart.add_argument("--auto-study-dir", type=Path)
@@ -203,7 +207,8 @@ def main(argv: list[str] | None = None) -> int:
                     default_config=default,
                     baseline_solutions=baseline_solutions(root, bank, practice_only=True),
                     prices_path=prices, model=args.model, code_commit=args.code_commit,
-                    rounds=args.rounds, max_output_tokens=args.max_output_tokens)
+                    rounds=args.rounds, max_output_tokens=args.max_output_tokens,
+                    max_workers=args.workers)
             output = {"schema": "cli_result/1", "command": args.command,
                       "study_dir": str(_within(root, args.study_dir)),
                       "selection": result["selection"],
@@ -217,7 +222,7 @@ def main(argv: list[str] | None = None) -> int:
                     agent_configs={"naive": naive, "default": default,
                                    "default_lib": default, "tuned_lib": tuned},
                     prices_path=prices, model=args.model, code_commit=args.code_commit,
-                    run_exam=args.exam)
+                    run_exam=args.exam, max_workers=args.workers)
             output = {"schema": "cli_result/1", "command": args.command,
                       "batch_dir": str(_within(root, args.batch_dir)),
                       "admission": result["admission"],

@@ -7,6 +7,7 @@ research budget, but existing positive per-task budgets still apply formally.
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from collections import Counter
 import hashlib
@@ -16,13 +17,15 @@ import os
 from pathlib import Path
 import re
 from statistics import mean
+from threading import Lock
 from typing import Any, Callable, Mapping
 
 from library import Library
 from ledger import Ledger, Usage, price_usage
 from research_agent.model import ModelClient
 
-from .batch import _agent_signature, _hash, _json, _run_path, _verify_code_freeze, _within
+from .batch import (_SerializedHarness, _agent_signature, _hash, _json, _run_path,
+                    _verify_code_freeze, _within)
 from .finalize import finish_run, start_run
 from .manifest import create_manifest
 from .orchestrate import execute_task
@@ -266,6 +269,7 @@ def evaluate_candidates(
     *, project_root: Path, study_dir: Path, harness: Any,
     candidates: Mapping[str, Path], baseline_solutions: Mapping[str, Path],
     prices_path: Path, model: str, code_commit: str,
+    max_workers: int = 1,
     test_only_budget: float | None = None,
     roles_factory: Callable[[str, int, str, Path], Any] | None = None,
     task_executor: Callable[..., dict] = execute_task,
@@ -279,6 +283,8 @@ def evaluate_candidates(
     study_dir = _within(root, Path(study_dir))
     if study_dir.exists():
         raise FileExistsError(f"Self-research study is one-shot: {study_dir}")
+    if type(max_workers) is not int or not 1 <= max_workers <= 3:
+        raise ValueError("max_workers must be an integer between 1 and 3")
     if not isinstance(model, str) or not model.strip():
         raise ValueError("A concrete model is required")
     if not isinstance(code_commit, str) or not re.fullmatch(r"[0-9a-f]{7,40}", code_commit):
@@ -334,55 +340,80 @@ def evaluate_candidates(
         "candidate_order": (["default", *(name for name in candidates if name != "default")]
                             if "default" in candidates else list(candidates)),
         "candidate_files": descriptors, "protected_sha256": protected,
-        "repetitions": [1, 2, 3], "budget_policy": "positive task budget"
+        "repetitions": [1, 2, 3], "max_workers": max_workers,
+        "sandbox_calls_serialized": max_workers > 1,
+        "budget_policy": "positive task budget"
         if formal else "TEST-only budget override",
     }, ensure_ascii=False, indent=2) + chr(10), encoding="utf-8")
     attempts = []
     reports = []
     ordered = (["default", *(name for name in candidates if name != "default")]
                if "default" in candidates else list(candidates))
-    for round_index, name in enumerate(ordered, 1):
-        for rep in (1, 2, 3):
-            if formal:
-                _verify_code_freeze(root, code_commit)
-            if any(_hash(Path(path)) != digest for path, digest in {**protected, **inputs}.items()):
-                raise ValueError("Self-research input or protected file changed")
+    task_harness = (_SerializedHarness(harness, Lock()) if max_workers > 1 else harness)
+
+    def reserve_run() -> Path:
+        for _ in range(100):
             run_dir = _run_path(root)
-            library_root = run_dir / "library"
-            library = Library.open(library_root)
-            manifest = create_manifest(
-                project_root=root, run_dir=run_dir,
-                phase="self_research" if formal else "dev",
-                config="default_lib" if name == "default" else "tuned_lib",
-                rep=rep, bank_version=bank["version"], tasks=task_ids,
-                library_root=library_root, library_start_version=library.version,
-                library_frozen=False, model=model, agent_config_path=config_paths[name],
-                prices_path=prices_path, code_commit=code_commit,
-            )
-            start_run(run_dir)
-            for task_id in task_ids:
-                kwargs = dict(run_dir=run_dir, task_id=task_id, harness=harness,
-                              baseline_solution=baselines[task_id], test_only_budget=test_only_budget)
-                if roles_factory is not None:
-                    kwargs["roles"] = roles_factory(name, rep, task_id, run_dir)
-                task_executor(**kwargs)
-            finish_run(run_dir)
-            report = run_report(run_dir)
-            if any(_hash(Path(path)) != digest for path, digest in {**protected, **inputs}.items()):
-                raise ValueError("Self-research input or protected file changed")
+            try:
+                run_dir.mkdir(parents=True, exist_ok=False)
+            except FileExistsError:
+                continue
+            return run_dir
+        raise RuntimeError("Could not reserve an unused run ID")
+
+    def one_rep(round_index: int, name: str, rep: int, run_dir: Path) -> tuple[dict, dict]:
+        if formal:
+            _verify_code_freeze(root, code_commit)
+        if any(_hash(Path(path)) != digest for path, digest in {**protected, **inputs}.items()):
+            raise ValueError("Self-research input or protected file changed")
+        library_root = run_dir / "library"
+        library = Library.open(library_root)
+        manifest = create_manifest(
+            project_root=root, run_dir=run_dir,
+            phase="self_research" if formal else "dev",
+            config="default_lib" if name == "default" else "tuned_lib",
+            rep=rep, bank_version=bank["version"], tasks=task_ids,
+            library_root=library_root, library_start_version=library.version,
+            library_frozen=False, model=model, agent_config_path=config_paths[name],
+            prices_path=prices_path, code_commit=code_commit,
+        )
+        start_run(run_dir)
+        for task_id in task_ids:
+            kwargs = dict(run_dir=run_dir, task_id=task_id, harness=task_harness,
+                          baseline_solution=baselines[task_id], test_only_budget=test_only_budget)
+            if roles_factory is not None:
+                kwargs["roles"] = roles_factory(name, rep, task_id, run_dir)
+            task_executor(**kwargs)
+        finish_run(run_dir)
+        report = run_report(run_dir)
+        if any(_hash(Path(path)) != digest for path, digest in {**protected, **inputs}.items()):
+            raise ValueError("Self-research input or protected file changed")
+        attempt = {"candidate": name, "round": round_index,
+                   "rep": rep, "run_id": run_dir.name,
+                   "report_path": str(run_dir / "report.json"),
+                   "config_sha256": descriptors[name]["config"]["sha256"],
+                   "prompt_sha256": {role: item["sha256"] for role, item in
+                                     descriptors[name]["prompts"].items()},
+                   "mean_score": mean(float(task["holdout_score"]) for task in report["tasks"]),
+                   "total_cost": report["total_cost"],
+                   "currency": report["currency"],
+                   "manifest_phase": manifest["phase"],
+                   "logical_phase": "self_research",
+                   "test_only": not formal}
+        return report, attempt
+
+    for round_index, name in enumerate(ordered, 1):
+        jobs = [(rep, reserve_run()) for rep in (1, 2, 3)]
+        if max_workers == 1:
+            completed = [one_rep(round_index, name, rep, run_dir) for rep, run_dir in jobs]
+        else:
+            with ThreadPoolExecutor(max_workers=max_workers) as pool:
+                futures = [pool.submit(one_rep, round_index, name, rep, run_dir)
+                           for rep, run_dir in jobs]
+                completed = [future.result() for future in futures]
+        for report, attempt in completed:
             reports.append(report)
-            attempts.append({"candidate": name, "round": round_index,
-                             "rep": rep, "run_id": run_dir.name,
-                             "report_path": str(run_dir / "report.json"),
-                             "config_sha256": descriptors[name]["config"]["sha256"],
-                             "prompt_sha256": {role: item["sha256"] for role, item in
-                                               descriptors[name]["prompts"].items()},
-                             "mean_score": mean(float(task["holdout_score"]) for task in report["tasks"]),
-                             "total_cost": report["total_cost"],
-                             "currency": report["currency"],
-                             "manifest_phase": manifest["phase"],
-                             "logical_phase": "self_research",
-                             "test_only": not formal})
+            attempts.append(attempt)
     ranking = []
     for name in ordered:
         group = [attempt for attempt in attempts if attempt["candidate"] == name]
@@ -417,6 +448,7 @@ def auto_evaluate_candidates(
     default_config: Path, baseline_solutions: Mapping[str, Path],
     prices_path: Path, model: str, code_commit: str,
     rounds: int = 3, max_output_tokens: int = 2048,
+    max_workers: int = 1,
     test_only_budget: float | None = None, proposal_client: Any | None = None,
     roles_factory: Callable[[str, int, str, Path], Any] | None = None,
     task_executor: Callable[..., dict] = execute_task,
@@ -436,6 +468,8 @@ def auto_evaluate_candidates(
         raise ValueError("Automatic candidate rounds must be between 1 and 8")
     if type(max_output_tokens) is not int or not 128 <= max_output_tokens <= 4096:
         raise ValueError("Proposal max_output_tokens must be between 128 and 4096")
+    if type(max_workers) is not int or not 1 <= max_workers <= 3:
+        raise ValueError("max_workers must be an integer between 1 and 3")
     formal = test_only_budget is None
     if formal and proposal_client is not None:
         raise ValueError("Formal proposal generation may not inject a scripted client")
@@ -474,6 +508,7 @@ def auto_evaluate_candidates(
     (study_dir / "auto_plan.json").write_text(json.dumps({
         "schema": "auto_self_research_plan/1", "label": "FORMAL" if formal else "TEST ONLY",
         "rounds": rounds, "max_output_tokens": max_output_tokens,
+        "max_workers": max_workers,
         "practice_tasks": practice, "default_files": default_descriptor["default"],
         "price_sha256": _hash(prices_path),
         "source_prompt_sha256": source_prompt_sha256,
@@ -491,6 +526,7 @@ def auto_evaluate_candidates(
             harness=harness, candidates={name: path},
             baseline_solutions=baseline_solutions, prices_path=prices_path,
             model=model, code_commit=code_commit,
+            max_workers=max_workers,
             test_only_budget=test_only_budget, roles_factory=roles_factory,
             task_executor=task_executor,
         )

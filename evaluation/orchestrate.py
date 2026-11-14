@@ -5,7 +5,6 @@ from __future__ import annotations
 import copy
 import json
 import math
-import os
 from pathlib import Path
 import shutil
 from typing import Any, Iterable, Mapping
@@ -18,7 +17,7 @@ from research_agent.replay import selected_library_settings, write_replay_contex
 from research_agent.roles import RoleAgents
 from research_agent.runner import TaskRunner
 
-from .finalize import finish_task
+from .finalize import assert_not_in_eval_window, finish_task
 from .quote import make_quote_callback
 
 
@@ -50,8 +49,7 @@ def execute_task(
     manifest = read_json(run_dir / "manifest.json", "run/1")
     if task_id not in manifest["tasks"]:
         raise ValueError("Task is absent from run manifest")
-    if os.environ.get("RA_EVAL") == "1":
-        raise ValueError("RA_EVAL must be absent during A's main loop")
+    assert_not_in_eval_window()
     ledger = Ledger.open(run_dir, task_id)
     scored_harness = harness
     test_controls: Path | None = None

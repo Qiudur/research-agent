@@ -13,6 +13,7 @@ from pathlib import Path
 import secrets
 import shutil
 import subprocess
+from threading import local
 
 import harness
 from evaluation.orchestrate import execute_task
@@ -78,18 +79,24 @@ def main(argv: list[str] | None = None) -> int:
     protocol_path = campaign / "protocol.json"
     protocol = json.loads(protocol_path.read_text(encoding="utf-8"))
     protocol.update({"study_type": "cross_task_transfer", "code_commit": code_commit,
+                     "max_workers": 3,
                      **source})
     _write(protocol_path, protocol)
     from openai import OpenAI
-    transport = OpenAI(api_key=os.environ["OPENAI_API_KEY"], base_url=BASE_URL,
-                       timeout=180.0, max_retries=0)
+    worker_state = local()
+
+    def task_transport():
+        if not hasattr(worker_state, "client"):
+            worker_state.client = OpenAI(api_key=os.environ["OPENAI_API_KEY"],
+                                         base_url=BASE_URL, timeout=180.0, max_retries=0)
+        return worker_state.client
 
     def roles_factory(name: str, rep: int, task_id: str, run_dir: Path) -> RoleAgents:
         manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
         config_path = project / manifest["agent_config"]["path"]
         config = json.loads(config_path.read_text(encoding="utf-8"))
         ledger = Ledger.open(run_dir, task_id)
-        model = ModelClient(MODEL, ledger, client=transport,
+        model = ModelClient(MODEL, ledger, client=task_transport(),
                             max_output_tokens=MAX_OUTPUT_TOKENS,
                             budget_limit=BUDGET_TOKENS, reserve_cost=RESERVE_TOKENS,
                             audit_dir=run_dir / "tasks" / task_id / "model_responses")
@@ -110,6 +117,7 @@ def main(argv: list[str] | None = None) -> int:
                                     for task_id in TRANSFER_TASKS},
                 prices_path=project / "config" / PRICE_NAME, model=MODEL,
                 code_commit=code_commit, test_only_budget=BUDGET_TOKENS,
+                max_workers=3,
                 roles_factory=roles_factory, task_executor=token_execute,
             )
         summary = {"schema": "token_transfer_summary/1",

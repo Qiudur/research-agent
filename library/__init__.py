@@ -7,13 +7,15 @@ the JSON representation remains the single source of truth for external consumer
 from __future__ import annotations
 
 import copy
+from contextlib import contextmanager
+from contextvars import ContextVar
 import json
 import os
 import re
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, TypeAlias
+from typing import Any, Iterator, TypeAlias
 
 Entry: TypeAlias = dict[str, Any]
 
@@ -24,6 +26,21 @@ _SCENARIOS = {"tabular", "speedup", "any"}
 _OPS = {"write", "update", "narrow", "promote", "demote", "retire", "merge"}
 _ACTORS = {"online", "self_research", "human"}
 _STATUSES = {"active", "demoted", "retired"}
+_SETTINGS_OVERRIDES: ContextVar[dict[str, str] | None] = ContextVar(
+    "library_settings_overrides", default=None)
+
+
+@contextmanager
+def selected_settings(agent_config: Path, triggers_config: Path) -> Iterator[None]:
+    """Pin per-run settings without changing another worker's environment."""
+    token = _SETTINGS_OVERRIDES.set({
+        "RA_AGENT_CONFIG": str(Path(agent_config).resolve()),
+        "RA_TRIGGERS_CONFIG": str(Path(triggers_config).resolve()),
+    })
+    try:
+        yield
+    finally:
+        _SETTINGS_OVERRIDES.reset(token)
 
 
 class LibraryError(Exception):
@@ -78,7 +95,7 @@ def _append_jsonl(path: Path, data: dict[str, Any]) -> None:
 
 
 def _settings_path(root: Path, env_name: str, filename: str) -> Path:
-    override = os.environ.get(env_name)
+    override = (_SETTINGS_OVERRIDES.get() or {}).get(env_name) or os.environ.get(env_name)
     if override:
         return Path(override).expanduser().resolve()
     for ancestor in (root, *root.parents):
@@ -432,4 +449,5 @@ class Library:
         return changes
 
 
-__all__ = ["Entry", "Library", "LibraryConflict", "LibraryError", "LibraryFrozen"]
+__all__ = ["Entry", "Library", "LibraryConflict", "LibraryError", "LibraryFrozen",
+           "selected_settings"]

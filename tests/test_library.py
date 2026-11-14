@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from library import Library, LibraryConflict, LibraryError, LibraryFrozen
+from library import Library, LibraryConflict, LibraryError, LibraryFrozen, selected_settings
 
 
 SOURCE = {"run_id": "run-20261113-221500-a3f9", "task_id": "tab-demo", "node_ids": ["n0001"]}
@@ -131,6 +133,28 @@ class LibraryTests(unittest.TestCase):
             active = [item for item in limited.entries if item["status"] == "active"]
             self.assertEqual(1, len(active))
             self.assertEqual(2, len(limited.entries))
+
+    def test_parallel_runs_use_independent_library_settings(self) -> None:
+        project = Path(__file__).resolve().parents[1]
+        source = json.loads((project / "config/agent.json").read_text(encoding="utf-8"))
+        triggers = project / "config/triggers.json"
+        configs = []
+        for index, limit in enumerate((1, 2)):
+            config = json.loads(json.dumps(source))
+            config["library_rules"]["max_experiences"] = limit
+            path = Path(self.temp.name) / f"agent-{index}.json"
+            path.write_text(json.dumps(config), encoding="utf-8")
+            configs.append(path)
+        barrier = threading.Barrier(2)
+
+        def inspect(path):
+            with selected_settings(path, triggers):
+                barrier.wait(timeout=5)
+                return Library.open(self.root).rules["max_experiences"]
+
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            futures = [pool.submit(inspect, path) for path in configs]
+            self.assertEqual([future.result() for future in futures], [1, 2])
 
     def test_state_tampering_is_detected(self) -> None:
         self.lib.write_experiences([self.draft()], source=SOURCE)

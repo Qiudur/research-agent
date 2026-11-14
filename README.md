@@ -7,6 +7,7 @@
 - B 题库有 12 道提速题和 12 道表格二分类题，各按练习 5、验证 2、考试 5 分层；速度题有止损陷阱，Bank Marketing 考试题有通话时长泄漏诱饵。原始/参考代码、LightGBM/AutoGluon 基线与上限均在 dev 实测，失败或弱差距的候选题保留测量但不冒充考试题。随机正确性、沙箱文件/网络隔离和新种子评分有回归测试。
 - C 的 execute_batch 运行四种配置各三遍：每遍空库练习；验证集只准入分数不降且平均花费更低的研究版；验证与考试对同一题库版本各设一次性尝试标记。正式模式核验题库、价目、预算、Git 提交与洁净工作区，并拒绝 TEST 注入。
 - C 的自动自研究只看练习题，受限生成设置和提示词附录，逐候选三遍评分。任务花费和提案模型调用的四桶 token（含失败调用）分别入账，所有候选和源文件有哈希；选中配置仍须通过一次验证准入。
+- C 可在同一阶段并行执行独立运行：batch 的 --workers 接受 1–4，自研究的 --workers 接受 1–3，默认均为 1。各运行内部任务仍按原顺序推进；练习、验证、考试之间及自研究候选轮次之间保留屏障。模型调用可以重叠，真实沙箱执行和评分串行，能力库设置用 ContextVar 隔离线程。并发吞吐收益须以真实模型实测为准，当前不能声称已经加速。不同 campaign 或队友在同一机器上没有跨进程评分串行保证；表格评分和提速脚本会争用 CPU、影响计时，正式计时应隔离机器或集中评分。
 - 报告从账本、实验树和单次 holdout 生成。准入通过时四线图从同一批次的 12 份考试报告绘制分数范围、逐题走势、报价误差和成本；准入未通过时生成三线报告并明确研究版未进考试。回本点包括全部自研究运行及提案费用，未准入时不宣称回本。TEST 数据有显著水印。只读看板可离线导出，也可在 localhost 每秒刷新并分屏展示。
 - A 的朴素对照配置使用同一通用提示词、全程高推理和完整实验历史；默认配置按角色分档。能力库支持版本回放、冻结、跨任务证据门槛和技能按需加载。
 
@@ -21,7 +22,7 @@
     .venv/bin/python -m unittest discover -s dashboard/tests -v
     .venv/bin/python scripts/preflight.py --model <正式模型名>
 
-2026-11-14 在 Python 3.11 虚拟环境中，主测试 151 项、技能层 6 项、看板 7 项均通过；24 道入库题的原始方案逐题通过真实沙箱 dev 评分，证据见 docs/B-全题dev烟测.json。wheel 已构建并从外部工作目录实测评分。真实 B 沙箱加 TEST 价目、脚本角色的三阶段四线端到端测试在 tests/test_real_batch_e2e.py；它跑 30 个 A 主循环任务和每任务一次 holdout，明确不构成真实模型效果。A 的真实计时和跨运行经验试验见 pilot/README.md。每个 TEST 运行的 manifest.phase 均为 dev，不会冒充正式考试。
+2026-11-14 在 Python 3.11 虚拟环境中，主测试 157 项、技能层 6 项、看板 7 项均通过；24 道入库题的原始方案逐题通过真实沙箱 dev 评分，证据见 docs/B-全题dev烟测.json。wheel 已构建并从外部工作目录实测评分。真实 B 沙箱加 TEST 价目、脚本角色的三阶段四线端到端测试在 tests/test_real_batch_e2e.py；它跑 30 个 A 主循环任务和每任务一次 holdout，明确不构成真实模型效果。A 的真实计时和跨运行经验试验见 pilot/README.md。每个 TEST 运行的 manifest.phase 均为 dev，不会冒充正式考试。
 
 ## 真实模型 dev 试点
 
@@ -31,14 +32,17 @@
     .venv/bin/python -m scripts.run_token_pilot --task tab-mushroom-edibility --agent-config config/agent_token_pilot_v2.json
     .venv/bin/python -m scripts.run_token_pilot --task tab-german-credit --agent-config config/naive_token_pilot.json --config-label naive
     .venv/bin/python -m scripts.run_token_self_research
+    .venv/bin/python -m scripts.run_token_self_research --default-only
 
-最后一条命令在被 Git 忽略的独立项目副本上，只取一道提速和一道表格练习题，各候选重复三次，并由真实模型提出至多一轮受限调参。C 报告标记 TEST ONLY，但此试验的 TEST 单位严格等于网关报告的四桶 token 总和，不能解释为现金成本或正式验证/考试。输入哈希、提案账本和所有运行留在 `runs/token-self-research-*`。
+不带 --default-only 的 run_token_self_research 命令在被 Git 忽略的独立项目副本上，只取一道提速和一道表格练习题，各候选重复三次，并由真实模型提出至多一轮受限调参。C 报告标记 TEST ONLY，但此试验的 TEST 单位严格等于网关报告的四桶 token 总和，不能解释为现金成本或正式验证/考试。输入哈希、提案账本和所有运行留在 `runs/token-self-research-*`。
 
 真实模型自研究已跑通两轮、各 6 次运行和 12 次任务。首轮候选分数下降且 token 花费上升；第二轮候选平均每遍省 34.5% token，但平均分下降约 2.2%，一个提速节点重放超容差。均未进入正式验证/考试；配置、结果和审计见 `docs/真实模型自研究试验.md`。
 
 第二轮候选又在未参与提案的距离矩阵和 Adult Income 两道 practice 题上做了三遍真实模型迁移复评：平均分提高但 token 花费增加，十二个最佳节点重放全通过。Adult Income 的微小 dev 参考差使 holdout 归一化均分为负，暴露了 C 原先负分/成本排序的缺陷；修复后非正分先按质量、再按成本排序。原始报告保留，详见 `docs/真实模型迁移复评.md`。
 
 ## 正式货币运行
+
+可在正式命令中给 auto-research 增加 --workers 3、给 batch 增加 --workers 4；这只调整独立重复的并发数，不改变阶段顺序或一次性验证/考试规则。--default-only 是真实模型三遍默认配置的并发基准入口，不运行候选提案；尚未完成该入口的真实网关基准测试。
 
 若要报告人民币或美元成本，需要核实模型的四桶真实计价并填 config/prices.json；给每道正式题定预算，在朴素配置上实测 naive_cost 后定难度，核对两场景 5/2/5 和陷阱，然后冻结 bank 版本、提交并保持工作区洁净。比赛目前未指定模型或题目预算，所以 token 试点采用自选预算，不能冒充比赛给定价格或正式成绩。不要把试点价目或凭据写成真实货币价格。具体决策和未完成项见 docs/项目交付与决策.md。
 

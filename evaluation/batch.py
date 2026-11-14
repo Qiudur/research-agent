@@ -7,6 +7,7 @@ phases receive independent frozen copies of its final practice snapshot.
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -17,12 +18,13 @@ import re
 import secrets
 import shutil
 import subprocess
+from threading import Lock
 from typing import Any, Callable, Mapping
 
 from library import Library
 
 from .admission import admit_configuration
-from .finalize import finish_run, start_run
+from .finalize import _eval_window, finish_run, start_run
 from .manifest import CONFIGS, create_manifest
 from .orchestrate import execute_task
 from .report import run_report, task_report
@@ -31,6 +33,34 @@ from .report import run_report, task_report
 TIERS = ("practice", "validation", "exam")
 DEFAULT_CONFIGS = ("naive", "default", "default_lib", "tuned_lib")
 TRAINED_CONFIGS = frozenset({"default_lib", "tuned_lib"})
+
+
+class _SerializedHarness:
+    """Let independent model calls overlap without overlapping sandbox work."""
+
+    def __init__(self, base: Any, lock: Lock):
+        self._base = base
+        self._lock = lock
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._base, name)
+
+    def score(self, *args: Any, **kwargs: Any) -> Any:
+        with self._lock:
+            return self._base.score(*args, **kwargs)
+
+    def score_holdout(self, task_id: str, node_dir: Path) -> Any:
+        with self._lock:
+            with _eval_window():
+                return self._base.score(task_id, node_dir, "holdout")
+
+    def run_script(self, *args: Any, **kwargs: Any) -> Any:
+        with self._lock:
+            return self._base.run_script(*args, **kwargs)
+
+    def profile_code(self, *args: Any, **kwargs: Any) -> Any:
+        with self._lock:
+            return self._base.profile_code(*args, **kwargs)
 
 
 def _json(path: Path) -> dict:
@@ -192,6 +222,7 @@ def execute_batch(
     prices_path: Path, model: str, code_commit: str,
     configs: tuple[str, ...] = DEFAULT_CONFIGS,
     run_validation: bool = True, run_exam: bool = False,
+    max_workers: int = 1,
     test_only_budget: float | None = None,
     roles_factory: Callable[[str, int, str, Path], Any] | None = None,
     task_executor: Callable[..., dict] = execute_task,
@@ -203,6 +234,8 @@ def execute_batch(
         raise FileExistsError(f"Batch is one-shot: {batch_dir}")
     if run_exam and not run_validation:
         raise ValueError("Exam requires validation admission first")
+    if type(max_workers) is not int or not 1 <= max_workers <= 4:
+        raise ValueError("max_workers must be an integer between 1 and 4")
     if not configs or len(set(configs)) != len(configs) or set(configs) - CONFIGS:
         raise ValueError("Configs must be unique run/1 configuration labels")
     if "tuned_lib" in configs and "default_lib" not in configs:
@@ -290,18 +323,31 @@ def execute_batch(
         "schema": "batch_plan/1", "label": "TEST ONLY" if not formal else "FORMAL",
         "bank_version": bank_version, "tasks": tasks, "configs": configs,
         "reps": [1, 2, 3], "run_validation": run_validation,
-        "run_exam": run_exam, "sealed_inputs": sealed_inputs,
+        "run_exam": run_exam, "max_workers": max_workers,
+        "sandbox_calls_serialized": max_workers > 1,
+        "sealed_inputs": sealed_inputs,
     }, ensure_ascii=False, indent=2) + chr(10), encoding="utf-8")
     reports: dict[str, list[dict]] = {tier: [] for tier in TIERS}
     runs: list[dict] = []
     practice_libraries: dict[tuple[str, int], Path] = {}
+    task_harness = (_SerializedHarness(harness, Lock()) if max_workers > 1 else harness)
 
-    def one_run(tier: str, config: str, rep: int, source: Path | None) -> None:
+    def reserve_run() -> Path:
+        for _ in range(100):
+            run_dir = _run_path(root)
+            try:
+                run_dir.mkdir(parents=True, exist_ok=False)
+            except FileExistsError:
+                continue
+            return run_dir
+        raise RuntimeError("Could not reserve an unused run ID")
+
+    def one_run(tier: str, config: str, rep: int, source: Path | None,
+                run_dir: Path) -> tuple[dict, dict, Path]:
         if formal:
             _verify_code_freeze(root, code_commit)
         if any(_hash(Path(path)) != digest for path, digest in sealed_inputs.items()):
             raise ValueError("A sealed batch input changed during execution")
-        run_dir = _run_path(root)
         library_root = run_dir / "library"
         start_version = _prepare_library(library_root, source)
         frozen = tier != "practice"
@@ -317,7 +363,7 @@ def execute_batch(
         quote_history: dict[str, list[dict]] = {"spd": [], "tab": []}
         for task_id in tasks[tier]:
             scenario = task_id.split("-", 1)[0]
-            kwargs = dict(run_dir=run_dir, task_id=task_id, harness=harness,
+            kwargs = dict(run_dir=run_dir, task_id=task_id, harness=task_harness,
                           baseline_solution=baselines[task_id], test_only_budget=test_only_budget,
                           quote_history=tuple(quote_history[scenario]))
             if roles_factory is not None:
@@ -337,25 +383,34 @@ def execute_batch(
         report = run_report(run_dir)  # Reconcile ledger, tree and holdout evidence.
         if frozen and _library_hash(library_root) != frozen_hash:
             raise ValueError("Frozen library changed during validation/exam")
-        reports[tier].append(report)
-        runs.append({"logical_phase": tier, "manifest_phase": manifest["phase"],
-                     "config": config, "rep": rep, "run_id": run_dir.name,
-                     "report_path": str(run_dir / "report.json"),
-                     "library_start_version": start_version,
-                     "test_only": not formal})
-        if tier == "practice":
-            practice_libraries[(config, rep)] = library_root
+        row = {"logical_phase": tier, "manifest_phase": manifest["phase"],
+               "config": config, "rep": rep, "run_id": run_dir.name,
+               "report_path": str(run_dir / "report.json"),
+               "library_start_version": start_version,
+               "test_only": not formal}
+        return report, row, library_root
 
-    for rep in (1, 2, 3):
-        for config in configs:
-            one_run("practice", config, rep, None)
+    def run_phase(tier: str, specs: list[tuple[str, int, Path | None]]) -> None:
+        jobs = [(config, rep, source, reserve_run()) for config, rep, source in specs]
+        if max_workers == 1:
+            completed = [one_run(tier, *job) for job in jobs]
+        else:
+            with ThreadPoolExecutor(max_workers=max_workers) as pool:
+                futures = [pool.submit(one_run, tier, *job) for job in jobs]
+                completed = [future.result() for future in futures]
+        for (config, rep, _), (report, row, library_root) in zip(specs, completed):
+            reports[tier].append(report)
+            runs.append(row)
+            if tier == "practice":
+                practice_libraries[(config, rep)] = library_root
+
+    run_phase("practice", [(config, rep, None) for rep in (1, 2, 3) for config in configs])
     if run_validation:
         if formal:
             _mark_attempt(root, "validation", bank_version, code_commit, batch_dir)
-        for rep in (1, 2, 3):
-            for config in configs:
-                if config in TRAINED_CONFIGS:
-                    one_run("validation", config, rep, practice_libraries[(config, rep)])
+        run_phase("validation", [
+            (config, rep, practice_libraries[(config, rep)])
+            for rep in (1, 2, 3) for config in configs if config in TRAINED_CONFIGS])
     admission = None
     if run_validation and "tuned_lib" in configs:
         admission = admit_configuration(
@@ -366,12 +421,11 @@ def execute_batch(
         with (batch_dir / "exam_attempt.json").open("x", encoding="utf-8") as handle:
             handle.write(json.dumps({"schema": "exam_attempt/1",
                                      "label": "TEST ONLY" if not formal else "FORMAL"}) + chr(10))
-        for rep in (1, 2, 3):
-            for config in configs:
-                if config == "tuned_lib" and (admission is None or admission["claim"] != "admitted"):
-                    continue
-                source = practice_libraries[(config, rep)] if config in TRAINED_CONFIGS else None
-                one_run("exam", config, rep, source)
+        run_phase("exam", [
+            (config, rep, practice_libraries[(config, rep)]
+             if config in TRAINED_CONFIGS else None)
+            for rep in (1, 2, 3) for config in configs
+            if config != "tuned_lib" or (admission is not None and admission["claim"] == "admitted")])
     result = {"schema": "batch_report/1", "label": "TEST ONLY" if not formal else "FORMAL",
               "bank_version": bank_version, "runs": runs, "reports": reports,
               "admission": admission,

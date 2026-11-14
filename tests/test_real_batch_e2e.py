@@ -149,6 +149,7 @@ class RealBatchSmokeTests(unittest.TestCase):
                     prices_path=root / "config/prices_test_only.json",
                     model="test-scripted", code_commit="a" * 40,
                     test_only_budget=1.0, run_validation=True, run_exam=True,
+                    max_workers=4,
                     roles_factory=roles_factory,
                 )
                 study = build_study_from_batch(batch_dir)
@@ -157,6 +158,7 @@ class RealBatchSmokeTests(unittest.TestCase):
             self.assertEqual([len(batch["reports"][tier]) for tier in
                               ("practice", "validation", "exam")], [12, 6, 12])
             self.assertEqual(len(batch["runs"]), 30)
+            self.assertEqual(json.loads((batch_dir / "plan.json").read_text())["max_workers"], 4)
             self.assertEqual(len(scored.scores), 60)
             self.assertTrue(all(count == 1 for (run, task, split), count in scored.scores.items()
                                 if split == "holdout"))

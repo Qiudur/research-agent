@@ -5,6 +5,8 @@ import os
 from pathlib import Path
 import shutil
 from tempfile import TemporaryDirectory
+import threading
+import time
 from types import SimpleNamespace
 import unittest
 
@@ -205,6 +207,47 @@ class SelfResearchTests(unittest.TestCase):
                              [0.0, 0.0])
             self.assertEqual([row["mean_score"] for row in result["ranking"]],
                              [-1.0, -0.8])
+
+    def test_parallel_repetitions_keep_order_and_serialize_sandbox_calls(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            baselines, candidates, _ = self.setup_project(root)
+            calls = []
+            ordinary = self.fake_executor(calls)
+            first_wave = threading.Barrier(3)
+            counter_lock = threading.Lock()
+            active = 0
+            peak = 0
+
+            class ProbeHarness:
+                def score(self):
+                    nonlocal active, peak
+                    with counter_lock:
+                        active += 1
+                        peak = max(peak, active)
+                    time.sleep(0.01)
+                    with counter_lock:
+                        active -= 1
+
+            def executor(**kwargs):
+                if kwargs["task_id"] == PRACTICE[0]:
+                    first_wave.wait(timeout=10)
+                kwargs["harness"].score()
+                return ordinary(**kwargs)
+
+            result = evaluate_candidates(
+                project_root=root, study_dir=root / "batches/study",
+                harness=ProbeHarness(), candidates={"default": candidates["default"]},
+                baseline_solutions=baselines,
+                prices_path=root / "config/prices_test_only.json", model="test-scripted",
+                code_commit="a" * 40, max_workers=3, test_only_budget=1.0,
+                task_executor=executor,
+            )
+            self.assertEqual(peak, 1)
+            self.assertEqual([row["rep"] for row in result["attempts"]], [1, 2, 3])
+            self.assertEqual(len(calls), 6)
+            plan = json.loads((root / "batches/study/plan.json").read_text())
+            self.assertEqual(plan["max_workers"], 3)
 
     def test_protected_file_mutation_fails_closed(self):
         with TemporaryDirectory() as temp:

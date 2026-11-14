@@ -8,9 +8,19 @@ import json
 import os
 from pathlib import Path
 import re
+from threading import RLock
 from typing import Any, Iterator
 
 from ledger import Ledger
+
+
+_EVAL_LOCK = RLock()
+
+
+def assert_not_in_eval_window() -> None:
+    with _EVAL_LOCK:
+        if os.environ.get("RA_EVAL") == "1":
+            raise ValueError("RA_EVAL must be absent during A's main loop")
 
 
 def _utc_now() -> str:
@@ -26,15 +36,16 @@ def _write_json(path: Path, data: dict) -> None:
 
 @contextmanager
 def _eval_window() -> Iterator[None]:
-    previous = os.environ.get("RA_EVAL")
-    os.environ["RA_EVAL"] = "1"
-    try:
-        yield
-    finally:
-        if previous is None:
-            os.environ.pop("RA_EVAL", None)
-        else:
-            os.environ["RA_EVAL"] = previous
+    with _EVAL_LOCK:
+        previous = os.environ.get("RA_EVAL")
+        os.environ["RA_EVAL"] = "1"
+        try:
+            yield
+        finally:
+            if previous is None:
+                os.environ.pop("RA_EVAL", None)
+            else:
+                os.environ["RA_EVAL"] = previous
 
 
 def start_run(run_dir: Path) -> None:
@@ -67,8 +78,12 @@ def finish_task(run_dir: Path, task_id: str, harness: Any) -> dict:
     with attempt.open("x", encoding="utf-8") as handle:
         json.dump({"schema": "holdout_attempt/1", "ts": _utc_now(), "best_node": best_node}, handle)
         handle.write("\n")
-    with _eval_window():
-        result = harness.score(task_id, node_dir, "holdout")
+    scored_holdout = getattr(harness, "score_holdout", None)
+    if callable(scored_holdout):
+        result = scored_holdout(task_id, node_dir)
+    else:
+        with _eval_window():
+            result = harness.score(task_id, node_dir, "holdout")
     if not isinstance(result, dict) or result.get("schema") != "score/1" or result.get("split") != "holdout":
         raise ValueError("B returned an invalid holdout score")
     if not result.get("ok") or result.get("score") is None:

@@ -8,7 +8,9 @@ environment and never written to the copied project or campaign summary.
 
 from __future__ import annotations
 
+import argparse
 from contextlib import contextmanager
+from datetime import datetime, timezone
 import hashlib
 import json
 import os
@@ -16,11 +18,13 @@ from pathlib import Path
 import secrets
 import shutil
 import subprocess
+from threading import local
+from time import monotonic
 from typing import Iterator
 
 import harness
 from evaluation.orchestrate import execute_task
-from evaluation.self_research import auto_evaluate_candidates
+from evaluation.self_research import auto_evaluate_candidates, evaluate_candidates
 from ledger import Ledger
 from research_agent.model import ModelClient
 from research_agent.roles import RoleAgents
@@ -30,6 +34,15 @@ from .run_token_pilot import (BASE_URL, BUDGET_TOKENS, MAX_OUTPUT_TOKENS, MODEL,
 
 TASKS = ("spd-membership-filter", "tab-german-credit")
 PRICE_NAME = "prices_real_token_test.json"
+
+
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+
+def _timing(started_utc: str, started_tick: float) -> dict[str, str | float]:
+    return {"started_utc": started_utc, "ended_utc": _utc_now(),
+            "elapsed_seconds": max(0.0, monotonic() - started_tick)}
 
 
 def _sha(path: Path) -> str:
@@ -74,6 +87,7 @@ def prepare_project(source: Path, campaign: Path, *,
         "label": "REAL MODEL DEV; TEST UNIT = ONE REPORTED TOKEN; NOT MONEY",
         "model": MODEL, "tasks": list(task_ids), "proposal_rounds": proposal_rounds,
         "repetitions_per_candidate": 3,
+        "max_workers": 3,
         "budget_tokens_per_task": BUDGET_TOKENS,
         "wall_seconds_per_task": wall_seconds_per_task,
         "reserve_tokens_per_call": RESERVE_TOKENS,
@@ -100,7 +114,11 @@ def _project_override(project: Path) -> Iterator[None]:
                 os.environ[key] = value
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--default-only", action="store_true",
+                        help="Three parallel default repetitions; no proposal or candidate")
+    args = parser.parse_args(argv)
     if not os.environ.get("OPENAI_API_KEY"):
         raise SystemExit("OPENAI_API_KEY must be injected in the process environment")
     if subprocess.check_output(["git", "status", "--porcelain=v1", "--untracked-files=all"],
@@ -108,21 +126,29 @@ def main() -> int:
         raise SystemExit("Commit source changes before the token self-research pilot")
     code_commit = subprocess.check_output(["git", "rev-parse", "HEAD"],
                                           cwd=PROJECT, text=True).strip()
-    campaign = PROJECT / "runs" / f"token-self-research-{_stamp()}-{secrets.token_hex(2)}"
-    project = prepare_project(PROJECT, campaign)
+    prefix = "token-parallel-default" if args.default_only else "token-self-research"
+    campaign = PROJECT / "runs" / f"{prefix}-{_stamp()}-{secrets.token_hex(2)}"
+    project = prepare_project(PROJECT, campaign,
+                              proposal_rounds=0 if args.default_only else 1)
     protocol = json.loads((campaign / "protocol.json").read_text(encoding="utf-8"))
     protocol["code_commit"] = code_commit
+    protocol["study_type"] = "parallel_default_benchmark" if args.default_only else "auto_self_research"
     _write(campaign / "protocol.json", protocol)
     from openai import OpenAI
-    transport = OpenAI(api_key=os.environ["OPENAI_API_KEY"], base_url=BASE_URL,
-                       timeout=180.0, max_retries=0)
+    worker_state = local()
+
+    def task_transport():
+        if not hasattr(worker_state, "client"):
+            worker_state.client = OpenAI(api_key=os.environ["OPENAI_API_KEY"],
+                                         base_url=BASE_URL, timeout=180.0, max_retries=0)
+        return worker_state.client
 
     def roles_factory(name: str, rep: int, task_id: str, run_dir: Path) -> RoleAgents:
         manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
         config_path = project / manifest["agent_config"]["path"]
         config = json.loads(config_path.read_text(encoding="utf-8"))
         ledger = Ledger.open(run_dir, task_id)
-        model = ModelClient(MODEL, ledger, client=transport,
+        model = ModelClient(MODEL, ledger, client=task_transport(),
                             max_output_tokens=MAX_OUTPUT_TOKENS,
                             budget_limit=BUDGET_TOKENS, reserve_cost=RESERVE_TOKENS,
                             audit_dir=run_dir / "tasks" / task_id / "model_responses")
@@ -131,38 +157,59 @@ def main() -> int:
     def token_execute(**kwargs):
         return execute_task(max_output_tokens=MAX_OUTPUT_TOKENS, **kwargs)
 
-    print(f"Starting real-model dev self-research: {campaign}", flush=True)
+    started_utc = _utc_now()
+    started_tick = monotonic()
+    print(f"Starting real-model dev {protocol['study_type']}: {campaign}", flush=True)
     try:
         with _project_override(project):
-            result = auto_evaluate_candidates(
-                project_root=project, study_dir=project / "runs/auto-study",
-                harness=harness, default_config=project / "config/agent_token_pilot_v2.json",
-                baseline_solutions={task_id: project / "tasks" / task_id / "workspace/original.py"
-                                    for task_id in TASKS},
-                prices_path=project / "config" / PRICE_NAME, model=MODEL,
-                code_commit=code_commit, rounds=1,
-                max_output_tokens=MAX_OUTPUT_TOKENS, test_only_budget=BUDGET_TOKENS,
-                proposal_client=transport, roles_factory=roles_factory,
-                task_executor=token_execute,
-            )
-        summary = {
-            "schema": "token_self_research_summary/1",
-            "label": protocol["label"], "campaign_dir": str(campaign),
-            "study_report": str(project / "runs/auto-study/auto_self_research_report.json"),
-            "proposal_attempts": result["proposal_attempts"],
-            "ranking": result["ranking"], "selection": result["selection"],
-            "total_task_tokens": result["total_task_cost"],
-            "total_proposal_tokens": result["total_proposal_cost"],
-            "total_research_tokens": result["total_research_cost"],
-            "run_count": len(result["reports"]),
-        }
+            common = dict(project_root=project, harness=harness,
+                          baseline_solutions={task_id: project / "tasks" / task_id / "workspace/original.py"
+                                              for task_id in TASKS},
+                          prices_path=project / "config" / PRICE_NAME, model=MODEL,
+                          code_commit=code_commit, test_only_budget=BUDGET_TOKENS,
+                          max_workers=3, roles_factory=roles_factory,
+                          task_executor=token_execute)
+            if args.default_only:
+                result = evaluate_candidates(
+                    study_dir=project / "runs/default-study",
+                    candidates={"default": project / "config/agent_token_pilot_v2.json"},
+                    **common)
+            else:
+                proposal_transport = OpenAI(api_key=os.environ["OPENAI_API_KEY"],
+                                            base_url=BASE_URL, timeout=180.0, max_retries=0)
+                result = auto_evaluate_candidates(
+                    study_dir=project / "runs/auto-study",
+                    default_config=project / "config/agent_token_pilot_v2.json",
+                    rounds=1, max_output_tokens=MAX_OUTPUT_TOKENS,
+                    proposal_client=proposal_transport, **common)
+        if args.default_only:
+            summary = {"schema": "token_parallel_default_summary/1",
+                       "label": protocol["label"], "campaign_dir": str(campaign),
+                       "study_report": str(project / "runs/default-study/self_research_report.json"),
+                       "ranking": result["ranking"],
+                       "total_task_tokens": sum(report["total_cost"] for report in result["reports"]),
+                       "run_count": len(result["reports"])}
+        else:
+            summary = {
+                "schema": "token_self_research_summary/1",
+                "label": protocol["label"], "campaign_dir": str(campaign),
+                "study_report": str(project / "runs/auto-study/auto_self_research_report.json"),
+                "proposal_attempts": result["proposal_attempts"],
+                "ranking": result["ranking"], "selection": result["selection"],
+                "total_task_tokens": result["total_task_cost"],
+                "total_proposal_tokens": result["total_proposal_cost"],
+                "total_research_tokens": result["total_research_cost"],
+                "run_count": len(result["reports"]),
+            }
+        summary.update(_timing(started_utc, started_tick))
         _write(campaign / "summary.json", summary)
         print(json.dumps(summary, ensure_ascii=False), flush=True)
     except Exception as exc:
         _write(campaign / "summary.json", {
-            "schema": "token_self_research_summary/1",
+            "schema": "token_parallel_default_summary/1" if args.default_only else "token_self_research_summary/1",
             "label": protocol["label"], "campaign_dir": str(campaign),
             "error": str(exc),
+            **_timing(started_utc, started_tick),
         })
         raise
     return 0

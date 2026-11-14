@@ -6,7 +6,9 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
+import threading
 from tempfile import TemporaryDirectory
+import time
 import unittest
 
 from evaluation.batch import _bank_tasks, _verify_code_freeze, execute_batch
@@ -99,17 +101,56 @@ class BatchTests(unittest.TestCase):
         return execute
 
     def run_batch(self, root: Path, baselines: dict[str, Path], executor, *,
-                  run_validation=True, run_exam=True):
+                  run_validation=True, run_exam=True, max_workers=1, harness=None):
         configs = {name: root / "config/agent.json"
                    for name in ("naive", "default", "default_lib", "tuned_lib")}
         return execute_batch(
-            project_root=root, batch_dir=root / "batches/first", harness=object(),
+            project_root=root, batch_dir=root / "batches/first",
+            harness=harness if harness is not None else object(),
             baseline_solutions=baselines, agent_configs=configs,
             prices_path=root / "config/prices_test_only.json", model="test-scripted",
             code_commit="a" * 40, run_validation=run_validation,
-            run_exam=run_exam, test_only_budget=1.0,
+            run_exam=run_exam, max_workers=max_workers, test_only_budget=1.0,
             task_executor=executor,
         )
+
+    def test_parallel_runs_preserve_order_and_serialize_sandbox_calls(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            baselines = self.setup_project(root)
+            calls: list[tuple] = []
+            ordinary = self.fake_executor(calls)
+            first_wave = threading.Barrier(4)
+            counter_lock = threading.Lock()
+            active = 0
+            peak = 0
+
+            class ProbeHarness:
+                def score(self):
+                    nonlocal active, peak
+                    with counter_lock:
+                        active += 1
+                        peak = max(peak, active)
+                    time.sleep(0.01)
+                    with counter_lock:
+                        active -= 1
+
+            def executor(**kwargs):
+                manifest = json.loads((kwargs["run_dir"] / "manifest.json").read_text())
+                if kwargs["task_id"] == "spd-practice-a" and manifest["rep"] == 1:
+                    first_wave.wait(timeout=10)
+                kwargs["harness"].score()
+                return ordinary(**kwargs)
+
+            result = self.run_batch(root, baselines, executor, max_workers=4,
+                                    harness=ProbeHarness())
+            self.assertEqual(peak, 1)
+            self.assertEqual([len(result["reports"][tier]) for tier in
+                              ("practice", "validation", "exam")], [12, 6, 12])
+            self.assertEqual([(row["rep"], row["config"]) for row in result["runs"][:4]],
+                             [(1, name) for name in
+                              ("naive", "default", "default_lib", "tuned_lib")])
+            self.assertEqual(result["admission"]["claim"], "admitted")
 
     def test_three_repetitions_and_frozen_snapshots_make_audited_reports(self):
         with TemporaryDirectory() as temp:

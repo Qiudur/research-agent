@@ -5,11 +5,10 @@ from __future__ import annotations
 from contextlib import contextmanager
 import hashlib
 import json
-import os
 from pathlib import Path
 from typing import Any, Mapping
 
-from library import Library
+from library import Library, selected_settings
 
 from .artifacts import node_directory
 from .io import atomic_json, fields, read_json, utc_now
@@ -31,18 +30,8 @@ def sha256_file(path: Path) -> str:
 @contextmanager
 def selected_library_settings(agent_config: Path, triggers_config: Path):
     """Pin library rules and trigger vocabulary to the audited run files."""
-    keys = {"RA_AGENT_CONFIG": str(Path(agent_config).resolve()),
-            "RA_TRIGGERS_CONFIG": str(Path(triggers_config).resolve())}
-    old = {key: os.environ.get(key) for key in keys}
-    try:
-        os.environ.update(keys)
+    with selected_settings(agent_config, triggers_config):
         yield
-    finally:
-        for key, value in old.items():
-            if value is None:
-                os.environ.pop(key, None)
-            else:
-                os.environ[key] = value
 
 
 def _manifest_fields(manifest: Mapping[str, Any]) -> dict[str, Any]:
