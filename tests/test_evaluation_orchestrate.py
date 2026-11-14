@@ -88,11 +88,15 @@ class OrchestrateTests(unittest.TestCase):
             result = execute_task(run_dir=run, task_id=TASK_ID, harness=harness,
                                   baseline_solution=WORKSPACE / "original.py",
                                   roles=ScriptedRoles(PROJECT / "pilot/candidate.py"),
-                                  test_only_budget=1.0)
+                                  test_only_budget=1.0,
+                                  quote_history=[{"predicted": {"cost": 1, "seconds": 10, "score": 0.5},
+                                                  "actual": {"cost": 2, "seconds": 20, "score": 0.7}}])
             self.assertEqual(result["outcome"]["best_node"], "n0001")
             self.assertTrue(result["holdout"]["correct"])
             events = Ledger.open(run, TASK_ID)._events()
             quote = next(i for i, event in enumerate(events) if event["kind"] == "quote")
+            self.assertEqual(events[quote]["basis"]["history_n"], 1)
+            self.assertEqual(events[quote]["basis"]["factors"]["cost_ratio"], 2)
             experiment = next(i for i, event in enumerate(events) if event["kind"] == "experiment")
             self.assertLess(quote, experiment)
             self.assertNotIn("RA_EVAL", os.environ)

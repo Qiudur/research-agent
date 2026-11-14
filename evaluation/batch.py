@@ -25,7 +25,7 @@ from .admission import admit_configuration
 from .finalize import finish_run, start_run
 from .manifest import CONFIGS, create_manifest
 from .orchestrate import execute_task
-from .report import run_report
+from .report import run_report, task_report
 
 
 TIERS = ("practice", "validation", "exam")
@@ -314,12 +314,25 @@ def execute_batch(
             prices_path=prices_path, code_commit=code_commit,
         )
         start_run(run_dir)
+        quote_history: dict[str, list[dict]] = {"spd": [], "tab": []}
         for task_id in tasks[tier]:
+            scenario = task_id.split("-", 1)[0]
             kwargs = dict(run_dir=run_dir, task_id=task_id, harness=harness,
-                          baseline_solution=baselines[task_id], test_only_budget=test_only_budget)
+                          baseline_solution=baselines[task_id], test_only_budget=test_only_budget,
+                          quote_history=tuple(quote_history[scenario]))
             if roles_factory is not None:
                 kwargs["roles"] = roles_factory(config, rep, task_id, run_dir)
             task_executor(**kwargs)
+            completed_task = task_report(run_dir, task_id)
+            if completed_task["quote"] is not None:
+                quote_history[scenario].append({
+                    "predicted": completed_task["quote"],
+                    "actual": {
+                        "cost": completed_task["total_cost"],
+                        "seconds": completed_task["seconds"]["wall"],
+                        "score": completed_task["holdout_score"],
+                    },
+                })
         finish_run(run_dir)
         report = run_report(run_dir)  # Reconcile ledger, tree and holdout evidence.
         if frozen and _library_hash(library_root) != frozen_hash:

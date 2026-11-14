@@ -7,8 +7,7 @@ from lightgbm import LGBMClassifier
 
 
 def fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:
-    # duration is present in train.csv but is unavailable before a call.
-    train = pd.read_csv(train_csv).drop(columns=["duration"], errors="ignore")
+    train = pd.read_csv(train_csv)
     y = train.pop("y").astype(int)
     test = pd.DataFrame(test_rows, columns=train.columns)
     for name in train.columns:

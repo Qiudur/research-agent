@@ -41,9 +41,13 @@ class BatchTests(unittest.TestCase):
             baselines[task_id] = path
         return baselines
 
-    def fake_executor(self, calls: list[tuple], *, tuned_score: float = 0.61):
+    def fake_executor(self, calls: list[tuple], *, tuned_score: float = 0.61,
+                      emit_quote: bool = False,
+                      quote_history_seen: list[tuple[str, int]] | None = None):
         def execute(*, run_dir, task_id, harness, baseline_solution,
                     test_only_budget, **kwargs):
+            if quote_history_seen is not None:
+                quote_history_seen.append((task_id, len(kwargs["quote_history"])))
             self.assertEqual(test_only_budget, 1.0)
             manifest = json.loads((run_dir / "manifest.json").read_text())
             tier = TIERS[task_id]
@@ -73,6 +77,9 @@ class BatchTests(unittest.TestCase):
             ledger.llm_call(node_id=None, role="planner", purpose="plan", effort="high",
                             model="test-scripted", usage=Usage(input=tokens),
                             seconds=0.1, prompt_hash="a" * 64)
+            if emit_quote:
+                ledger.emit("quote", predicted={"cost": 0.02, "seconds": 1.0, "score": 0.6},
+                            basis={"source": "test_fixture"})
             value = tuned_score if config == "tuned_lib" else 0.60
             root_node = {"schema": "node/1", "node_id": "n0000", "parent": None,
                          "hypothesis": "Baseline", "status": "accepted",
@@ -158,6 +165,17 @@ class BatchTests(unittest.TestCase):
                               ("practice", "validation", "exam")], [12, 0, 0])
             self.assertIsNone(result["admission"])
             self.assertFalse((root / "batches/first/exam_attempt.json").exists())
+
+    def test_practice_quote_history_stays_within_scenario_and_run(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            baselines = self.setup_project(root)
+            seen: list[tuple[str, int]] = []
+            self.run_batch(root, baselines,
+                           self.fake_executor([], emit_quote=True, quote_history_seen=seen),
+                           run_validation=False, run_exam=False)
+            self.assertEqual(seen.count(("spd-practice-a", 0)), 12)
+            self.assertEqual(seen.count(("spd-practice-b", 1)), 12)
 
     def test_frozen_library_file_mutation_is_detected(self):
         with TemporaryDirectory() as temp:

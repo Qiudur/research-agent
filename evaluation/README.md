@@ -34,7 +34,7 @@ TEST-only 模式允许脚本角色与临时预算，但底层 manifest 的 phase
 
 `ledger.py` 实现 `ledger/1`：每个任务或运行一个只追加账本，模型 token 分为互斥的 `input`、`cached_input`、`output`、`reasoning` 四桶，价格表缺失或哈希不匹配会直接报错。
 
-`evaluation.manifest.create_manifest` 在运行开始前封存任务、配置、模型、价格、能力库版本和 hard cap。`evaluation.quote.make_quote_callback` 接在 A 的 `TaskRunner.on_initial_plan` 上，在第一个实验前写入 `quote`；有历史预测/实际对时，按中位误差修正并留下 basis。
+`evaluation.manifest.create_manifest` 在运行开始前封存任务、配置、模型、价格、能力库版本和 hard cap。`evaluation.quote.make_quote_callback` 接在 A 的 `TaskRunner.on_initial_plan` 上，在第一个实验前写入 `quote`；有历史预测/实际对时，按中位误差修正并留下 basis。 batch 只取同一次运行中更早、同场景任务的完整审计报告作历史，避免跨配置或不同重复轮次混用；首题没有历史，仍保留未经校准的原始报价。
 
 `evaluation.orchestrate.execute_task` 是 A+B+C 的单任务编排入口：B 提供 dev 基线和评分，A 运行主循环，C 接收报价、单次 holdout、`task_end`、回放封存和成本核对。holdout 只在 C 调用 B 的短暂 `RA_EVAL=1` 窗口内执行，候选进程不会继承该变量。`finish_run` 要求所有任务恰好完成一次后才写 `run_end` 并填 `ended_ts`。
 

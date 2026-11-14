@@ -8,7 +8,7 @@ import math
 import os
 from pathlib import Path
 import shutil
-from typing import Any
+from typing import Any, Iterable, Mapping
 
 from ledger import Ledger
 from library import Library
@@ -42,6 +42,7 @@ def execute_task(
     *, run_dir: Path, task_id: str, harness: Any, baseline_solution: Path,
     roles: Any | None = None, test_only_budget: float | None = None,
     max_output_tokens: int = 30000,
+    quote_history: Iterable[Mapping[str, Any]] | None = None,
 ) -> dict:
     """Run dev scoring, A's loop, sealed replay, and one C-only holdout."""
     run_dir = Path(run_dir).expanduser().resolve()
@@ -87,7 +88,7 @@ def execute_task(
         outcome = TaskRunner(
             run_dir=run_dir, task_id=task_id, harness=scored_harness, ledger=ledger,
             roles=roles, library=library, baseline_score=baseline, config=config,
-            hard_caps=hard_caps, on_initial_plan=make_quote_callback(ledger),
+            hard_caps=hard_caps, on_initial_plan=make_quote_callback(ledger, quote_history),
         ).run()
     source_files = {
         "baseline": baseline_dir / "score.json", "agent_config": config_path,

@@ -105,7 +105,7 @@ def _tasks_override(path: Path) -> Iterator[None]:
 
 def _run_one(project_root: Path, run_dir: Path, task_id: str,
              copied_tasks: Path, base_url: str, config_path: Path,
-             library_source: Path | None) -> dict:
+             library_source: Path | None, config_label: str) -> dict:
     from openai import OpenAI
 
     prices_path = project_root / "config/prices_token_pilot.json"
@@ -120,7 +120,7 @@ def _run_one(project_root: Path, run_dir: Path, task_id: str,
             raise ValueError("Library source is not a library/1 state")
         start_version = state["version"]
     create_manifest(
-        project_root=project_root, run_dir=run_dir, phase="dev", config="default", rep=1,
+        project_root=project_root, run_dir=run_dir, phase="dev", config=config_label, rep=1,
         bank_version="bank-v1", tasks=[task_id], library_root=run_dir / "library",
         library_start_version=start_version, library_frozen=False, model=MODEL,
         agent_config_path=config_path, prices_path=prices_path, code_commit=code_commit,
@@ -165,6 +165,7 @@ def main() -> int:
                         help="Existing run/library directory for a dev-only reuse check")
     parser.add_argument("--agent-config", type=Path,
                         default=Path("config/agent_token_pilot.json"))
+    parser.add_argument("--config-label", choices=("default", "naive"), default="default")
     args = parser.parse_args()
     if not os.environ.get("OPENAI_API_KEY"):
         raise SystemExit("OPENAI_API_KEY must be injected in the process environment")
@@ -175,6 +176,8 @@ def main() -> int:
     config_path = (root / args.agent_config).resolve()
     if not config_path.is_relative_to(root / "config") or not config_path.is_file():
         raise SystemExit("--agent-config must be an existing project config file")
+    if args.config_label == "naive" and config_path.name != "naive_token_pilot.json":
+        raise SystemExit("The naive label requires config/naive_token_pilot.json")
     library_source = None
     if args.library_source is not None:
         library_source = (root / args.library_source).resolve()
@@ -187,6 +190,7 @@ def main() -> int:
     summary = {"schema": "token_pilot_report/1", "label": "DEV TOKEN MEASUREMENT - NOT MONEY",
                "campaign_dir": str(campaign), "model": MODEL, "base_url": args.base_url,
                "agent_config_path": str(config_path.relative_to(root)),
+               "config_label": args.config_label,
                "worktree_clean_at_start": worktree_clean,
                "library_source": str(library_source) if library_source else None,
                "library_source_state_sha256": _sha(library_source / "state.json")
@@ -202,7 +206,7 @@ def main() -> int:
         print(f"Starting {task_id}: {run_dir}", flush=True)
         try:
             row = _run_one(root, run_dir, task_id, copied, args.base_url,
-                           config_path, library_source)
+                           config_path, library_source, args.config_label)
             summary["tasks"].append(row)
             print(json.dumps(row, ensure_ascii=False), flush=True)
         except Exception as exc:

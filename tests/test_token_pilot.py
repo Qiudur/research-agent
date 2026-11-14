@@ -37,6 +37,20 @@ class TokenPilotTests(unittest.TestCase):
             self.assertEqual([row["task_id"] for row in bank["tasks"]],
                              ["tab-german-credit"])
 
+    def test_naive_control_preserves_one_generic_prompt_and_high_effort(self):
+        path = PROJECT / "config/naive_token_pilot.json"
+        config = json.loads(path.read_text())
+        self.assertEqual(set(config["effort"].values()), {"high"})
+        self.assertEqual(set(config["prompts"].values()),
+                         {"config/prompts/naive_token_pilot.md"})
+        self.assertEqual(config["query_k"], 0)
+        with TemporaryDirectory() as temp:
+            campaign = Path(temp) / "campaign"
+            prepare_task_copies(PROJECT, campaign, ("spd-membership-filter",), path)
+            inputs = json.loads((campaign / "pilot_inputs.json").read_text())
+            self.assertEqual(inputs["agent_config_path"],
+                             "config/naive_token_pilot.json")
+
 
 if __name__ == "__main__":
     unittest.main()
