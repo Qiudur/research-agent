@@ -1,0 +1,44 @@
+# 冻结题库内部 token 研究报告
+
+更新：2026-11-14。本页的“正式”指项目对冻结题库、真实模型调用和一次性阶段标记的内部研究协议；比赛没有指定模型、单题预算或现金价格。所有成本均为网关返回的四桶 token 数，**不是现金节省或官方比赛成绩**。本页只纳入已审计的冻结题库和首次 practice 批次；v2、validation、exam 及最终图表在文末明确待填。
+
+## 冻结题库与成本依据
+
+- bank-v1 已冻结：提速和表格各 12 题，每场景分别为 5 道 practice、2 道 validation、5 道 exam；24 题都填有实测 naive_cost、按各场景成本四等分的 easy/medium/hard（每档 4 题），单题预算统一为自选的 40,000 token。题库冻结提交 5cb5b290cb85e6b5496479f09c830f8237725e97；当前 tasks/bank.json 的 SHA-256 为 6f6e30b8c585629a901ecda9f9fc66807565e8eb79d805a2831b6534e3a31d6c。
+- 模型为可本地部署的 qwen3.5-27b，本轮经授权网关调用；config/prices.json 的 currency=TOKENS、unit_tokens=1、四桶费率均为 1、test_only=false。该表 SHA-256 为 bd42eb7295ecf0c07d2d5291ab6701b3d054a069f51d0af48b12670725f6346e。正式任务调用沿用单次输出上限 2,048 token 和请求前 12,000 token 预留；实际单题账本仍逐项核对 40,000 上限。
+- 提速朴素 dev 校准 36 遍中 34 次正常完成、2 次提前错误，合计 531,929 token；表格朴素 dev 校准 36 遍中 35 次正常完成、1 次提前错误，合计 1,041,097 token。失败已花 token 计入成本分子。主工作区私有审计目录 runs/naive-cost-audit-20261114-1041-agent/ 的 audit.json 核验两组共 72/72 次尝试、holdout 尝试 0、ready=true；bank_proposal.json 是冻结前的成本与难度提案。原始 campaign 位于独立校准 worktree，runs/ 未入 Git。逐题证据见 [提速校准](提速朴素成本校准.md)、[表格校准](表格朴素成本校准.md) 和 [预先固定的合并规则](成本校准合并规则.md)。
+
+## 首次正式 practice
+
+原始研究目录：/Users/qizetao/Desktop/research-agent-formal-20261114/runs/auto-internal-20261114-105159-8cbb/。关键文件为 auto_plan.json、auto_self_research_report.json 和 proposal_ledger.jsonl；三个 run 的 manifest、逐题 ledger、实验树、回放上下文及练习题评分在同一正式 worktree 的 runs/run-20261114-105159-9661/、runs/run-20261114-105159-2f0d/、runs/run-20261114-105159-8c51/。代码提交 7c801cf585ed6a6df2f71d8f3d2b871a6ca8cca0，默认配置 SHA-256 为 b50bd43b43c25e40eb2006bf0abb3ed1aacd200058c15d2f43ee0a599c272d68。
+
+计划只使用 10 道 practice 题（每场景 5 道），请求 2 轮受限候选提案、3 个并发 worker；默认配置先独立跑 3 遍，每遍 10 题。两轮模型提案均收到已计量响应，但第一轮因 rationale 无效被拒，第二轮因 planner 策略附录不安全或过大被拒；分别消耗 4,068 和 3,878 token。**selection=null，未生成可送唯一正式验证的候选配置或 selection SHA。** 这次运行没有打开 validation/exam，也没有写对应的一次性 attempt 标记。
+
+| 默认配置遍次 | 10 题任务 token | 10 题平均归一化分数 |
+|---:|---:|---:|
+| 1 | 221,911 | -20.6816 |
+| 2 | 240,280 | -19.9484 |
+| 3 | 187,913 | -20.0141 |
+| 三遍合计 / 平均 | 650,104 / 每遍 216,701.3 | -20.2147 |
+
+30 个任务的四桶分别为 input 347,437、cached_input 0、output 66,638、reasoning 236,029，合计 **650,104 token**；提案两次四桶合计 7,946 token。因此首次 practice 的完整已记录研究成本为 **658,050 token**，不是 650,104。proposal_ledger.jsonl 的 SHA 与正式报告一致，两次提案均有返回用量；171 次任务模型调用也没有零用量记录。
+
+独立只读复核对 30/30 个 task_report 重新执行账本、源文件与节点回放封存核验：逐题四桶之和等于成本，最高单题 34,762 token，均不超过 40,000；30 个回放上下文的输出上限均为 2,048。三遍 manifest.phase 均为 self_research；每个练习任务均有一次练习期 holdout_attempt 文件。30 个任务的停止原因分别为达到评分上限 13、预算闸门 14、错误 3；共 4 次模型调用报错且已有用量，其中 Edit Distance 两遍各有一次 JSON 语法错误，Mushroom 一遍返回多余 JSON，German Credit 一遍规划 JSON 缺字段。错误停止的任务费用未删除，不能把 30 个任务都表述为正常完成。
+
+## 分数解释与独立复核边界
+
+Phishing Websites 的冻结参考 baseline AUC 为 0.9935600225、ceiling AUC 为 0.9935708244，差仅约 0.00001080185。B 的 gap 归一化按 (raw-baseline)/(ceiling-baseline) 计算；首次 practice 三遍该题均为 -229.6927，对应原始 AUC 中位数约 0.991079，比 baseline 低约 0.002481。这个很小的参考分母主导了十题均分的极端负值；剔除该题只作解释、不改正式成绩时，其余九题均分分别为 2.5419、3.3565、3.2835。Adult Income、Online Shoppers 的参考 AUC 差也只有约 0.001023、0.000133；验证题 Breast Cancer Diagnostic 的差约 0.001677。正式报告须并列给出原始 AUC、参考差及逐题归一化分数，不凭单一均分宣称整体能力或稳定提升。
+
+- [成员乙十题基准](A-十题练习试验.md)来自 Git 提交 633f4ad 的 runs/token-practice10-default-20261114-091613-02ab/：同一组 10 题、同一模型和 40,000/2,048/12,000 token 限制，默认版三遍记录 758,055 token，平均分 -19.6670。但其代码提交为 482f3ef，默认配置 SHA 为 f0ba329，采用 TEST 价目及另一网关；这不是与本轮冻结配置、同一代码和同一环境配对的实验。不能把两组记录差额解释为 107,951 token 的节省或质量改善。成员乙的 Phishing 三遍也为 -229.6927、-206.4446、-229.6927，显示极小参考 gap 的波动并非本批次独有。
+- [成员甲表格复核](队友甲表格成本独立复核.md)的完整批次记录 36 次、35 次正常完成，账面合计 1,025,623 token；原始压缩包备份于主工作区私有的 runs/external/member-a-tabular-20261114/runs.zip，逐题审计见 [JSON 摘要](队友甲表格成本独立复核.json)。其代码提交 8340996、网关与冻结校准不同，Default Credit 有一次 HTTP 400 未返回用量；1,025,623 仅为已记录用量。跨 campaign 审计明确返回 Calibration commits differ outside docs/，未生成可替换 bank 的提案。这是一组独立交叉复核，不能与本机校准合并为精确朴素成本，也不能据其差额归因于配置。
+
+## 后续结果：待填
+
+| 阶段 | 当前可报告状态 | 必须补齐的证据 |
+|---|---|---|
+| v2 practice 自研究 | **待填**；首次批次 selection=null | 新提交与独立运行目录、候选配置及四角色提示词 SHA、三遍逐题分数与四桶、提案失败和总研究成本 |
+| 唯一 validation 准入 | **待填；尚无本报告可引用结果** | 一次性 attempt 标记、默认练过库与研究版三遍配对、逐题分数及成本、准入或拒绝理由 |
+| 一次性 exam | **待填；尚无本报告可引用结果** | 准入后的实际三线或四线运行、单次 holdout/回放/预算审计、逐题及总体结果 |
+| 图表、回本点与路演结论 | **待填** | 仅由同批次已审计报告生成；若研究版未准入或优势不显著，明确报告无可靠提升，不计算研究版回本点 |
+
+上述待填项不能由 TEST 联调、成员甲乙独立试验、首次失败的提案或练习集自身分数代替。正式考试结果和现金价格如无实测，应继续保持空缺。
