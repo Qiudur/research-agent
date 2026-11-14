@@ -50,12 +50,15 @@ def prepare_project(source: Path, campaign: Path) -> Path:
     bank["tasks"] = selected
     _write(project / "tasks/bank.json", bank)
     source_tasks = {}
+    wall_seconds_per_task = {}
     for task_id in TASKS:
         shutil.copytree(source / "tasks" / task_id, project / "tasks" / task_id)
         original = source / "tasks" / task_id / "task.json"
         copied = project / "tasks" / task_id / "task.json"
         source_tasks[task_id] = {"original_task_sha256": _sha(original),
                                  "copied_task_sha256": _sha(copied)}
+        copied_task = json.loads(copied.read_text(encoding="utf-8"))
+        wall_seconds_per_task[task_id] = copied_task["budget"]["wall_seconds"]
     prices = json.loads((source / "config/prices_token_pilot.json").read_text(encoding="utf-8"))
     if prices.get("currency") != "TOKENS" or prices.get("unit_tokens") != 1:
         raise ValueError("Expected the four-bucket one-token price table")
@@ -70,6 +73,7 @@ def prepare_project(source: Path, campaign: Path) -> Path:
         "model": MODEL, "tasks": list(TASKS), "proposal_rounds": 1,
         "repetitions_per_candidate": 3,
         "budget_tokens_per_task": BUDGET_TOKENS,
+        "wall_seconds_per_task": wall_seconds_per_task,
         "reserve_tokens_per_call": RESERVE_TOKENS,
         "max_output_tokens_requested": MAX_OUTPUT_TOKENS,
         "prices_sha256": _sha(project / "config" / PRICE_NAME),
