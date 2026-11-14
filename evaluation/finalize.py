@@ -5,6 +5,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from datetime import datetime, timezone
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -32,6 +33,53 @@ def _write_json(path: Path, data: dict) -> None:
     temporary = path.with_name(path.name + ".tmp")
     temporary.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     temporary.replace(path)
+
+
+_SAFE_SCORER_MESSAGES = frozenset({
+    "Scoring timed out", "Candidate exceeded wall time",
+    "Scoring exceeded memory", "Candidate exceeded memory limit",
+    "Sandbox worker returned no JSON", "Scoring worker failed",
+})
+_FALLBACK_SCORER_MESSAGES = {
+    "timeout": "Scoring timed out",
+    "oom": "Scoring exceeded memory",
+    "exception": "Scoring worker failed",
+    "missing_score": "Holdout scorer returned no score",
+    "unknown": "Holdout scoring failed",
+}
+
+
+def _holdout_failure_metadata(result: dict, best_node: str) -> dict:
+    """Allowlist scorer diagnostics without retaining hidden labels or predictions."""
+    error = result.get("error") if isinstance(result.get("error"), dict) else {}
+    kind = error.get("kind")
+    if not isinstance(kind, str) or kind not in _FALLBACK_SCORER_MESSAGES:
+        kind = "missing_score" if result.get("ok") else "unknown"
+    message = error.get("message")
+    if not isinstance(message, str) or message not in _SAFE_SCORER_MESSAGES:
+        message = _FALLBACK_SCORER_MESSAGES[kind]
+    metadata = {
+        "schema": "holdout_failure/1",
+        "ts": _utc_now(),
+        "best_node": best_node,
+        "reason": "not_ok" if not result.get("ok") else "missing_score",
+        "error": {"kind": kind, "message": message},
+    }
+    seconds = result.get("seconds")
+    if isinstance(seconds, dict):
+        safe_seconds = {}
+        for key in ("run", "queue"):
+            value = seconds.get(key)
+            if isinstance(value, (int, float)) and not isinstance(value, bool):
+                value = float(value)
+                if math.isfinite(value) and value >= 0:
+                    safe_seconds[key] = value
+        if safe_seconds:
+            metadata["seconds"] = safe_seconds
+    seed = result.get("seed")
+    if isinstance(seed, int) and not isinstance(seed, bool) and 0 <= seed < 2**64:
+        metadata["seed"] = seed
+    return metadata
 
 
 @contextmanager
@@ -87,6 +135,7 @@ def finish_task(run_dir: Path, task_id: str, harness: Any) -> dict:
     if not isinstance(result, dict) or result.get("schema") != "score/1" or result.get("split") != "holdout":
         raise ValueError("B returned an invalid holdout score")
     if not result.get("ok") or result.get("score") is None:
+        _write_json(task_dir / "holdout_failure.json", _holdout_failure_metadata(result, best_node))
         raise RuntimeError("Holdout failed; attempt is recorded and must not be retried")
     _write_json(task_dir / "holdout_score.json", result)
     elapsed = ledger.elapsed()

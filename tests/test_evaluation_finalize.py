@@ -57,6 +57,18 @@ class FakeHarness:
                 "seconds": {"run": 0.2, "queue": 0.1}, "seed": 1234}
 
 
+class ReturnedHarness:
+    def __init__(self, result: dict):
+        self.result = result
+        self.calls = 0
+
+    def score(self, task_id, node_dir, split):
+        self.calls += 1
+        assert os.environ.get("RA_EVAL") == "1"
+        assert task_id == TASK and node_dir.name == "n0000" and split == "holdout"
+        return self.result
+
+
 class FinalizeTests(unittest.TestCase):
     def test_one_holdout_then_task_end_and_run_end(self):
         with TemporaryDirectory() as temp:
@@ -88,6 +100,61 @@ class FinalizeTests(unittest.TestCase):
             with self.assertRaises(FileExistsError):
                 finish_task(run, TASK, harness)
             self.assertEqual(harness.calls, 1)
+
+    def test_failed_score_records_safe_metadata_without_retry(self):
+        cases = [
+            ("not_ok", {
+                "schema": "score/1", "split": "holdout", "ok": False, "score": None,
+                "error": {"kind": "timeout", "message": "Scoring timed out",
+                          "trace_tail": "trace-secret"},
+                "seconds": {"run": 302.0, "queue": 4.0, "labels": ["hidden-label-value"]},
+                "seed": 1234, "labels": ["hidden-label-value"],
+                "predictions": ["prediction-secret"],
+            }, "timeout", "Scoring timed out"),
+            ("missing_score", {
+                "schema": "score/1", "split": "holdout", "ok": True, "score": None,
+                "error": None, "seconds": {"run": float("inf"), "queue": -3.0},
+                "seed": True, "labels": ["hidden-label-value"],
+                "predictions": ["prediction-secret"],
+            }, "missing_score", "Holdout scorer returned no score"),
+            ("untrusted_message", {
+                "schema": "score/1", "split": "holdout", "ok": False, "score": None,
+                "error": {"kind": "exception",
+                          "message": "hidden-label-value prediction-secret",
+                          "trace_tail": "trace-secret"},
+                "seconds": {"run": 1.5, "queue": 0}, "seed": 99,
+            }, "exception", "Scoring worker failed"),
+        ]
+        for name, result, expected_kind, expected_message in cases:
+            with self.subTest(name=name), TemporaryDirectory() as temp:
+                run = setup(Path(temp))
+                harness = ReturnedHarness(result)
+                with self.assertRaisesRegex(RuntimeError, "must not be retried"):
+                    finish_task(run, TASK, harness)
+                task_dir = run / "tasks" / TASK
+                failure = json.loads((task_dir / "holdout_failure.json").read_text())
+                self.assertEqual(failure["schema"], "holdout_failure/1")
+                self.assertEqual(failure["best_node"], "n0000")
+                self.assertEqual(failure["reason"],
+                                 "missing_score" if name == "missing_score" else "not_ok")
+                self.assertEqual(failure["error"],
+                                 {"kind": expected_kind, "message": expected_message})
+                if name == "missing_score":
+                    self.assertNotIn("seconds", failure)
+                    self.assertNotIn("seed", failure)
+                else:
+                    self.assertIn("seconds", failure)
+                    self.assertIn("seed", failure)
+                contents = (task_dir / "holdout_failure.json").read_text()
+                for secret in ("hidden-label-value", "prediction-secret", "trace-secret"):
+                    self.assertNotIn(secret, contents)
+                self.assertFalse((task_dir / "holdout_failure.json.tmp").exists())
+                self.assertFalse((task_dir / "holdout_score.json").exists())
+                self.assertFalse(any(event["kind"] == "task_end"
+                                     for event in Ledger.open(run, TASK)._events()))
+                with self.assertRaises(FileExistsError):
+                    finish_task(run, TASK, harness)
+                self.assertEqual(harness.calls, 1)
 
     def test_exam_marked_library_remains_unchanged(self):
         with TemporaryDirectory() as temp:
