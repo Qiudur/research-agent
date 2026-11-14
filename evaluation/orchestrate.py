@@ -46,7 +46,9 @@ def execute_task(
     """Run dev scoring, A's loop, sealed replay, and one C-only holdout."""
     run_dir = Path(run_dir).expanduser().resolve()
     project_root = run_dir.parent.parent
-    manifest = read_json(run_dir / "manifest.json", "run/1")
+    manifest = read_json(run_dir / "manifest.json")
+    if manifest.get("schema") not in {"run/1", "run/2"}:
+        raise ValueError("Unsupported run manifest schema")
     if task_id not in manifest["tasks"]:
         raise ValueError("Task is absent from run manifest")
     assert_not_in_eval_window()
@@ -81,6 +83,8 @@ def execute_task(
     with selected_library_settings(config_path, triggers_path):
         library = Library.open(library_root, frozen=bool(manifest["library"]["frozen"]))
         if roles is None:
+            if manifest["schema"] == "run/2":
+                raise ValueError("Routed run requires injected routed roles")
             roles = RoleAgents(ModelClient(manifest["model"], ledger, max_output_tokens=max_output_tokens),
                                config, project_root=project_root)
         outcome = TaskRunner(
@@ -96,6 +100,8 @@ def execute_task(
         source_files[f"prompt_{role}"] = (project_root / relative).resolve()
     if test_controls is not None:
         source_files["test_controls"] = test_controls
+    if manifest["schema"] == "run/2":
+        source_files["routing"] = (project_root / manifest["routing"]["path"]).resolve()
     opening_plan = run_dir / "tasks" / task_id / "opening_plan.json"
     if opening_plan.exists():
         source_files["opening_plan"] = opening_plan

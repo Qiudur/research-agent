@@ -11,7 +11,7 @@ import re
 
 
 PHASES = frozenset({"dev", "practice", "validation", "exam", "self_research", "demo"})
-CONFIGS = frozenset({"naive", "default", "default_lib", "tuned_lib"})
+CONFIGS = frozenset({"naive", "default", "default_lib", "tuned_lib", "self_evolving"})
 _TASK_ID = re.compile(r"^(tab|spd)-[a-z0-9][a-z0-9-]*$")
 _BANK_VERSION = re.compile(r"^bank-v[1-9][0-9]*$")
 _LIB_VERSION = re.compile(r"^lib-(0|[1-9][0-9]*)$")
@@ -38,6 +38,7 @@ def create_manifest(
     bank_version: str, tasks: list[str], library_root: Path,
     library_start_version: str, library_frozen: bool, model: str,
     agent_config_path: Path, prices_path: Path, code_commit: str,
+    routing_config_path: Path | None = None,
 ) -> dict:
     """Write manifest.json once; reject incomplete prices and test rates outside dev."""
     project_root = Path(project_root).expanduser().resolve()
@@ -49,6 +50,9 @@ def create_manifest(
         raise ValueError("run_dir must match runs/run-YYYYMMDD-HHMMSS-xxxx")
     if phase not in PHASES or config not in CONFIGS or isinstance(rep, bool) or rep not in {1, 2, 3}:
         raise ValueError("Invalid phase/config/rep")
+    routed = routing_config_path is not None
+    if routed != (config == "self_evolving") or (routed and phase != "dev"):
+        raise ValueError("Self-evolving routing requires a dev run/2 manifest")
     if not _BANK_VERSION.fullmatch(bank_version):
         raise ValueError("Invalid bank version")
     if not tasks or len(set(tasks)) != len(tasks) or any(not _TASK_ID.fullmatch(item) for item in tasks):
@@ -63,6 +67,15 @@ def create_manifest(
         raise ValueError("code_commit must be a Git SHA")
     agent_descriptor, _ = _descriptor(project_root, Path(agent_config_path), "agent/1")
     price_descriptor, prices = _descriptor(project_root, Path(prices_path), "prices/1")
+    route_descriptor = None
+    models = [model]
+    if routed:
+        route_descriptor, policy = _descriptor(project_root, Path(routing_config_path), "route_policy/1")
+        from research_agent.routing import validate_policy
+        validate_policy(policy)
+        if policy["default_model"] != model:
+            raise ValueError("Routing default model differs from sealed run model")
+        models = sorted({model, *policy["role_models"].values()})
     if prices.get("currency") == "TEST" and phase != "dev":
         raise ValueError("TEST prices are restricted to dev runs")
     if prices.get("test_only") and phase != "dev":
@@ -70,13 +83,16 @@ def create_manifest(
     if not isinstance(prices.get("currency"), str) or not prices["currency"].strip():
         raise ValueError("Price currency is unset")
     unit = prices.get("unit_tokens")
-    rates = prices.get("models", {}).get(model)
-    if not isinstance(unit, int) or unit <= 0 or not isinstance(rates, dict):
-        raise ValueError("No complete price table for the selected model")
-    for bucket in ("input", "cached_input", "output", "reasoning"):
-        value = rates.get(bucket)
-        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
-            raise ValueError(f"Model price {bucket} is missing or invalid")
+    if not isinstance(unit, int) or unit <= 0:
+        raise ValueError("No valid price unit")
+    for selected_model in models:
+        rates = prices.get("models", {}).get(selected_model)
+        if not isinstance(rates, dict):
+            raise ValueError(f"No complete price table for {selected_model}")
+        for bucket in ("input", "cached_input", "output", "reasoning"):
+            value = rates.get(bucket)
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
+                raise ValueError(f"Model price {selected_model}.{bucket} is missing or invalid")
     hard_caps = json.loads((project_root / "config/hard_caps.json").read_text(encoding="utf-8"))
     if hard_caps.get("schema") != "hard_caps/1":
         raise ValueError("Unsupported hard cap schema")
@@ -84,7 +100,7 @@ def create_manifest(
         raise FileExistsError(run_dir / "manifest.json")
     run_dir.mkdir(parents=True, exist_ok=True)
     manifest = {
-        "schema": "run/1", "run_id": run_dir.name, "phase": phase,
+        "schema": "run/2" if routed else "run/1", "run_id": run_dir.name, "phase": phase,
         "config": config, "rep": rep, "bank_version": bank_version,
         "tasks": tasks,
         "library": {"root": str(library_root.relative_to(project_root)),
@@ -95,6 +111,9 @@ def create_manifest(
         "started_ts": datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z"),
         "ended_ts": None,
     }
+    if routed:
+        manifest["models"] = models
+        manifest["routing"] = route_descriptor
     (run_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return manifest
 

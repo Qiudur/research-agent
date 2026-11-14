@@ -80,7 +80,9 @@ class TaskRunner:
         self.tree = ExperimentTree.open(self.run_dir, task_id)
         manifest_path = self.run_dir / "manifest.json"
         if manifest_path.exists():
-            manifest = read_json(manifest_path, "run/1")
+            manifest = read_json(manifest_path)
+            if manifest.get("schema") not in {"run/1", "run/2"}:
+                raise ValueError("Unsupported run manifest schema")
             if manifest.get("run_id") != self.run_id or task_id not in manifest.get("tasks", []):
                 raise ValueError("Manifest does not include this task/run")
             if manifest.get("phase") == "exam" and not getattr(library, "frozen", False):

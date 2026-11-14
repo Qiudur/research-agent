@@ -35,7 +35,10 @@ def selected_library_settings(agent_config: Path, triggers_config: Path):
 
 
 def _manifest_fields(manifest: Mapping[str, Any]) -> dict[str, Any]:
-    return {key: manifest.get(key) for key in MANIFEST_KEYS}
+    fields = {key: manifest.get(key) for key in MANIFEST_KEYS}
+    if manifest.get("schema") == "run/2":
+        fields.update(schema="run/2", models=manifest.get("models"), routing=manifest.get("routing"))
+    return fields
 
 
 def _file_record(path: Path) -> dict[str, str]:
@@ -62,7 +65,9 @@ def write_replay_context(
     """
     run_dir = Path(run_dir).resolve()
     library_root = Path(library_root).resolve()
-    manifest = read_json(run_dir / "manifest.json", "run/1")
+    manifest = read_json(run_dir / "manifest.json")
+    if manifest.get("schema") not in {"run/1", "run/2"}:
+        raise ValueError("Unsupported run manifest schema")
     if manifest.get("run_id") != run_dir.name or task_id not in manifest.get("tasks", []):
         raise ValueError("Manifest does not describe this task run")
     tree = ExperimentTree.open(run_dir, task_id)
@@ -74,6 +79,8 @@ def write_replay_context(
     required = {"baseline", "agent_config", "prices", "hard_caps", "triggers"}
     if required - source_files.keys():
         raise ValueError(f"Missing replay sources: {sorted(required - source_files.keys())}")
+    if manifest["schema"] == "run/2" and "routing" not in source_files:
+        raise ValueError("Routed replay requires its sealed policy source")
     node_records: dict[str, dict[str, Any]] = {}
     for node in tree.all_nodes():
         node_id = node["node_id"]
@@ -111,7 +118,9 @@ def _verify_replay_context(
     context = read_json(run_dir / "tasks" / task_id / CONTEXT_NAME, CONTEXT_SCHEMA)
     if context.get("run_id") != run_dir.name or context.get("task_id") != task_id:
         raise ValueError("Replay context belongs to a different run or task")
-    manifest = read_json(run_dir / "manifest.json", "run/1")
+    manifest = read_json(run_dir / "manifest.json")
+    if manifest.get("schema") not in {"run/1", "run/2"}:
+        raise ValueError("Unsupported run manifest schema")
     if context.get("manifest_fields") != _manifest_fields(manifest):
         raise ValueError("Run manifest changed since replay context was sealed")
     if context.get("library_root") != str(Path(library_root).resolve()):
@@ -129,6 +138,8 @@ def _verify_replay_context(
     source_labels = set(context.get("sources", {}))
     if {"baseline", "agent_config", "prices", "hard_caps", "triggers"} - source_labels:
         raise ValueError("Replay context lacks mandatory source provenance")
+    if manifest["schema"] == "run/2" and "routing" not in source_labels:
+        raise ValueError("Routed replay context lacks route provenance")
     records = context.get("nodes", {})
     saved = records.get(node["node_id"])
     if not isinstance(saved, dict) or saved.get("library_version") != node["library_version"]:

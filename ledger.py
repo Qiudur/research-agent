@@ -15,7 +15,7 @@ from typing import Any
 
 KINDS = frozenset({
     "task_start", "quote", "llm_call", "experiment", "score",
-    "review", "library", "stop", "task_end", "run_start", "run_end",
+    "review", "library", "stop", "task_end", "run_start", "run_end", "route_decision",
 })
 TOKEN_BUCKETS = ("input", "cached_input", "output", "reasoning")
 _TASK_ID = re.compile(r"^(tab|spd)-[a-z0-9][a-z0-9-]*$")
@@ -95,8 +95,26 @@ class Ledger:
             raise ValueError("Invalid task_id")
         manifest_path = run_dir / "manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        if manifest.get("schema") != "run/1" or manifest.get("run_id") != run_dir.name:
+        if manifest.get("schema") not in {"run/1", "run/2"} or manifest.get("run_id") != run_dir.name:
             raise ValueError("Run manifest schema or run_id mismatch")
+        if manifest["schema"] == "run/2":
+            models = manifest.get("models")
+            if (not isinstance(models, list) or not models or len(set(models)) != len(models)
+                    or manifest.get("model") not in models):
+                raise ValueError("Routed manifest has no valid sealed model catalog")
+            route = manifest.get("routing")
+            if not isinstance(route, dict) or not isinstance(route.get("path"), str) or not _HASH.fullmatch(str(route.get("sha256", ""))):
+                raise ValueError("Routed manifest has no sealed route policy")
+            root = run_dir.parent.parent
+            route_path = (root / route["path"]).resolve()
+            if not route_path.is_relative_to(root) or hashlib.sha256(route_path.read_bytes()).hexdigest() != route["sha256"]:
+                raise ValueError("Sealed route policy changed")
+            from research_agent.routing import validate_policy
+            policy = json.loads(route_path.read_text(encoding="utf-8"))
+            validate_policy(policy)
+            if (policy["default_model"] != manifest["model"]
+                    or set(models) != {policy["default_model"], *policy["role_models"].values()}):
+                raise ValueError("Routed manifest model catalog differs from sealed policy")
         if task_id is not None and task_id not in manifest.get("tasks", []):
             raise ValueError("Task is absent from run manifest")
         descriptor = manifest.get("prices")
@@ -175,7 +193,9 @@ class Ledger:
         usage: Usage, seconds: float, prompt_hash: str, ok: bool = True,
         error: str | None = None,
     ) -> float:
-        if model != self.manifest.get("model"):
+        allowed = ([self.manifest.get("model")] if self.manifest["schema"] == "run/1"
+                   else self.manifest["models"])
+        if model not in allowed:
             raise ValueError("Model differs from sealed run manifest")
         if role not in {"planner", "executor", "diagnoser", "summarizer"}:
             raise ValueError("Invalid model role")

@@ -78,7 +78,7 @@ def task_report(run_dir: Path, task_id: str) -> dict:
     quotes = [event for event in events if event["kind"] == "quote"]
     if len(quotes) > 1:
         raise ValueError("Task has more than one quote")
-    return {
+    result = {
         "schema": "task_report/1", "run_id": run_dir.name, "task_id": task_id,
         "best_node": ending["best_node"], "dev_score": stop["dev_score"],
         "holdout_score": ending["holdout_score"], "total_cost": ending["total_cost"],
@@ -96,6 +96,36 @@ def task_report(run_dir: Path, task_id: str) -> dict:
             "holdout_path": str(task_dir / "holdout_score.json"),
         },
     }
+    if ledger.manifest["schema"] == "run/2":
+        routes = [event for event in events if event["kind"] == "route_decision"]
+        matched = {event["llm_seq"]: event for event in routes if event.get("llm_seq") is not None}
+        if len(matched) != len(model_events) or set(matched) != {event["seq"] for event in model_events}:
+            raise ValueError("Routed calls do not reconcile to route decisions")
+        for event in model_events:
+            route = matched[event["seq"]]
+            if route["selected_model"] != event["model"] or route["ok"] != event["ok"]:
+                raise ValueError("Route choice disagrees with model-call evidence")
+        default_model = ledger.manifest["model"]
+        remote = [event for event in model_events if event["model"] != default_model]
+        policy_path = (run_dir.parent.parent / ledger.manifest["routing"]["path"]).resolve()
+        policy = json.loads(policy_path.read_text(encoding="utf-8"))
+        if len(remote) > policy["remote_call_cap"]:
+            raise ValueError("Routed task exceeded its sealed remote-call cap")
+        result["routing"] = {
+            "default_model": default_model,
+            "remote_calls": len(remote),
+            "remote_tokens": sum(sum(event["tokens"].values()) for event in remote),
+            "remote_cost": sum(float(event["cost"]) for event in remote),
+            "failed_remote_calls": sum(not event["ok"] for event in remote),
+            "failed_calls_without_reported_usage": sum(not event["ok"] and
+                not any(event["tokens"].values()) for event in model_events),
+            "calls_by_model": {model: sum(event["model"] == model for event in model_events)
+                               for model in ledger.manifest["models"]},
+            "cost_by_model": {model: sum(float(event["cost"]) for event in model_events if event["model"] == model)
+                              for model in ledger.manifest["models"]},
+            "route_decision_seqs": [event["seq"] for event in routes],
+        }
+    return result
 
 
 def run_report(run_dir: Path) -> dict:
