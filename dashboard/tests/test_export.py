@@ -90,7 +90,7 @@ class ExportTests(unittest.TestCase):
         for currency, test_only, internal in (("TOKENS", False, True),
                                               ("TOKENS", True, False), ("CNY", False, False)):
             write_json(prices_path, {"schema": "prices/1", "currency": currency,
-                                     "test_only": test_only, "models": {"test-model": {
+                                     "unit_tokens": 1, "test_only": test_only, "models": {"test-model": {
                                          "input": 1, "cached_input": 1, "output": 1, "reasoning": 1}}})
             manifest["prices"] = {"path": "config/prices.json",
                                   "sha256": hashlib.sha256(prices_path.read_bytes()).hexdigest()}
@@ -107,6 +107,22 @@ class ExportTests(unittest.TestCase):
                 self.assertIn("仅供联调", info["message"])
         html = render_html(load_run(self.run, project_root=self.project))
         self.assertIn("isTokens ? 'token 消耗' : '花费'", html)
+
+    def test_weighted_tokens_prices_cannot_claim_raw_token_consumption(self) -> None:
+        self.add_manifest_and_prices()
+        prices_path = self.project / "config/prices.json"
+        manifest_path = self.run / "manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        for unit, output_rate in ((1000, 1), (1, 2)):
+            write_json(prices_path, {"schema": "prices/1", "currency": "TOKENS",
+                                     "unit_tokens": unit, "test_only": False,
+                                     "models": {"test-model": {"input": 1, "cached_input": 1,
+                                                               "output": output_rate, "reasoning": 1}}})
+            manifest["prices"] = {"path": "config/prices.json",
+                                  "sha256": hashlib.sha256(prices_path.read_bytes()).hexdigest()}
+            write_json(manifest_path, manifest)
+            with self.assertRaisesRegex(ValueError, "unit_tokens=1"):
+                load_run(self.run, project_root=self.project)
 
     def test_missing_cost_evidence_remains_unknown_even_with_prices(self) -> None:
         self.add_manifest_and_prices()

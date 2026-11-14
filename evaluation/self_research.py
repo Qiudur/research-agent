@@ -23,6 +23,7 @@ from typing import Any, Callable, Mapping
 from library import Library
 from ledger import Ledger, Usage, price_usage
 from research_agent.model import ModelClient
+from token_accounting import require_exact_token_accounting
 
 from .batch import (_SerializedHarness, _agent_signature, _hash, _json, _run_path,
                     _verify_code_freeze, _within)
@@ -316,6 +317,7 @@ def evaluate_candidates(
     if formal:
         if prices.get("currency") in (None, "", "TEST") or prices.get("test_only"):
             raise ValueError("Formal self-research requires actual model prices")
+        require_exact_token_accounting(prices, model)
         if roles_factory is not None or task_executor is not execute_task:
             raise ValueError("Formal self-research may not inject scripted roles or executor")
         if not os.environ.get("OPENAI_API_KEY"):
@@ -484,6 +486,8 @@ def auto_evaluate_candidates(
     price_usage(prices, model, Usage(input=1))
     if formal and (prices.get("currency") in (None, "", "TEST") or prices.get("test_only")):
         raise ValueError("Formal proposal generation needs actual prices")
+    if formal:
+        require_exact_token_accounting(prices, model)
     if not formal and prices.get("currency") != "TEST":
         raise ValueError("TEST-only proposal generation needs TEST prices")
     if formal:

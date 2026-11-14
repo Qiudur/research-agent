@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from ledger import Ledger
+from token_accounting import is_exact_token_accounting
 
 
 def _jsonl(path: Path, schema: str) -> list[dict]:
@@ -112,6 +113,7 @@ def run_report(run_dir: Path) -> dict:
     report = {"schema": "run_report/1", "run_id": run_dir.name,
               "phase": ledger.manifest["phase"], "config": ledger.manifest["config"],
               "rep": ledger.manifest["rep"], "currency": ledger.prices["currency"],
+              "exact_token_accounting": is_exact_token_accounting(ledger.prices, ledger.manifest["model"]),
               "total_cost": total, "tasks": tasks,
               "evidence": {"run_ledger_path": str(ledger.path), "run_end_seq": run_ends[0]["seq"]}}
     (run_dir / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

@@ -19,6 +19,14 @@ def _positive(value: object) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) and value > 0
 
 
+def _exact_token_rates(prices: dict, rates: object) -> bool:
+    return (type(prices.get("unit_tokens")) is int and prices["unit_tokens"] == 1
+            and isinstance(rates, dict)
+            and all(type(rates.get(key)) in (int, float)
+                    and math.isfinite(rates[key]) and rates[key] == 1
+                    for key in ("input", "cached_input", "output", "reasoning")))
+
+
 def audit(project_root: Path, model: str | None = None) -> dict:
     root = Path(project_root).expanduser().resolve()
     blockers = []
@@ -85,11 +93,14 @@ def audit(project_root: Path, model: str | None = None) -> dict:
     valid_prices = (prices.get("schema") == "prices/1" and prices.get("currency") not in {None, "", "TEST"}
             and not prices.get("test_only") and isinstance(rates, dict)
             and type(prices.get("unit_tokens")) is int and prices["unit_tokens"] > 0
+            and (prices.get("currency") != "TOKENS" or _exact_token_rates(prices, rates))
             and all(isinstance(rates.get(key), (int, float)) and not isinstance(rates[key], bool)
                     and math.isfinite(rates[key]) and rates[key] >= 0
                     for key in ("input", "cached_input", "output", "reasoning")))
     if not valid_prices:
-        blockers.append("Model name and complete non-TEST prices or token-accounting rates are missing")
+        blockers.append("TOKENS accounting requires unit_tokens=1 and all four model rates=1"
+                        if prices.get("currency") == "TOKENS" and not _exact_token_rates(prices, rates)
+                        else "Model name and complete non-TEST prices or token-accounting rates are missing")
     if not os.environ.get("OPENAI_API_KEY"):
         blockers.append("OPENAI_API_KEY is unavailable")
     if sys.platform != "darwin" or not shutil.which("sandbox-exec"):

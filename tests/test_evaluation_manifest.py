@@ -63,6 +63,20 @@ class ManifestTests(unittest.TestCase):
                 self.create(root, phase="exam")
             self.assertEqual(self.create(root, phase="dev")["phase"], "dev")
 
+    def test_formal_token_prices_require_one_token_per_unit_and_bucket(self):
+        for unit, output_rate in ((1000, 1), (1, 2)):
+            with TemporaryDirectory() as temp:
+                root = Path(temp)
+                self.setup_root(root)
+                path = root / "config/prices_test_only.json"
+                prices = json.loads(path.read_text(encoding="utf-8"))
+                prices.update(currency="TOKENS", test_only=False, unit_tokens=unit)
+                prices["models"]["test-scripted"]["output"] = output_rate
+                path.write_text(json.dumps(prices), encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "unit_tokens=1"):
+                    self.create(root, phase="exam")
+                self.assertFalse((root / "runs/run-20261114-120000-abcd/manifest.json").exists())
+
     def test_unset_prices_fail_before_manifest(self):
         with TemporaryDirectory() as temp:
             root = Path(temp)

@@ -13,6 +13,7 @@ import sys
 
 import harness
 from ledger import Usage, price_usage
+from token_accounting import require_exact_token_accounting
 
 from . import figures
 from .batch import (_agent_signature, _bank_tasks, _json, _verify_code_freeze,
@@ -93,6 +94,7 @@ def formal_preflight(
         if prices.get("schema") != "prices/1" or prices.get("currency") in (None, "", "TEST") or prices.get("test_only"):
             raise ValueError("A non-TEST price or token-accounting table is required")
         price_usage(prices, model, Usage(input=1))
+        require_exact_token_accounting(prices, model)
         if prices["currency"] == "TOKENS":
             accounting_scope = "internal_token_study"
             accounting_note = "自选 token 预算的内部冻结题库研究；非现金节省、非官方比赛成绩。"

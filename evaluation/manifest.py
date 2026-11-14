@@ -9,6 +9,8 @@ import math
 from pathlib import Path
 import re
 
+from token_accounting import require_exact_token_accounting
+
 
 PHASES = frozenset({"dev", "practice", "validation", "exam", "self_research", "demo"})
 CONFIGS = frozenset({"naive", "default", "default_lib", "tuned_lib"})
@@ -77,6 +79,8 @@ def create_manifest(
         value = rates.get(bucket)
         if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
             raise ValueError(f"Model price {bucket} is missing or invalid")
+    if phase != "dev":
+        require_exact_token_accounting(prices, model)
     hard_caps = json.loads((project_root / "config/hard_caps.json").read_text(encoding="utf-8"))
     if hard_caps.get("schema") != "hard_caps/1":
         raise ValueError("Unsupported hard cap schema")

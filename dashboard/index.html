@@ -66,7 +66,7 @@
     const fmt = (value, digits=2) => value === null || value === undefined || !Number.isFinite(Number(value)) ? '未知' : new Intl.NumberFormat('zh-CN',{maximumFractionDigits:digits}).format(Number(value));
     const scoreValue = value => value && typeof value === 'object' ? value.score ?? value.raw ?? value.dev ?? null : value;
     const colors = {accepted:'#168668',rejected:'#bd4c54',failed:'#9aa5b8',running:'#3566da',queued:'#3566da',succeeded:'#3566da'};
-    const isTokens = data.run.price.currency === 'TOKENS';
+    const isTokens = data.run.price.exact_token_accounting === true;
     const costLabel = isTokens ? 'token 消耗' : '花费';
     const amountLabel = isTokens ? 'token 数' : '金额';
     const money = value => value === null || value === undefined ? '未知' : `${fmt(value,4)} ${esc(data.run.price.currency || '')}`;

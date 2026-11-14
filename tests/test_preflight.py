@@ -45,6 +45,12 @@ class PreflightTests(unittest.TestCase):
             prices_path.write_text(json.dumps(prices), encoding="utf-8")
             self.assertIsNone(audit(root, "local-model")["accounting_scope"])
             prices["unit_tokens"] = 1
+            prices["models"]["local-model"]["output"] = 2
+            prices_path.write_text(json.dumps(prices), encoding="utf-8")
+            invalid = audit(root, "local-model")
+            self.assertIsNone(invalid["accounting_scope"])
+            self.assertTrue(any("unit_tokens=1" in blocker for blocker in invalid["blockers"]))
+            prices["models"]["local-model"]["output"] = 1
             prices["currency"] = "CNY"
             prices_path.write_text(json.dumps(prices), encoding="utf-8")
             self.assertIsNone(audit(root, "local-model")["accounting_scope"])

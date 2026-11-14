@@ -22,6 +22,7 @@ from threading import Lock
 from typing import Any, Callable, Mapping
 
 from library import Library
+from token_accounting import require_exact_token_accounting
 
 from .admission import admit_configuration
 from .finalize import _eval_window, finish_run, start_run
@@ -271,6 +272,7 @@ def execute_batch(
     if formal:
         if prices.get("currency") in (None, "", "TEST") or prices.get("test_only"):
             raise ValueError("Formal execution needs real currency and prices")
+        require_exact_token_accounting(prices, model)
         if roles_factory is not None or task_executor is not execute_task:
             raise ValueError("Formal execution may not inject scripted roles or executor")
         if not os.environ.get("OPENAI_API_KEY"):

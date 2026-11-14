@@ -37,6 +37,7 @@ def build_study(reports, *, research_reports=None, research_total_cost=None,
     """Require three paired runs per eligible config; keep TEST separate."""
     grouped = defaultdict(dict)
     phases, currencies, ids = set(), set(), set()
+    exact_token_flags = []
     tasks = None
     for report in reports:
         if report.get("schema") != "run_report/1":
@@ -50,6 +51,7 @@ def build_study(reports, *, research_reports=None, research_total_cost=None,
         grouped[config][rep] = report
         phases.add(report.get("phase"))
         currencies.add(report.get("currency"))
+        exact_token_flags.append(report.get("exact_token_accounting") is True)
         order = tuple(task["task_id"] for task in report["tasks"])
         if not order or len(set(order)) != len(order) or (tasks is not None and order != tasks):
             raise ValueError("Paired runs need identical ordered tasks")
@@ -75,6 +77,8 @@ def build_study(reports, *, research_reports=None, research_total_cost=None,
     test_only = phase == "dev" and currency == "TEST"
     if not (phase == "exam" and currency != "TEST") and not test_only:
         raise ValueError("Only exam or explicitly TEST dev runs can be plotted")
+    if currency == "TOKENS" and not all(exact_token_flags):
+        raise ValueError("TOKENS study needs audited unit_tokens=1 and all four model rates=1")
     if phase == "exam" and not (rejected or (isinstance(admission, dict)
             and admission.get("claim") == "admitted"
             and admission.get("baseline") == "default_lib"
@@ -113,6 +117,8 @@ def build_study(reports, *, research_reports=None, research_total_cost=None,
                 raise ValueError("Research cost needs matching self-research run reports")
             if report.get("currency") != currency or report.get("run_id") in ids | set(research_ids):
                 raise ValueError("Research run currency or ID mismatch")
+            if currency == "TOKENS" and report.get("exact_token_accounting") is not True:
+                raise ValueError("TOKENS research report lacks audited exact token accounting")
             research_ids.append(report["run_id"])
             research_cost += _finite(report.get("total_cost"), "research cost", True)
     if research_total_cost is not None:
@@ -122,6 +128,7 @@ def build_study(reports, *, research_reports=None, research_total_cost=None,
                if not rejected else None)
     breakeven = math.ceil(research_cost / savings) if research_cost is not None and savings is not None and savings > 0 else None
     return {"schema": "study/1", "phase": phase, "currency": currency, "test_only": test_only,
+            "exact_token_accounting": currency == "TOKENS" and all(exact_token_flags),
             "tasks": list(tasks), "configurations": stats, "comparisons": comparisons,
             "admission": admission,
             "task_rows": rows, "breakeven": {"research_cost": research_cost,
@@ -172,6 +179,8 @@ def _auto_research_cost(study_dir: Path, project_root: Path, currency: str, test
         audited = run_report(run_dir)
         if audited["run_id"] != run_id or audited["phase"] != ("dev" if test_only else "self_research"):
             raise ValueError("Self-research run identity or phase changed")
+        if currency == "TOKENS" and audited["exact_token_accounting"] is not True:
+            raise ValueError("TOKENS self-research run lacks exact token accounting")
         task_cost += audited["total_cost"]
         run_ledger = Ledger.open(run_dir)
         if prices is None:
@@ -299,7 +308,9 @@ def render_html(study):
         marks.append(f'<circle cx="{x(s["score_mean"]):.1f}" cy="{y}" r="8" fill="{color}"/>')
         marks.append(f'<text x="930" y="{y+5}">{s["score_mean"]:.3f} · {s["cost_mean"]:.4f} {escape(study["currency"])}</text>')
     svg = f'<svg viewBox="0 0 1160 330" role="img" aria-label="{len(active)}配置三遍分数与范围">' + ''.join(marks) + '</svg>'
-    is_tokens = study["currency"] == "TOKENS"
+    is_tokens = study["currency"] == "TOKENS" and study.get("exact_token_accounting") is True
+    if study["currency"] == "TOKENS" and not is_tokens:
+        raise ValueError("TOKENS figure needs audited exact token accounting")
     notice = ('TEST 联调数据，不代表正式效果或真实花费。' if study["test_only"] else
               '自选 token 预算的内部冻结题库研究；非现金节省、非官方比赛成绩。数字可追溯到运行账本。' if is_tokens else
               '正式考试数据；数字可追溯到运行账本。')

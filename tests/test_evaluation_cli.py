@@ -25,9 +25,14 @@ class EvaluationCliTests(unittest.TestCase):
             prices = {"schema": "prices/1", "currency": "TOKENS", "unit_tokens": 1,
                       "test_only": False, "models": {"real-model": {
                           "input": 1, "cached_input": 1, "output": 1, "reasoning": 1}}}
-            for currency, test_only, expected in (("TOKENS", False, "internal_token_study"),
-                                                   ("TOKENS", True, None), ("CNY", False, None)):
-                prices.update(currency=currency, test_only=test_only)
+            cases = (("TOKENS", False, 1, 1, "internal_token_study"),
+                     ("TOKENS", False, 1000, 1, None),
+                     ("TOKENS", False, 1, 2, None),
+                     ("TOKENS", True, 1, 1, None),
+                     ("CNY", False, 1, 1, None))
+            for currency, test_only, unit, output_rate, expected in cases:
+                prices.update(currency=currency, test_only=test_only, unit_tokens=unit)
+                prices["models"]["real-model"]["output"] = output_rate
                 path.write_text(json.dumps(prices), encoding="utf-8")
                 report = formal_preflight(project_root=root, model="real-model", prices_path=path,
                                           code_commit=SHA, default_config=root / "config/missing.json")
@@ -36,6 +41,8 @@ class EvaluationCliTests(unittest.TestCase):
                     self.assertIn("非现金节省", report["accounting_note"])
                 else:
                     self.assertIsNone(report["accounting_note"])
+                if currency == "TOKENS" and not test_only and expected is None:
+                    self.assertTrue(any("unit_tokens=1" in blocker for blocker in report["blockers"]))
 
     def setup_project(self, root: Path):
         rows = []

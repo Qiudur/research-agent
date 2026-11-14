@@ -70,6 +70,7 @@ class StudyFiguresTests(unittest.TestCase):
         for report in reports:
             report["phase"] = "exam"
             report["currency"] = "TOKENS"
+            report["exact_token_accounting"] = True
         admission = {"claim": "admitted", "baseline": "default_lib", "candidate": "tuned_lib"}
         study = build_study(reports, admission=admission)
         html = render_html(study)
@@ -78,8 +79,20 @@ class StudyFiguresTests(unittest.TestCase):
         self.assertIn("平均绝对 token 数误差", html)
         self.assertNotIn("正式考试数据", html)
         self.assertNotIn("金额为每遍", html)
+        bad = deepcopy(reports)
+        bad[0]["exact_token_accounting"] = False
+        with self.assertRaisesRegex(ValueError, "audited unit_tokens=1"):
+            build_study(bad, admission=admission)
+        with self.assertRaisesRegex(ValueError, "audited exact token accounting"):
+            render_html({**study, "exact_token_accounting": False})
+        with self.assertRaisesRegex(ValueError, "research report lacks audited"):
+            build_study(reports, admission=admission, research_reports=[{
+                "schema": "run_report/1", "run_id": "research-1", "phase": "self_research",
+                "currency": "TOKENS", "total_cost": 1,
+            }])
         for report in reports:
             report["currency"] = "CNY"
+            report["exact_token_accounting"] = False
         cash_html = render_html(build_study(reports, admission=admission))
         self.assertIn("正式考试数据", cash_html)
         self.assertIn("研究自己的成本尚无审计报告", cash_html)
