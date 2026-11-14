@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0005",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "a315566605fedd3c4d31789b85bfb9391768e83f4276e31c3b7f560e97a4756a",
+  "response_id": "resp_2be9442b-f9e7-944e-b593-cf8fc0746ffd",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Optimized implementation using NumPy broadcasting for distance matrix computation.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nfrom math import sqrt\\nimport numpy as np\\n\\n\\ndef distance_matrix(points: list[tuple[float, float]]) -> list[list[float]]:\\n    \\\"\\\"\\\"Compute pairwise Euclidean distances using vectorized operations.\\n\\n    Args:\\n        points: List of (x, y) coordinate tuples\\n\\n    Returns:\\n        Square list of lists containing Euclidean distances between all pairs\\n    \\\"\\\"\\\"\\n    # Handle empty input\\n    if len(points) == 0:\\n        return []\\n\\n    n = len(points)\\n\\n    # Small-input threshold: use naive loop for very small inputs (< 50 points)\\n    # to avoid NumPy overhead. For larger inputs, use vectorized computation.\\n    if n < 50:\\n        result: list[list[float]] = []\\n        for x1, y1 in points:\\n            row: list[float] = []\\n            for x2, y2 in points:\\n                dx = x1 - x2\\n                dy = y1 - y2\\n                row.append(sqrt(dx * dx + dy * dy))\\n            result.append(row)\\n        return result\\n\\n    # Convert to numpy array for vectorized computation\\n    arr = np.array(points)  # shape: (n, 2)\\n\\n    # Use broadcasting to compute all pairwise differences at once\\n    # arr[:, None, :] broadcasts to shape (n, 1, 2)\\n    # arr[None, :, :] broadcasts to shape (1, n, 2)\\n    # Resulting diff has shape (n, n, 2) containing (dx, dy) for each pair\\n    diff = arr[:, None, :] - arr[None, :, :]\\n\\n    # Compute Euclidean distance using np.hypot(dx, dy) - vectorized\\n    distances = np.hypot(diff[:, :, 0], diff[:, :, 1])\\n\\n    # Convert back to list of lists to match original interface\\n    return distances.tolist()\\n\",\n  \"notes\": \"Added threshold check (n < 50) to use naive nested loop for small inputs, avoiding NumPy overhead. For inputs >= 50 points, retains vectorized NumPy computation. Behavior remains identical to original.py on all edge cases (empty, single point, duplicates, negative coordinates).\"\n}",
+  "tokens": {
+    "input": 1143,
+    "cached_input": 0,
+    "output": 540,
+    "reasoning": 571
+  },
+  "cost": 2254.0,
+  "error": null
+}

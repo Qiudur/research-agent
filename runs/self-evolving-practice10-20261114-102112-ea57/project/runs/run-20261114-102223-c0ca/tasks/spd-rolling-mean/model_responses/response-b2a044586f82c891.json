@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "50e13de81c26ca80f183fc324e12997b713979e505e8d27bba42995a364ea93e",
+  "response_id": "resp_7a4a03a9-e16d-9fcd-8aa5-bcbca2fa6a92",
+  "status": "completed",
+  "output_text": "{\"code\":\"\\\"\\\"\\\"Optimized rolling mean using sliding window with running sum maintenance.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\n\\ndef rolling_mean(values: list[float], window: int) -> list[float]:\\n    if window <= 0:\\n        raise ValueError(\\\"window must be positive\\\")\\n    \\n    n = len(values)\\n    if n == 0:\\n        return []\\n    \\n    result = []\\n    running_sum = 0.0\\n    \\n    for i in range(n):\\n        # Add current value to running sum\\n        running_sum += values[i]\\n        \\n        # If window is full, remove the oldest value that falls out\\n        if i >= window:\\n            running_sum -= values[i - window]\\n        \\n        # Count elements in current effective window\\n        count = min(i + 1, window)\\n        \\n        # Compute mean\\n        result.append(running_sum / count)\\n    \\n    return result\",\"notes\":\"Implemented O(n) sliding window: maintain running_sum by adding new value and subtracting outgoing value when window slides. No slicing or re-summing per position. Handles all edge cases (empty, small window, prefix, window>=len). Pure Python, no numpy dependency.\"}",
+  "tokens": {
+    "input": 1084,
+    "cached_input": 0,
+    "output": 282,
+    "reasoning": 889
+  },
+  "cost": 2255.0,
+  "error": null
+}

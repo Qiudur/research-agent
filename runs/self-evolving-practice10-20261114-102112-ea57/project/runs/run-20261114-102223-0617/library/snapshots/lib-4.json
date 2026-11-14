@@ -1,0 +1,87 @@
+{
+  "entries": [
+    {
+      "action": "use scipy.spatial.distance.cdist as drop-in replacement",
+      "conditions": "when computing distance matrices or similar pairwise operations with nested Python loops",
+      "created_version": "lib-1",
+      "credibility": 0.6,
+      "effect": {
+        "mean_cost": 2612.0,
+        "mean_gain": 0.009877191076285485,
+        "uses": 1,
+        "wins": 1
+      },
+      "id": "exp-0001",
+      "kind": "experience",
+      "negative": false,
+      "scenario": "speedup",
+      "schema": "entry/1",
+      "scope": "method",
+      "sources": [
+        {
+          "node_ids": [
+            "n0001"
+          ],
+          "run_id": "run-20261114-102223-0617",
+          "task_id": "spd-distance-matrix"
+        },
+        {
+          "node_ids": [
+            "n0002"
+          ],
+          "run_id": "run-20261114-102223-0617",
+          "task_id": "spd-edit-distance"
+        }
+      ],
+      "status": "active",
+      "triggers": [
+        "nested_python_loop"
+      ],
+      "updated_version": "lib-4"
+    },
+    {
+      "action": "实施O(n)单次遍历算法跟踪运行峰值价格",
+      "conditions": "当优化嵌套Python循环结构的性能瓶颈时",
+      "created_version": "lib-2",
+      "credibility": 0.6,
+      "effect": {
+        "mean_cost": 11590.0,
+        "mean_gain": 0.14473430255170078,
+        "uses": 1,
+        "wins": 1
+      },
+      "id": "exp-0002",
+      "kind": "experience",
+      "negative": false,
+      "scenario": "speedup",
+      "schema": "entry/1",
+      "scope": "method",
+      "sources": [
+        {
+          "node_ids": [
+            "n0001"
+          ],
+          "run_id": "run-20261114-102223-0617",
+          "task_id": "spd-max-drawdown"
+        },
+        {
+          "node_ids": [
+            "n0001"
+          ],
+          "run_id": "run-20261114-102223-0617",
+          "task_id": "spd-edit-distance"
+        }
+      ],
+      "status": "active",
+      "triggers": [
+        "nested_python_loop"
+      ],
+      "updated_version": "lib-3"
+    }
+  ],
+  "metadata": {
+    "demoted_losses": {}
+  },
+  "schema": "library/1",
+  "version": "lib-4"
+}

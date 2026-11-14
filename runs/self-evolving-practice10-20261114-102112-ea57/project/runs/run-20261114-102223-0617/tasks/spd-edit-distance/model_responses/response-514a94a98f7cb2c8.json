@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "9272c3fe7d4aba7f3e783244b98f84af6539f180c0e642976e64b22f700b31a2",
+  "response_id": "resp_fce03d99-4bcc-91f5-b428-70e4d8e759d1",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Test alternative scipy.spatial.distance metrics beyond cdist that may align better with edit distance structure\",\n      \"rationale\": \"scipy.cdist experiment achieved best score (0.163); trying hamming or other distance metrics may capture substitution/insertion/deletion patterns more naturally than general pairwise distances\",\n      \"estimate\": {\n        \"gain\": 0.03,\n        \"cost\": 1800,\n        \"seconds\": 45\n      },\n      \"cites\": [\"exp-0001\"]\n    },\n    {\n      \"hypothesis\": \"Combine NumPy vectorized row updates with reduced space allocation (track only 2 rows instead of full matrix)\",\n      \"rationale\": \"Original baseline used only 2 rows for space efficiency; NumPy version built full matrix. Combining vectorized ops with space-optimized structure may improve cache locality and reduce allocation overhead\",\n      \"estimate\": {\n        \"gain\": 0.02,\n        \"cost\": 1600,\n        \"seconds\": 40\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Explore numba jit compilation on the core loop with minimal code changes to original structure\",\n      \"rationale\": \"When Python loop bottlenecks persist despite NumPy/scipy attempts, just-in-time compilation targeting the critical nested loop path can provide 10x+ speedups with minimal restructuring\",\n      \"estimate\": {\n        \"gain\": 0.05,\n        \"cost\": 2200,\n        \"seconds\": 60\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 5600,\n    \"seconds\": 145,\n    \"score\": 0.213\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"SciPy_alt_metrics\",\n      \"amount\": 1800\n    },\n    {\n      \"direction\": \"NumPy_2row_optimization\",\n      \"amount\": 1600\n    },\n    {\n      \"direction\": \"Numba_jit_test\",\n      \"amount\": 2200\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.14,\n      \"score\": 0.183\n    },\n    {\n      \"spent_ratio\": 0.28,\n      \"score\": 0.198\n    },\n    {\n      \"spent_ratio\": 0.42,\n      \"score\": 0.213\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1663,
+    "cached_input": 0,
+    "output": 628,
+    "reasoning": 804
+  },
+  "cost": 3095.0,
+  "error": null
+}

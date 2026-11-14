@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "5d35539345298e8ed3c9e3cd8ae02542043d03fb615aaaba373d5e01b9da6eec",
+  "response_id": "resp_9b0bbaf7-6da3-9b1f-8fee-ae163343ac00",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Maximum-drawdown implementation with numpy vectorization.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport numpy as np\\n\\n\\ndef max_drawdown(prices: list[float]) -> float:\\n    \\\"\\\"\\\"Compute maximum chronological peak-to-trough fraction.\\n    \\n    Args:\\n        prices: List of strictly positive finite float prices.\\n        \\n    Returns:\\n        Maximum drawdown as fraction, or 0.0 for empty/non-decreasing series.\\n    \\\"\\\"\\\"\\n    if len(prices) <= 1:\\n        return 0.0\\n    \\n    arr = np.array(prices)\\n    \\n    # Use cummax to get running maximum (peak so far) at each position\\n    peak_arr = np.maximum.accumulate(arr)\\n    \\n    # Calculate drawdown at each position from the current peak\\n    drawdowns = (peak_arr - arr) / peak_arr\\n    \\n    # Return maximum drawdown across all positions\\n    return float(np.max(drawdowns))\",\n  \"notes\": \"Implemented numpy vectorized approach using np.maximum.accumulate for running peak tracking. This is algorithmically O(n) like parent_code but uses vectorized numpy operations instead of Python loop. Should match original.py semantics exactly on all edge cases while testing if numpy provides speedup over pure Python iteration.\"\n}",
+  "tokens": {
+    "input": 1032,
+    "cached_input": 0,
+    "output": 303,
+    "reasoning": 1860
+  },
+  "cost": 3195.0,
+  "error": null
+}

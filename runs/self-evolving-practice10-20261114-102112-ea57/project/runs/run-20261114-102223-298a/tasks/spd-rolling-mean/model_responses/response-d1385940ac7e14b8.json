@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "4f6b28ffe431cd8eef344040a97e2f839ccaf80982decc74609dc87016ee1811",
+  "response_id": "resp_cd33d967-7920-9587-b065-85f5af13953d",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Handle window==1 edge case with direct copy instead of averaging\",\n      \"rationale\": \"When window equals 1, each mean is just the value itself, avoiding division operations entirely. This is a common case worth specializing.\",\n      \"estimate\": {\n        \"gain\": 0.0015,\n        \"cost\": 1500,\n        \"seconds\": 45\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Preallocate result list using multiplication then indexed assignment\",\n      \"rationale\": \"Preallocating with [0.0] * len avoids repeated append overhead during the main loop iteration.\",\n      \"estimate\": {\n        \"gain\": 0.001,\n        \"cost\": 1200,\n        \"seconds\": 35\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Cache frequently accessed methods locally outside loop\",\n      \"rationale\": \"Binding built-in functions like abs or reducing repeated attribute lookups reduces per-iteration Python overhead.\",\n      \"estimate\": {\n        \"gain\": 0.0008,\n        \"cost\": 1000,\n        \"seconds\": 30\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 8500,\n    \"seconds\": 180,\n    \"score\": 1.0\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"edge_case_specialization\",\n      \"amount\": 3000\n    },\n    {\n      \"direction\": \"micro_optimization\",\n      \"amount\": 4000\n    },\n    {\n      \"direction\": \"reserve_for_future_calls\",\n      \"amount\": 1500\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.1,\n      \"score\": 0.998\n    },\n    {\n      \"spent_ratio\": 0.25,\n      \"score\": 0.999\n    },\n    {\n      \"spent_ratio\": 0.4,\n      \"score\": 1.0\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1511,
+    "cached_input": 0,
+    "output": 543,
+    "reasoning": 583
+  },
+  "cost": 2637.0,
+  "error": null
+}

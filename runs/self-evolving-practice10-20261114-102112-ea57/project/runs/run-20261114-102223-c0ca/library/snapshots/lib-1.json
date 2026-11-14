@@ -1,0 +1,41 @@
+{
+  "entries": [
+    {
+      "action": "Convert to O(n) single-pass algorithm tracking running state variables",
+      "conditions": "Python code with nested or multi-pass iteration structure on sequences",
+      "created_version": "lib-1",
+      "credibility": 0.5,
+      "effect": {
+        "mean_cost": 0.0,
+        "mean_gain": 0.0,
+        "uses": 0,
+        "wins": 0
+      },
+      "id": "exp-0001",
+      "kind": "experience",
+      "negative": false,
+      "scenario": "speedup",
+      "schema": "entry/1",
+      "scope": "method",
+      "sources": [
+        {
+          "node_ids": [
+            "n0001"
+          ],
+          "run_id": "run-20261114-102223-c0ca",
+          "task_id": "spd-max-drawdown"
+        }
+      ],
+      "status": "active",
+      "triggers": [
+        "nested_python_loop"
+      ],
+      "updated_version": "lib-1"
+    }
+  ],
+  "metadata": {
+    "demoted_losses": {}
+  },
+  "schema": "library/1",
+  "version": "lib-1"
+}

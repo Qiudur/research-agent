@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "gpt-6-astra",
+  "prompt_hash": "a35a0d485027fb44a45e76a21712302c72a388054717417c9c3b9e653dcc7657",
+  "response_id": "resp_0dc766d71f42c3d8016af838f6b71487d1b1bc6086f7bca0ce",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Starting from n0001, compare set-backed list comprehension with allowed_set = set(allowed); return list(filter(allowed_set.__contains__, values)).\",\n      \"rationale\": \"Preserves input order and duplicates while testing whether the built-in filter iteration reduces overhead. Keep set construction inside the timed function and test empty inputs, duplicate values, and absent values against original.py. Improvement is uncertain; retain the existing implementation as the control. Estimates are forecasts, not measurements. No capability-library entries were provided.\",\n      \"estimate\": {\n        \"gain\": 0.002,\n        \"cost\": 2000,\n        \"seconds\": 65\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Independently compare n0001 with the same comprehension using a locally constructed frozenset instead of set.\",\n      \"rationale\": \"Changes only the membership container, preserving the successful algorithm and original behavior. Measure construction plus filtering, since lookup-only timing could hide conversion costs. The expected benefit is small and may be zero. Do not combine this change with the filter experiment until each is tested independently. Estimates use the visible experiment costs as rough guidance, not as proof of complete model-call consumption.\",\n      \"estimate\": {\n        \"gain\": 0.0005,\n        \"cost\": 1800,\n        \"seconds\": 55\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 6000,\n    \"seconds\": 180,\n    \"score\": 0.998\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"Test built-in filter against the accepted set-backed baseline; all amounts are four-bucket total TOKENS.\",\n      \"amount\": 2000\n    },\n    {\n      \"direction\": \"Test frozenset independently, preserving the accepted comprehension structure.\",\n      \"amount\": 1800\n    },\n    {\n      \"direction\": \"Validate exact outputs and repeat interleaved timings using only permitted task inputs. Investigate stability without treating rejected n0003's higher score as an accepted improvement. Avoid benchmark-size dispatch, hidden labels, reference solutions, cross-call result caching, and other-task files.\",\n      \"amount\": 2200\n    },\n    {\n      \"direction\": \"Protect the next model-call reserve; do not spend it on these experiments. Actual call usage can exceed this reserve.\",\n      \"amount\": 12000\n    },\n    {\n      \"direction\": \"Keep uncommitted contingency within the stated 19000 available allocation. Predicted cost is 6000 additional TOKENS, implying 18929 cumulative TOKENS; the reserve is not counted as already spent. Leave acceptance and hard stopping decisions to code.\",\n      \"amount\": 1000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.323225,\n      \"score\": 0.9956896220081176\n    },\n    {\n      \"spent_ratio\": 0.373225,\n      \"score\": 0.997\n    },\n    {\n      \"spent_ratio\": 0.418225,\n      \"score\": 0.998\n    },\n    {\n      \"spent_ratio\": 0.473225,\n      \"score\": 0.998\n    }\n  ]\n}",
+  "tokens": {
+    "input": 19835,
+    "cached_input": 0,
+    "output": 709,
+    "reasoning": 963
+  },
+  "cost": 21507.0,
+  "error": null
+}

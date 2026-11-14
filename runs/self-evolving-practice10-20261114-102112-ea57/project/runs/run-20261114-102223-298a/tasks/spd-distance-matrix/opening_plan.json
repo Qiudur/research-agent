@@ -1,0 +1,38 @@
+{
+  "schema": "opening_plan/1",
+  "run_id": "run-20261114-102223-298a",
+  "task_id": "spd-distance-matrix",
+  "predicted": {
+    "cost": 7500.0,
+    "seconds": 60.0,
+    "score": 0.69
+  },
+  "expected_progress": [
+    {
+      "spent_ratio": 0.05,
+      "score": 0.42
+    },
+    {
+      "spent_ratio": 0.125,
+      "score": 0.61
+    },
+    {
+      "spent_ratio": 0.19,
+      "score": 0.69
+    }
+  ],
+  "budget_allocation": [
+    {
+      "direction": "list_comp_baseline",
+      "amount": 2000
+    },
+    {
+      "direction": "numpy_vectorization",
+      "amount": 3000
+    },
+    {
+      "direction": "scipy_cdist",
+      "amount": 2500
+    }
+  ]
+}

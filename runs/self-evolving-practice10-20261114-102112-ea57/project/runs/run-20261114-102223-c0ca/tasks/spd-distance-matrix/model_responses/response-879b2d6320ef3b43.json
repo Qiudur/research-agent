@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "c7dc4716359352a64128e696ca4cea7dc208ffe5d722787ea97d5da7a05963e5",
+  "response_id": "resp_424777a9-b035-9869-9912-dd7b85ce0519",
+  "status": "completed",
+  "output_text": "{\"hypotheses\":[{\"hypothesis\":\"Replace nested Python loops with NumPy vectorized broadcasting for dx/dy computation\",\"rationale\":\"The profile explicitly identifies nested Python loops as the hotspot. NumPy broadcasting computes all pairwise differences simultaneously in C, avoiding n² Python loop iterations.\",\"cites\":[],\"estimate\":{\"gain\":0.6,\"cost\":1500,\"seconds\":300}},{\"hypothesis\":\"Use np.sqrt((dx*dx+dy*dy)) or np.hypot instead of math.sqrt per iteration\",\"rationale\":\"Even with some vectorization, calling math.sqrt inside any remaining loops adds overhead. NumPy's vectorized sqrt or hypot is faster for batch computation.\",\"cites\":[],\"estimate\":{\"gain\":0.1,\"cost\":800,\"seconds\":180}},{\"hypothesis\":\"Preallocate result list and avoid append overhead with list comprehension or np.fromiter\",\"rationale\":\"Repeated list.append() in inner loops causes reallocation overhead. Preallocation or comprehension-based construction reduces allocation pressure.\",\"cites\":[],\"estimate\":{\"gain\":0.05,\"cost\":600,\"seconds\":120}}],\"predicted\":{\"cost\":2900,\"score\":0.94,\"seconds\":600},\"budget_allocation\":[{\"direction\":\"numpy_vectorization\",\"amount\":1500},{\"direction\":\"sqrt_optimization\",\"amount\":800},{\"direction\":\"memory_layout\",\"amount\":600}],\"expected_progress\":[{\"spent_ratio\":0.07,\"score\":0.5},{\"spent_ratio\":0.14,\"score\":0.75},{\"spent_ratio\":0.23,\"score\":0.94}]}",
+  "tokens": {
+    "input": 1384,
+    "cached_input": 0,
+    "output": 354,
+    "reasoning": 877
+  },
+  "cost": 2615.0,
+  "error": null
+}

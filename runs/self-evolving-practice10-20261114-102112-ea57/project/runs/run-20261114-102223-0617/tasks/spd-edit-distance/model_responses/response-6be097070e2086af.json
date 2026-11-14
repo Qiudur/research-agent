@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0004",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "c5f87856f5c43c8962dec6f1a177ec2ca3eef69d8fb05e6f362be9385eb79df8",
+  "response_id": "resp_51a07910-388e-9009-bd86-b95f664bceaf",
+  "status": "completed",
+  "output_text": "{\"code\":\"\\\"\\\"\\\"NumPy-vectorized Levenshtein distance with 2-row space optimization.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\nimport numpy as np\\n\\n\\ndef edit_distance(a: str, b: str) -> int:\\n    if len(a) > len(b):\\n        a, b = b, a  # distance is symmetric; vectorize over the longer string\\n    m, n = len(a), len(b)\\n    if m == 0:\\n        return n\\n    if a == b:\\n        return 0\\n    b_arr = np.fromiter((ord(c) for c in b), dtype=np.int64, count=n)\\n    idx = np.arange(n + 1, dtype=np.int64)\\n    prev = idx.copy()\\n    vals = np.empty(n + 1, dtype=np.int64)\\n    for i, ch in enumerate(a, 1):\\n        sub = (b_arr != ord(ch))\\n        # best of insertion/substitution, independent of current row\\n        np.minimum(prev[1:] + 1, prev[:-1] + sub, out=vals[1:])\\n        vals[0] = i\\n        # left dependency: curr[j] = min_k<=j (vals[k] + j - k)\\n        vals -= idx\\n        np.minimum.accumulate(vals, out=vals)\\n        vals += idx\\n        prev, vals = vals, prev\\n    return int(prev[-1])\", \"notes\":\"Hypothesis implemented: Uses NumPy vectorized operations on just 2 row buffers (prev and vals) instead of full matrix. Already tracks only O(n) space with buffer swapping. Edge cases handled: empty strings, identical strings, swapped order for efficiency.\"}",
+  "tokens": {
+    "input": 1158,
+    "cached_input": 0,
+    "output": 383,
+    "reasoning": 1390
+  },
+  "cost": 2931.0,
+  "error": null
+}

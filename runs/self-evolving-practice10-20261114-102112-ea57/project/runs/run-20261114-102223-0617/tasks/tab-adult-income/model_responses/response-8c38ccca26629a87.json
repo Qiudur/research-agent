@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "fix",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "c91ed6d1d8c3557774fcb1661fb5cccb72cc4e3d8e98bbbbf3dc6c38f2240da2",
+  "response_id": "resp_dbe4a76f-879e-995b-854a-f7e79506d26e",
+  "status": "completed",
+  "output_text": "```json\n{\n  \"code\": \"\\\"\\\"\\\"LightGBM baseline with target encoding for high-cardinality categoricals.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    \\n    # High-cardinality categorical features for target encoding\\n    target_encode_cols = [\\\"native_country\\\", \\\"workclass\\\", \\\"occupation\\\"]\\n    \\n    # Compute modes from training data for missing value filling\\n    train_modes = {}\\n    for col in train.columns:\\n        if train[col].isna().any():\\n            mode_vals = train[col].mode()\\n            train_modes[col] = mode_vals[0] if len(mode_vals) > 0 else \\\"\\\"\\n        else:\\n            train_modes[col] = None\\n    \\n    # Fill missing values in training data with modes\\n    for col, mode_val in train_modes.items():\\n        if mode_val is not None:\\n            train[col] = train[col].fillna(mode_val)\\n    \\n    # Compute target encoding from training data only (prevents leakage)\\n    encodings = {}\\n    for col in target_encode_cols:\\n        encodings[col] = train.groupby(col)[y].mean().to_dict()\\n    \\n    global_mean = y.mean()\\n    \\n    # Apply target encoding to training data\\n    for col in target_encode_cols:\\n        train[col] = train[col].map(encodings[col]).fillna(global_mean).astype(float)\\n    \\n    # Prepare test data\\n    test = pd.DataFrame(test_rows)\\n    \\n    # Fill missing values in test with training modes\\n    for col in train.columns:\\n        mode_val = train_modes.get(col)\\n        if mode_val is not None and test[col].isna().any():\\n            test[col] = test[col].fillna(mode_val)\\n    \\n    # Apply target encoding to test data\\n    for col in target_encode_cols:\\n        test[col] = test[col].map(encodings[col]).fillna(global_mean).astype(float)\\n    \\n    # Convert numeric columns in test data\\n    for col in train.columns:\\n        if col not in target_encode_cols:\\n            try:\\n                test[col] = pd.to_numeric(test[col], errors='coerce')\\n            except Exception:\\n                pass\\n    \\n    # Fit LightGBM model\\n    model = LGBMClassifier(random_state=20261114, n_jobs=1, verbosity=-1)\\n    model.fit(train, y)\\n    \\n    # Predict probabilities\\n    return model.predict_proba(test)[:, 1].tolist()\\n\",\n  \"notes\": \"Fixed column ordering issue by computing encodings before modifying train structure. Target encoding applied to native_country, workclass, occupation using mean of y per category with global mean fallback for unseen values. Missing values filled with training mode. All test rows processed consistently.\"\n}\n```",
+  "tokens": {
+    "input": 3122,
+    "cached_input": 0,
+    "output": 693,
+    "reasoning": 1321
+  },
+  "cost": 5136.0,
+  "error": null
+}

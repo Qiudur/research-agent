@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0003",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "083b04b0f9f755c91c46e99d4806a0b09486444d7de4eec208e3a6e1645f33b7",
+  "response_id": null,
+  "status": null,
+  "output_text": null,
+  "tokens": {
+    "input": 0,
+    "cached_input": 0,
+    "output": 0,
+    "reasoning": 0
+  },
+  "cost": 0.0,
+  "error": "Connection error."
+}

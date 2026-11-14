@@ -1,0 +1,20 @@
+{
+  "schema": "score/1",
+  "ok": false,
+  "split": "dev",
+  "score": null,
+  "raw": null,
+  "spread": 0.0,
+  "correct": false,
+  "cheat_flags": [],
+  "error": {
+    "kind": "exception",
+    "message": "'Column not found: y'",
+    "trace_tail": "Traceback (most recent call last):\n  File \"/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/tabular_worker.py\", line 98, in main\n    values = function(str(args.workspace / \"train.csv\"), rows)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-c0ca/tasks/tab-adult-income/nodes/n0004/solution.py\", line 69, in fit_predict\n    group_means = train.groupby(col)[\"y\"].mean().to_dict()\n                  ~~~~~~~~~~~~~~~~~~^^^^^\n  File \"/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/.venv/lib/python3.11/site-packages/pandas/core/groupby/generic.py\", line 1951, in __getitem__\n    return super().__getitem__(key)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/.venv/lib/python3.11/site-packages/pandas/core/base.py\", line 245, in __getitem__\n    raise KeyError(f\"Column not found: {key}\")\nKeyError: 'Column not found: y'\n"
+  },
+  "seconds": {
+    "run": 1.0133229580242187,
+    "queue": 0.0
+  },
+  "seed": 266006331892937116
+}

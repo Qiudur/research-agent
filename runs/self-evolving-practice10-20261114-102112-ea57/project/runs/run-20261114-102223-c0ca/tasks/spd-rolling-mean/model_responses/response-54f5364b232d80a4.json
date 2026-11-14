@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "8830cc59b54d0b354c32e66527029dd7f9cdd5691fa909bd80699007fb8d7054",
+  "response_id": "resp_e0716be2-c2dc-9920-96b0-ef6b59e4c284",
+  "status": "completed",
+  "output_text": "{\n\"code\": \"\\\"\\\"\\\"Optimized rolling mean using numpy cumsum approach.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\nimport numpy as np\\n\\n\\ndef rolling_mean(values: list[float], window: int) -> list[float]:\\n    if window <= 0:\\n        raise ValueError(\\\"window must be positive\\\")\\n    \\n    n = len(values)\\n    if n == 0:\\n        return []\\n    \\n    # Convert to numpy array for efficient cumsum computation\\n    arr = np.asarray(values, dtype=np.float64)\\n    \\n    # Compute cumulative sums with leading zero for easy range queries\\n    cumsum = np.concatenate(([0.0], np.cumsum(arr)))\\n    \\n    # Build result using cumsum differences\\n    # For each position i: sum from start to i is cumsum[i+1] - cumsum[start]\\n    result = []\\n    for i in range(n):\\n        start = max(0, i - window + 1)\\n        total = cumsum[i + 1] - cumsum[start]\\n        count = i + 1 - start\\n        result.append(total / count)\\n    \\n    return result\",\n\"notes\": \"Implemented numpy cumsum optimization per hypothesis. Cumulative sums computed once via np.cumsum, then window totals derived via differencing O(1) instead of recomputing each window O(window). Matches original semantics: handles empty lists, partial prefixes, window larger than input, and any window>=1. Pure Python loop retained to match exact output type (list[float]) and avoid full vectorization edge-case risks.\"\n}",
+  "tokens": {
+    "input": 923,
+    "cached_input": 0,
+    "output": 359,
+    "reasoning": 1079
+  },
+  "cost": 2361.0,
+  "error": null
+}

@@ -1,0 +1,33 @@
+--- parent/solution.py
++++ solution.py
+@@ -1,9 +1,11 @@
+-"""LightGBM with depth limiting and regularization."""
++"""LightGBM with depth limiting, regularization, and class weighting."""
+ 
+ from __future__ import annotations
+ 
+ import pandas as pd
++import numpy as np
+ from lightgbm import LGBMClassifier
++from sklearn.utils.class_weight import compute_sample_weight
+ 
+ 
+ def fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:
+@@ -20,6 +22,9 @@
+             train[name] = pd.Categorical(train[name], categories=categories)
+             test[name] = pd.Categorical(test[name], categories=categories)
+     
++    # Compute balanced sample weights for imbalanced classes
++    sample_weights = compute_sample_weight(class_weight='balanced', y=y)
++    
+     model = LGBMClassifier(
+         random_state=20261114,
+         n_jobs=1,
+@@ -28,6 +33,6 @@
+         lambda_l1=0.5,
+         lambda_l2=0.5
+     )
+-    model.fit(train, y)
++    model.fit(train, y, sample_weight=sample_weights)
+     
+     return model.predict_proba(test)[:, 1].tolist()

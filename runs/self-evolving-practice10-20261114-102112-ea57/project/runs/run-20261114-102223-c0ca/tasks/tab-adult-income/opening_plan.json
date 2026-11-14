@@ -1,0 +1,50 @@
+{
+  "schema": "opening_plan/1",
+  "run_id": "run-20261114-102223-c0ca",
+  "task_id": "tab-adult-income",
+  "predicted": {
+    "cost": 1550.0,
+    "seconds": 105.0,
+    "score": 0.24
+  },
+  "expected_progress": [
+    {
+      "spent_ratio": 0.02,
+      "score": 0.08
+    },
+    {
+      "spent_ratio": 0.04,
+      "score": 0.16
+    },
+    {
+      "spent_ratio": 0.06,
+      "score": 0.24
+    },
+    {
+      "spent_ratio": 0.3,
+      "score": 0.75
+    },
+    {
+      "spent_ratio": 0.6,
+      "score": 0.92
+    },
+    {
+      "spent_ratio": 0.9,
+      "score": 0.97
+    }
+  ],
+  "budget_allocation": [
+    {
+      "direction": "hypothesis_testing",
+      "amount": 1550
+    },
+    {
+      "direction": "reserve_for_future_calls",
+      "amount": 12000
+    },
+    {
+      "direction": "unused_flexibility",
+      "amount": 22450
+    }
+  ]
+}

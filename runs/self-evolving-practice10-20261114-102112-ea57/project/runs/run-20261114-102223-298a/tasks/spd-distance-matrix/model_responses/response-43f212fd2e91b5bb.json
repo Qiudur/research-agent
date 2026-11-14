@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "cbec97831e406b1da7a6968eefb5a9bafe440a9bd9bdc19773d240d33328c0a7",
+  "response_id": "resp_075eb141-d421-97c9-bae1-7e561a328440",
+  "status": "completed",
+  "output_text": "```json\n{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Replace nested for loops with list comprehensions\",\n      \"rationale\": \"List comprehensions are faster than explicit for loops in CPython due to reduced interpreter overhead. This is a minimal-risk change preserving exact behavior.\",\n      \"estimate\": {\n        \"gain\": 0.08,\n        \"cost\": 2000,\n        \"seconds\": 15\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Vectorize with NumPy broadcasting\",\n      \"rationale\": \"NumPy array operations move computation to C level, eliminating Python loop overhead entirely. Broadcasting computes all pairwise distances in parallel.\",\n      \"estimate\": {\n        \"gain\": 0.35,\n        \"cost\": 3000,\n        \"seconds\": 25\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Use scipy.spatial.distance.cdist\",\n      \"rationale\": \"scipy's cdist is specifically optimized for distance matrices with highly tuned C code, likely fastest option if scipy is available in environment.\",\n      \"estimate\": {\n        \"gain\": 0.42,\n        \"cost\": 2500,\n        \"seconds\": 20\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 7500,\n    \"score\": 0.69,\n    \"seconds\": 60\n  },\n  \"budget_allocation\": [\n    {\"direction\": \"list_comp_baseline\", \"amount\": 2000},\n    {\"direction\": \"numpy_vectorization\", \"amount\": 3000},\n    {\"direction\": \"scipy_cdist\", \"amount\": 2500}\n  ],\n  \"expected_progress\": [\n    {\"spent_ratio\": 0.05, \"score\": 0.42},\n    {\"spent_ratio\": 0.125, \"score\": 0.61},\n    {\"spent_ratio\": 0.19, \"score\": 0.69}\n  ]\n}\n```",
+  "tokens": {
+    "input": 1382,
+    "cached_input": 0,
+    "output": 507,
+    "reasoning": 489
+  },
+  "cost": 2378.0,
+  "error": null
+}

@@ -1,0 +1,36 @@
+--- parent/solution.py
++++ solution.py
+@@ -14,22 +14,23 @@
+     Returns:
+         Square list of lists containing Euclidean distances between all pairs
+     """
++    n = len(points)
++    
+     # Handle empty input
+-    if len(points) == 0:
++    if n == 0:
+         return []
+-
+-    # Convert to numpy array for vectorized computation
+-    arr = np.array(points)  # shape: (n, 2)
+-    n = len(arr)
+-
++    
++    # Convert to numpy array with explicit dtype to avoid inference overhead
++    arr = np.array(points, dtype=np.float64)
++    
+     # Use broadcasting to compute all pairwise differences at once
+     # arr[:, None, :] broadcasts to shape (n, 1, 2)
+     # arr[None, :, :] broadcasts to shape (1, n, 2)
+     # Resulting diff has shape (n, n, 2) containing (dx, dy) for each pair
+     diff = arr[:, None, :] - arr[None, :, :]
+-
+-    # Compute Euclidean distance using np.hypot(dx, dy) - vectorized
++    
++    # Compute Euclidean distance using np.hypot - fully vectorized, no Python loops
+     distances = np.hypot(diff[:, :, 0], diff[:, :, 1])
+-
+-    # Convert back to list of lists to match original interface
++    
++    # Convert back to list of lists using efficient .tolist()
+     return distances.tolist()

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "a0b1a14ac12d889001244caef4da97b685f2eba792a11d35f57c3162c6508093",
+  "response_id": "resp_cb257719-3928-938c-be33-5b84f88037e6",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Convert to O(n) single-pass algorithm tracking running max peak\",\n      \"rationale\": \"Current code scans all later prices for each buy index (O(n^2)). Maximum drawdown only requires tracking the running maximum price seen so far and computing drawdown at each point, reducing complexity to O(n). This is the dominant factor for speedup.\",\n      \"estimate\": {\n        \"gain\": 0.85,\n        \"cost\": 3000,\n        \"seconds\": 60\n      },\n      \"cites\": [\"profile_summary.hotspot\", \"profile_summary.edge_cases\"]\n    },\n    {\n      \"hypothesis\": \"Handle edge cases explicitly before main loop\",\n      \"rationale\": \"Edge cases (empty, one price, non-decreasing) are common failure points. Explicit handling avoids unnecessary iterations and ensures correctness across the 1800 benchmarks.\",\n      \"estimate\": {\n        \"gain\": 0.05,\n        \"cost\": 500,\n        \"seconds\": 20\n      },\n      \"cites\": [\"profile_summary.edge_cases\", \"task.description\"]\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 3500,\n    \"score\": 0.9,\n    \"seconds\": 80\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"algorithm_rewrite_onepass\",\n      \"amount\": 3000\n    },\n    {\n      \"direction\": \"edge_case_handling\",\n      \"amount\": 500\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.0875,\n      \"score\": 0.9\n    },\n    {\n      \"spent_ratio\": 0.5,\n      \"score\": 0.95\n    },\n    {\n      \"spent_ratio\": 0.9,\n      \"score\": 0.98\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1358,
+    "cached_input": 0,
+    "output": 470,
+    "reasoning": 534
+  },
+  "cost": 2362.0,
+  "error": null
+}

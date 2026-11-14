@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "5887ff6a9e7bcea701612ccbcf302a03961622e656ff388cc8c5234236dd928c",
+  "response_id": "resp_b12e62be-c1be-9ae4-95af-931080097034",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Build LightGBM classifier with native missing value support and optimal hyperparameters\",\n      \"rationale\": \"LGBM handles sparse categorical data well; native NaN splitting captures missing patterns; 4 features with heavy missingness benefit from tree methods over linear models\",\n      \"cites\": [\"tabular\", \"missing_heavy\"],\n      \"estimate\": {\n        \"gain\": 0.75,\n        \"cost\": 2500,\n        \"seconds\": 45\n      }\n    },\n    {\n      \"hypothesis\": \"Target encode sparse categories (cap_color, habitat) with K-fold smoothing to reduce overfitting on rare values\",\n      \"rationale\": \"Many category combinations have few samples; regularized encoding converts to continuous features that capture poisoning probability better than one-hot\",\n      \"cites\": [\"missing_heavy\"],\n      \"estimate\": {\n        \"gain\": 0.82,\n        \"cost\": 3200,\n        \"seconds\": 60\n      }\n    },\n    {\n      \"hypothesis\": \"Add interaction features (cap_shape x cap_color) since certain shape-color combinations may be diagnostic\",\n      \"rationale\": \"Mushroom taxonomy often depends on trait combinations rather than individual traits; polynomial features could capture this without complex models\",\n      \"cites\": [\"tabular\"],\n      \"estimate\": {\n        \"gain\": 0.68,\n        \"cost\": 2000,\n        \"seconds\": 35\n      }\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 2500,\n    \"score\": 0.75,\n    \"seconds\": 45\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"lightgbm_baseline\",\n      \"amount\": 2500\n    },\n    {\n      \"direction\": \"target_encoding\",\n      \"amount\": 3200\n    },\n    {\n      \"direction\": \"feature_engineering\",\n      \"amount\": 2000\n    },\n    {\n      \"direction\": \"reserve_buffer\",\n      \"amount\": 5300\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.06,\n      \"score\": 0.75\n    },\n    {\n      \"spent_ratio\": 0.15,\n      \"score\": 0.82\n    },\n    {\n      \"spent_ratio\": 0.2,\n      \"score\": 0.85\n    }\n  ]\n}",
+  "tokens": {
+    "input": 3846,
+    "cached_input": 0,
+    "output": 613,
+    "reasoning": 984
+  },
+  "cost": 5443.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "d9171103ac7dbfc7141560ef38f05ee15afa2e38149ba9841b821fdcc936b078",
+  "response_id": "resp_aa752245-ad8c-97bd-9727-2c146d9ddd8f",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"from __future__ import annotations\\n\\ndef membership_filter(values: list[int], allowed: list[int]) -> list[int]:\\n    if not allowed:\\n        return []\\n    allowed_set = set(allowed)\\n    return [value for value in values if value in allowed_set]\",\n  \"notes\": \"Added early return when allowed list is empty to skip set creation and iteration overhead.\"\n}",
+  "tokens": {
+    "input": 727,
+    "cached_input": 0,
+    "output": 96,
+    "reasoning": 482
+  },
+  "cost": 1305.0,
+  "error": null
+}

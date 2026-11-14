@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "2f27c77cdc48d9419481c31d084afb753da7c8bd7bc15b5b3b67bf4564f1f138",
+  "response_id": "resp_a54d4f81-c73a-99c8-be08-8a44547bd0f5",
+  "status": "completed",
+  "output_text": "{\"code\":\"\\\"\\\"\\\"Single-pass O(n) maximum-drawdown implementation.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\n\\ndef max_drawdown(prices: list[float]) -> float:\\n    \\\"\\\"\\\"Compute maximum chronological peak-to-trough fraction in O(n) time.\\n    \\n    Args:\\n        prices: List of strictly positive finite float prices.\\n        \\n    Returns:\\n        Maximum drawdown as fraction, or 0.0 for empty/non-decreasing series.\\n    \\\"\\\"\\\"\\n    largest = 0.0\\n    \\n    if len(prices) <= 1:\\n        return largest\\n    \\n    peak = prices[0]\\n    \\n    for i in range(1, len(prices)):\\n        current = prices[i]\\n        \\n        # Update peak if we found a new high\\n        if current > peak:\\n            peak = current\\n        \\n        # Calculate drawdown from current peak to this price\\n        drawdown = (peak - current) / peak\\n        largest = max(largest, drawdown)\\n    \\n    return largest\",\"notes\":\"Implemented O(n) single-pass algorithm by tracking running peak. Instead of comparing every pair (O(n^2)), we maintain the highest price seen so far and compute drawdown at each step. Handles all edge cases: empty/one-element returns 0.0, increasing series keeps drawdown at 0, decreasing/devolatile series correctly captures max decline. Maintains same semantic as original.\"}",
+  "tokens": {
+    "input": 880,
+    "cached_input": 0,
+    "output": 331,
+    "reasoning": 602
+  },
+  "cost": 1813.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "43de00707b4c56759466c36571dd2267e3820ee8f393ea2027a843c6d5c9a81a",
+  "response_id": "resp_31e11c3c-dedd-9c73-87da-052d1f819c9c",
+  "status": "completed",
+  "output_text": "```json\n{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Replace slicing-sum loop with cumulative sum array to reduce O(window) recomputation per element to O(1)\",\n      \"rationale\": \"Hotspot shows repeated window slicing/summing. Precomputing cumulative sums allows each mean to be calculated in constant time using prefix sum differences.\",\n      \"estimate\": {\"gain\": 0.75, \"cost\": 200, \"seconds\": 3600},\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Use sliding window sum with running total instead of slicing, maintaining current window sum by adding new and subtracting old elements\",\n      \"rationale\": \"Directly addresses the 'repeated_recompute_window' feature by tracking sum incrementally instead of recalculating entire slice each iteration\",\n      \"estimate\": {\"gain\": 0.65, \"cost\": 150, \"seconds\": 2700},\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\"cost\": 350, \"score\": 0.80, \"seconds\": 6300},\n  \"budget_allocation\": [\n    {\"direction\": \"hypothesis_1_cumulative_sum\", \"amount\": 200},\n    {\"direction\": \"hypothesis_2_sliding_sum\", \"amount\": 150}\n  ],\n  \"expected_progress\": [\n    {\"spent_ratio\": 0.01, \"score\": 0.65},\n    {\"spent_ratio\": 0.03, \"score\": 0.80},\n    {\"spent_ratio\": 0.90, \"score\": 0.95}\n  ]\n}\n```",
+  "tokens": {
+    "input": 1382,
+    "cached_input": 0,
+    "output": 402,
+    "reasoning": 324
+  },
+  "cost": 2108.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "summarizer",
+  "purpose": "summarize",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "709bc60f1a10cda57816108803b73c56254093f4d3b029518a6b41de97f047a8",
+  "response_id": "resp_8aac03b8-97de-91e4-8294-6a48b457e48f",
+  "status": "completed",
+  "output_text": "{\n  \"drafts\": [\n    {\n      \"scope\": \"method\",\n      \"scenario\": \"speedup\",\n      \"triggers\": [\n        \"nested_python_loop\"\n      ],\n      \"conditions\": \"Task involves calculating distance matrices implemented with nested python loops\",\n      \"action\": \"Replace implementation with scipy.spatial.distance.cdist\",\n      \"negative\": false,\n      \"node_ids\": [\n        \"n0001\"\n      ]\n    }\n  ],\n  \"narrowings\": []\n}",
+  "tokens": {
+    "input": 634,
+    "cached_input": 0,
+    "output": 122,
+    "reasoning": 3299
+  },
+  "cost": 4055.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "summarizer",
+  "purpose": "summarize",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "fac323ebdf1a80da179e58b09d520577aa957226add9b773aed9a59da3ed923e",
+  "response_id": "resp_007b7b55-fc72-9d6d-8851-d745b8f3b9dd",
+  "status": "completed",
+  "output_text": "{\"drafts\":[{\"scope\":\"method\",\"scenario\":\"speedup\",\"triggers\":[\"nested_python_loop\"],\"conditions\":\"Python code with nested or multi-pass iteration structure on sequences\",\"action\":\"Convert to O(n) single-pass algorithm tracking running state variables\",\"negative\":false,\"node_ids\":[\"n0001\"]},{\"scope\":\"method\",\"scenario\":\"speedup\",\"triggers\":[\"nested_python_loop\"],\"conditions\":\"Optimizing Python loops where bytecode overhead reduction is attempted\",\"action\":\"Avoid caching local variables and pre-indexing as the primary optimization\",\"negative\":true,\"node_ids\":[\"n0003\"]}],\"narrowings\":[]}",
+  "tokens": {
+    "input": 849,
+    "cached_input": 0,
+    "output": 130,
+    "reasoning": 1609
+  },
+  "cost": 2588.0,
+  "error": null
+}

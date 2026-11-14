@@ -1,0 +1,22 @@
+--- parent/solution.py
++++ solution.py
+@@ -9,7 +9,18 @@
+ def fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:
+     train = pd.read_csv(train_csv)
+     y = train.pop("y").astype(int)
+-    test = pd.DataFrame(test_rows, columns=train.columns)
++    
++    # Get original columns before modification
++    original_cols = [c for c in train.columns]
++    test = pd.DataFrame(test_rows, columns=original_cols)
++    
++    # Create interaction feature between cap_shape and cap_color
++    train["cap_shape_cap_color"] = train["cap_shape"].fillna("_NA_") + "_" + train["cap_color"].fillna("_NA_")
++    test["cap_shape_cap_color"] = test["cap_shape"].fillna("_NA_") + "_" + test["cap_color"].fillna("_NA_")
++    
++    # Align columns for test dataframe
++    test = test[train.columns]
++    
+     for name in train.columns:
+         if pd.api.types.is_numeric_dtype(train[name]):
+             test[name] = pd.to_numeric(test[name])

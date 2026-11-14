@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0006",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "5ad38ad4efaecfb79b7cd3c56ac1ef617f68f2631b83e1f0d0423e80b4745a93",
+  "response_id": "resp_3f78f713-8eb8-97ce-aa7e-c9043bcc8e46",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Optimized implementation using NumPy broadcasting for distance matrix computation.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport numpy as np\\n\\n\\ndef distance_matrix(points: list[tuple[float, float]]) -> list[list[float]]:\\n    \\\"\\\"\\\"Compute pairwise Euclidean distances using vectorized operations.\\n\\n    Args:\\n        points: List of (x, y) coordinate tuples\\n\\n    Returns:\\n        Square list of lists containing Euclidean distances between all pairs\\n    \\\"\\\"\\\"\\n    # Handle empty input\\n    if len(points) == 0:\\n        return []\\n\\n    # Pre-compute X and Y coordinate arrays separately - avoids tuple indexing later\\n    x = np.array([p[0] for p in points])  # shape: (n,)\\n    y = np.array([p[1] for p in points])  # shape: (n,)\\n    \\n    n = len(x)\\n    \\n    # Use broadcasting to compute all pairwise differences at once\\n    # x[:, None] broadcasts to shape (n, 1)\\n    # x[None, :] broadcasts to shape (1, n)\\n    # Resulting dx/dy has shape (n, n)\\n    dx = x[:, None] - x[None, :]\\n    dy = y[:, None] - y[None, :]\\n\\n    # Compute Euclidean distance using np.hypot(dx, dy) - vectorized\\n    distances = np.hypot(dx, dy)\\n\\n    # Convert back to list of lists to match original interface\\n    return distances.tolist()\",\n  \"notes\": \"Pre-extracted X and Y coordinates as separate 1D arrays at function entry, avoiding per-index access and column slicing operations. Broadcasting computes dx and dy matrices directly from these separated arrays. Maintains exact behavior including empty input handling.\"\n}",
+  "tokens": {
+    "input": 1139,
+    "cached_input": 0,
+    "output": 413,
+    "reasoning": 731
+  },
+  "cost": 2283.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "summarizer",
+  "purpose": "summarize",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "64aac178a60fbbe9d7d672d49bcf11508d76e76f9da26a6da8e58f5a176d587f",
+  "response_id": "resp_46e326de-a768-90b2-90db-d90960d2efe7",
+  "status": "completed",
+  "output_text": "{\n  \"drafts\": [],\n  \"narrowings\": []\n}",
+  "tokens": {
+    "input": 578,
+    "cached_input": 0,
+    "output": 22,
+    "reasoning": 459
+  },
+  "cost": 1059.0,
+  "error": null
+}

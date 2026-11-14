@@ -1,0 +1,46 @@
+--- parent/solution.py
++++ solution.py
+@@ -1,7 +1,6 @@
+-"""Optimized rolling mean using numpy cumsum approach."""
++"""Optimized rolling mean using sliding window with running sum maintenance."""
+ 
+ from __future__ import annotations
+-import numpy as np
+ 
+ 
+ def rolling_mean(values: list[float], window: int) -> list[float]:
+@@ -12,20 +11,21 @@
+     if n == 0:
+         return []
+     
+-    # Convert to numpy array for efficient cumsum
+-    arr = np.array(values, dtype=np.float64)
++    result = []
++    running_sum = 0.0
+     
+-    # Compute cumulative sums with leading zero
+-    cumsum = np.zeros(n + 1, dtype=np.float64)
+-    cumsum[1:] = np.cumsum(arr)
+-    
+-    # Build result using cumsum differences
+-    # For each position i: sum from start to i is cumsum[i+1] - cumsum[start]
+-    result = []
+     for i in range(n):
+-        start = max(0, i - window + 1)
+-        total = cumsum[i + 1] - cumsum[start]
+-        count = i + 1 - start
+-        result.append(total.item() / count)
++        # Add current value to running sum
++        running_sum += values[i]
++        
++        # If window is full, remove the oldest value that falls out
++        if i >= window:
++            running_sum -= values[i - window]
++        
++        # Count elements in current effective window
++        count = min(i + 1, window)
++        
++        # Compute mean
++        result.append(running_sum / count)
+     
+     return result

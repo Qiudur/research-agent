@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "9878012dc74b30df22bfff4bf07461504535e17869dc079053082e9489a41c2e",
+  "response_id": "resp_bc78eee3-6258-9caf-b6f0-617f632b64b6",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Measured LightGBM baseline with depth limiting, regularization, and early stopping.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\nfrom sklearn.model_selection import train_test_split\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    test = pd.DataFrame(test_rows, columns=train.columns)\\n    \\n    # Process features (handle numeric vs categorical)\\n    for name in train.columns:\\n        if pd.api.types.is_numeric_dtype(train[name]):\\n            test[name] = pd.to_numeric(test[name])\\n        else:\\n            categories = pd.Categorical(pd.concat([train[name], test[name]], ignore_index=True)).categories\\n            train[name] = pd.Categorical(train[name], categories=categories)\\n            test[name] = pd.Categorical(test[name], categories=categories)\\n    \\n    # Split into train/validation for early stopping\\n    X_train, X_val, y_train, y_val = train_test_split(\\n        train, y, test_size=0.2, random_state=20261114, stratify=y\\n    )\\n    \\n    model = LGBMClassifier(\\n        random_state=20261114,\\n        n_jobs=1,\\n        verbosity=-1,\\n        max_depth=3,\\n        lambda_l1=0.5,\\n        lambda_l2=0.5\\n    )\\n    model.fit(\\n        X_train, y_train,\\n        eval_set=[(X_val, y_val)],\\n        early_stopping_rounds=50,\\n        verbose=False\\n    )\\n    \\n    return model.predict_proba(test)[:, 1].tolist()\\n\",\n  \"notes\": \"Added max_depth=3, lambda_l1=0.5, lambda_l2=0.5, and early_stopping_rounds=50. Created 80/20 stratified train-val split for early stopping validation. Used sklearn.model_selection.train_test_split which should be available alongside lightgbm.\"\n}",
+  "tokens": {
+    "input": 3774,
+    "cached_input": 0,
+    "output": 498,
+    "reasoning": 863
+  },
+  "cost": 5135.0,
+  "error": null
+}

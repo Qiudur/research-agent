@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "af6af90e2e799c7671f9ae99fe9fcc085a54b62761e7eb7a0074b9902907af9f",
+  "response_id": "resp_e7340ca6-16d7-9d9f-947e-acf1529fc864",
+  "status": "completed",
+  "output_text": "```json\n{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Establish Logistic Regression baseline with L2 regularization, one-hot encoding for categorical features and standard scaling for numerical features.\",\n      \"rationale\": \"Small dataset (600 rows) suggests strong regularization is needed to avoid overfitting. Baseline raw ROC AUC of 0.7267 indicates clear signal exists. Linear models provide stable starting point before attempting tree-based approaches.\",\n      \"cites\": [],\n      \"estimate\": {\n        \"gain\": 0.15,\n        \"cost\": 400,\n        \"seconds\": 25\n      }\n    },\n    {\n      \"hypothesis\": \"Train LightGBM with depth limiting (max_depth=3), high regularization (lambda_l1=0.5, lambda_l2=0.5) and early stopping.\",\n      \"rationale\": \"Tree ensembles typically excel on tabular data even with small samples. Depth restriction and high regularization mitigate overfitting risk while preserving nonlinear feature interactions.\",\n      \"cites\": [],\n      \"estimate\": {\n        \"gain\": 0.25,\n        \"cost\": 600,\n        \"seconds\": 35\n      }\n    },\n    {\n      \"hypothesis\": \"Apply class weighting to balance positive/negative samples given credit default scenarios often exhibit imbalance.\",\n      \"rationale\": \"German credit data historically shows minority positive cases (~30%). Weighting improves recall without explicit resampling which could be unstable in tiny datasets.\",\n      \"cites\": [],\n      \"estimate\": {\n        \"gain\": 0.12,\n        \"cost\": 300,\n        \"seconds\": 20\n      }\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 1300,\n    \"score\": 0.25,\n    \"seconds\": 80\n  },\n  \"budget_allocation\": [\n    {\"direction\": \"model_baseline\", \"amount\": 1000},\n    {\"direction\": \"feature_engineering\", \"amount\": 300}\n  ],\n  \"expected_progress\": [\n    {\"spent_ratio\": 0.03, \"score\": 0.15},\n    {\"spent_ratio\": 0.05, \"score\": 0.25},\n    {\"spent_ratio\": 0.07, \"score\": 0.30}\n  ]\n}\n```",
+  "tokens": {
+    "input": 4061,
+    "cached_input": 0,
+    "output": 562,
+    "reasoning": 657
+  },
+  "cost": 5280.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0003",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "92693670596985209def4b61a2849044627cb301d94a81dcad0ba3084f9dabbf",
+  "response_id": "resp_f8f753ea-924e-9fc1-92d9-b5a82fae0922",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Optimized rolling mean using sliding window with running sum maintenance.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\nfrom itertools import accumulate\\n\\n\\ndef rolling_mean(values: list[float], window: int) -> list[float]:\\n    \\\"\\\"\\\"Compute trailing rolling mean with efficient cumulative sum approach.\\\"\\\"\\\"\\n    if window <= 0:\\n        raise ValueError(\\\"window must be positive\\\")\\n    \\n    if not values:\\n        return []\\n    \\n    # Use accumulate for O(1) window sum queries via cumulative sums\\n    # Then use list comprehension to compute means\\n    cumsum = [0.0] + list(accumulate(values))\\n    n = len(values)\\n    \\n    return [\\n        (cumsum[i + 1] - cumsum[max(0, i + 1 - window)]) / min(i + 1, window)\\n        for i in range(n)\\n    ]\",\n  \"notes\": \"Replaced explicit for-loop with list comprehension over precomputed cumulative sums. Original algorithm used running_sum state mutation; this reformulates using cumsum[i+1]-cumsum[start] for window sums, enabling pure list comprehension. Both approaches are O(n) but list comprehension may have lower bytecode overhead. Edge cases handled: empty list, window larger than input, single element windows.\"\n}",
+  "tokens": {
+    "input": 1021,
+    "cached_input": 0,
+    "output": 298,
+    "reasoning": 2111
+  },
+  "cost": 3430.0,
+  "error": null
+}

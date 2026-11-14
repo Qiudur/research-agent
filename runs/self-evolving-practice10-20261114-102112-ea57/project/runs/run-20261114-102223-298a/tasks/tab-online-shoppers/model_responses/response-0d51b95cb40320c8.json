@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "summarizer",
+  "purpose": "summarize",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "b000a3e74374b642b3afd4f422cf095e09b1e7445b4dbd2e7ce3d657becf5838",
+  "response_id": "resp_d8bf3371-d21a-9776-b5e4-b3c81492bba3",
+  "status": "completed",
+  "output_text": "{\n  \"drafts\": [\n    {\n      \"scope\": \"method\",\n      \"scenario\": \"tabular\",\n      \"triggers\": [\"class_imbalance\", \"AUC\"],\n      \"conditions\": \"当优化目标为排序指标(如ROC AUC)而非分类准确率时，LightGBM的scale_pos_weight参数会改变分裂和叶子取值但对AUC无收益且增加方差\",\n      \"action\": \"避免在AUC优化任务中使用scale_pos_weight\",\n      \"negative\": true,\n      \"node_ids\": [\"n0002\"]\n    }\n  ],\n  \"narrowings\": []\n}",
+  "tokens": {
+    "input": 884,
+    "cached_input": 0,
+    "output": 146,
+    "reasoning": 1186
+  },
+  "cost": 2216.0,
+  "error": null
+}

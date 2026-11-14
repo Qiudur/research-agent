@@ -1,0 +1,30 @@
+{
+  "schema": "opening_plan/1",
+  "run_id": "run-20261114-102223-298a",
+  "task_id": "spd-max-drawdown",
+  "predicted": {
+    "cost": 7000.0,
+    "seconds": 150.0,
+    "score": 0.95
+  },
+  "expected_progress": [
+    {
+      "spent_ratio": 0.075,
+      "score": 0.15
+    },
+    {
+      "spent_ratio": 0.175,
+      "score": 0.95
+    }
+  ],
+  "budget_allocation": [
+    {
+      "direction": "exp-0001 test",
+      "amount": 3000
+    },
+    {
+      "direction": "linear-algorithm implementation",
+      "amount": 4000
+    }
+  ]
+}

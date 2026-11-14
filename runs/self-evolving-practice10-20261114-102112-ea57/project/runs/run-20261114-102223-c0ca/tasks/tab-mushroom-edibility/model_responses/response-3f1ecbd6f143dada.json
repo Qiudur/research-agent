@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "diagnoser",
+  "purpose": "diagnose",
+  "node_id": "n0003",
+  "model": "claude-opus-5-5",
+  "prompt_hash": "d207dc1888eba0871bccbe4a8b9bbf99496a5d01d85743281e3602e515c96a91",
+  "response_id": null,
+  "status": null,
+  "output_text": null,
+  "tokens": {
+    "input": 0,
+    "cached_input": 0,
+    "output": 0,
+    "reasoning": 0
+  },
+  "cost": 0.0,
+  "error": "Connection error."
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "5887ff6a9e7bcea701612ccbcf302a03961622e656ff388cc8c5234236dd928c",
+  "response_id": "resp_60555e26-f3a4-91db-9e71-0765b695be1e",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"LightGBM with categorical feature encoding and missing-as-category handling\",\n      \"rationale\": \"Only 4 visible predictors with heavy missingness; LightGBM natively handles categorical features and NA values. This is lowest-risk approach given tabular scenario.\",\n      \"estimate\": {\n        \"gain\": 0.4,\n        \"cost\": 4000,\n        \"seconds\": 180\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Add interaction features between visible traits before modeling\",\n      \"rationale\": \"With only 4 predictors, feature interactions may capture combinatorial patterns that single features miss. Low incremental cost after base model works.\",\n      \"estimate\": {\n        \"gain\": 0.08,\n        \"cost\": 3000,\n        \"seconds\": 120\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 7000,\n    \"seconds\": 300,\n    \"score\": 0.48\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"hypothesis_1_lightgbm\",\n      \"amount\": 4000\n    },\n    {\n      \"direction\": \"hypothesis_2_interactions\",\n      \"amount\": 3000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.0,\n      \"score\": 0.0\n    },\n    {\n      \"spent_ratio\": 0.11,\n      \"score\": 0.4\n    },\n    {\n      \"spent_ratio\": 0.19,\n      \"score\": 0.48\n    }\n  ]\n}",
+  "tokens": {
+    "input": 3846,
+    "cached_input": 0,
+    "output": 436,
+    "reasoning": 499
+  },
+  "cost": 4781.0,
+  "error": null
+}

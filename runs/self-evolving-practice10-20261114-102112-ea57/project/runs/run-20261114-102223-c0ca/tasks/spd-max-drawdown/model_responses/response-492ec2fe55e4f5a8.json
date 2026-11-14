@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "d9a88ed3fd5f6eacaffee72f90353a831a7619ae992451e8019690935eb0a509",
+  "response_id": "resp_bb5ca20f-ac1b-90c3-a617-79b4dc22aa8f",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Optimized O(n) single-pass maximum-drawdown implementation.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\n\\ndef max_drawdown(prices: list[float]) -> float:\\n    \\\"\\\"\\\"Calculate the maximum drawdown from a sequence of prices.\\n    \\n    Args:\\n        prices: List of strictly positive finite float prices in chronological order.\\n        \\n    Returns:\\n        Maximum chronological peak-to-trough fraction. Returns 0.0 for empty,\\n        single-price, or non-decreasing sequences.\\n    \\\"\\\"\\\"\\n    # Edge case: insufficient data for drawdown calculation\\n    if len(prices) <= 1:\\n        return 0.0\\n    \\n    # Edge case: all None/NaN values would be caught by problem constraints\\n    # (prices are guaranteed strictly positive finite floats)\\n    \\n    largest = 0.0\\n    peak = prices[0]\\n    \\n    for price in prices[1:]:\\n        if price > peak:\\n            peak = price\\n        else:\\n            drawdown = (peak - price) / peak\\n            largest = max(largest, drawdown)\\n    \\n    return largest\",\n  \"notes\": \"Handled edge cases (empty, single price) explicitly before main loop with len check. Added docstring for clarity. O(n) time complexity preserved. Matches original behavior: returns 0.0 for empty/single/non-decreasing sequences, computed fraction otherwise.\"\n}",
+  "tokens": {
+    "input": 906,
+    "cached_input": 0,
+    "output": 332,
+    "reasoning": 964
+  },
+  "cost": 2202.0,
+  "error": null
+}

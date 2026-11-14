@@ -1,0 +1,49 @@
+{
+  "schema": "run/2",
+  "run_id": "run-20261114-102223-298a",
+  "phase": "dev",
+  "config": "self_evolving",
+  "rep": 1,
+  "bank_version": "bank-v1",
+  "tasks": [
+    "spd-distance-matrix",
+    "spd-rolling-mean",
+    "spd-max-drawdown",
+    "spd-edit-distance",
+    "spd-membership-filter",
+    "tab-adult-income",
+    "tab-mushroom-edibility",
+    "tab-online-shoppers",
+    "tab-phishing-websites",
+    "tab-german-credit"
+  ],
+  "library": {
+    "root": "runs/run-20261114-102223-298a/library",
+    "start_version": "lib-0",
+    "frozen": false
+  },
+  "agent_config": {
+    "path": "config/agent_token_pilot_v2.json",
+    "sha256": "f0ba329f64b0592e4e90fe1fb0968611ccd0a34a40b27c1fce9e1e7a139c367b"
+  },
+  "prices": {
+    "path": "config/prices_real_token_test.json",
+    "sha256": "37104378171e3c3488cf1643a15246d1565821c9dd945d8fe09469fa5b327a3f"
+  },
+  "hard_caps": {
+    "budget_ratio": 0.9
+  },
+  "code_commit": "c46457f54cdc83bd61a676f6b486a87c22e9813f",
+  "model": "qwen3.5-27b",
+  "started_ts": "2026-11-14T10:22:23.925Z",
+  "ended_ts": "2026-11-14T10:47:31.778Z",
+  "models": [
+    "claude-opus-5-5",
+    "gpt-6-astra",
+    "qwen3.5-27b"
+  ],
+  "routing": {
+    "path": "config/route_policy_self_evolving.json",
+    "sha256": "d9e15aa241a0c7a67c9fc2e1af7a2163cd0f0b79a10774a7f5b85314e7d5b2c3"
+  }
+}

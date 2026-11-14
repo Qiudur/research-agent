@@ -1,0 +1,38 @@
+{
+  "schema": "opening_plan/1",
+  "run_id": "run-20261114-102223-0617",
+  "task_id": "spd-max-drawdown",
+  "predicted": {
+    "cost": 2500.0,
+    "seconds": 35.0,
+    "score": 0.5
+  },
+  "expected_progress": [
+    {
+      "spent_ratio": 0.0625,
+      "score": 0.5
+    },
+    {
+      "spent_ratio": 0.125,
+      "score": 0.65
+    },
+    {
+      "spent_ratio": 0.25,
+      "score": 0.75
+    }
+  ],
+  "budget_allocation": [
+    {
+      "direction": "O(n) algorithm rewrite",
+      "amount": 2500
+    },
+    {
+      "direction": "numpy optimization backup",
+      "amount": 2000
+    },
+    {
+      "direction": "review/retry reserve",
+      "amount": 3500
+    }
+  ]
+}

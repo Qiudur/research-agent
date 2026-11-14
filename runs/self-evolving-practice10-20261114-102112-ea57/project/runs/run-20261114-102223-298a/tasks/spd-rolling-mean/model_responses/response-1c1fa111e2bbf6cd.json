@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "gpt-6-astra",
+  "prompt_hash": "8d922578887f78c30d0dc4b803e2555eb4664a3ceee99380ce37963d3c4ad50e",
+  "response_id": "resp_08f2f7a9255a4932016af83765930087d0bba54c5f9e75fa5f",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Starting from n0001, separate partial-prefix processing from the full-window loop, if it is not already separated, to eliminate repeated window-boundary checks.\",\n      \"rationale\": \"Sliding-window maintenance already delivers the strongest observed score. Preserve its arithmetic order, append-based output, input validation, and preprocessing rather than repeating rejected approaches. Inspect the incumbent first; skip this modification if already present. Validate empty input, partial prefixes, windows longer than input, mixed signs, and cancellation-sensitive inputs against original.py. The estimated gain is speculative and small because the current score is near 1. No capability-library entries were supplied.\",\n      \"estimate\": {\n        \"gain\": 0.00015,\n        \"cost\": 2400,\n        \"seconds\": 90\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Independently test replacing repeated full-window division with multiplication by one precomputed reciprocal, leaving prefix divisions and sliding-sum updates unchanged.\",\n      \"rationale\": \"A constant denominator permits a narrowly scoped arithmetic optimization without replacing the successful algorithm. Test this separately against n0001 before considering combination with loop separation. Multiplication can change floating-point rounding, so require agreement with the original under the actual permitted tolerance, including cancellation-sensitive cases. Skip if the incumbent already uses this approach. Do not infer a speed improvement from one timing run or from the rejected window-one specialization. Estimates are predictions, not measurements.\",\n      \"estimate\": {\n        \"gain\": 0.0001,\n        \"cost\": 2400,\n        \"seconds\": 90\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 6600,\n    \"seconds\": 240,\n    \"score\": 0.99815\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"Inspect n0001 and test prefix/full-window loop separation using only visible task artifacts.\",\n      \"amount\": 2400\n    },\n    {\n      \"direction\": \"Test reciprocal multiplication independently, conditional on correctness and remaining budget.\",\n      \"amount\": 2400\n    },\n    {\n      \"direction\": \"Repeat interleaved incumbent/candidate timing and correctness checks; evaluate a combination only if separate results justify it. Planned additional spending totals 6600 TOKENS, bringing cumulative spending to 21414. Acceptance remains controlled by code.\",\n      \"amount\": 1800\n    },\n    {\n      \"direction\": \"Uncommitted contingency within the existing cap; prefer leaving unused given four consecutive rejected experiments and minimal remaining score headroom.\",\n      \"amount\": 2586\n    },\n    {\n      \"direction\": \"Reserve for the next model invocation; do not allocate to current experiments. Actual invocation consumption may exceed this reserve.\",\n      \"amount\": 12000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.37035,\n      \"score\": 0.9979514688402868\n    },\n    {\n      \"spent_ratio\": 0.43035,\n      \"score\": 0.99805\n    },\n    {\n      \"spent_ratio\": 0.49035,\n      \"score\": 0.99812\n    },\n    {\n      \"spent_ratio\": 0.53535,\n      \"score\": 0.99815\n    }\n  ]\n}",
+  "tokens": {
+    "input": 19922,
+    "cached_input": 0,
+    "output": 719,
+    "reasoning": 346
+  },
+  "cost": 20987.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "11754682c7c5ced7c4ff1e878ebf2bf3e4adc8ba4b553fa70501b35720d1e8eb",
+  "response_id": null,
+  "status": null,
+  "output_text": null,
+  "tokens": {
+    "input": 0,
+    "cached_input": 0,
+    "output": 0,
+    "reasoning": 0
+  },
+  "cost": 0.0,
+  "error": "Connection error."
+}

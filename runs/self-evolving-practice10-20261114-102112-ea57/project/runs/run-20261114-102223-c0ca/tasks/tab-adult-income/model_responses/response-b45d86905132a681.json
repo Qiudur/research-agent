@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "e208b85d891f54e9f9ee251f3b274927b366ae13293eff40f065fc4ec4b3bd86",
+  "response_id": "resp_795fbf27-7112-9185-af32-1af84d23dd31",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Measured LightGBM baseline with frequency encoding for high-cardinality categoricals.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    \\n    # High-cardinality categorical features to encode\\n    high_card_features = [\\\"workclass\\\", \\\"occupation\\\", \\\"native_country\\\"]\\n    \\n    # Build frequency maps from training data only (prevents leakage)\\n    freq_maps = {}\\n    for feat in high_card_features:\\n        if feat in train.columns:\\n            value_counts = train[feat].value_counts(normalize=True)\\n            freq_maps[feat] = value_counts.to_dict()\\n    \\n    # Apply frequency encoding to training data\\n    for feat in high_card_features:\\n        if feat in train.columns:\\n            train[f\\\"{feat}_freq\\\"] = train[feat].map(freq_maps[feat]).fillna(0.0)\\n    \\n    # Prepare test dataframe with same column order as train after processing\\n    test = pd.DataFrame(test_rows)\\n    \\n    # Align columns - ensure all train columns exist in test\\n    for col in train.columns:\\n        if col not in test.columns:\\n            if col.endswith(\\\"_freq\\\"):\\n                # Will be added via encoding below\\n                continue\\n            test[col] = train[col].iloc[0]  # Fill missing cols with default\\n    \\n    # Apply frequency encoding to test using train maps\\n    for feat in high_card_features:\\n        if feat in test.columns:\\n            test[f\\\"{feat}_freq\\\"] = test[feat].map(freq_maps.get(feat, {})).fillna(0.0)\\n    \\n    # Select only columns that are in both train and test\\n    common_cols = [c for c in train.columns if c in test.columns]\\n    X_train = train[common_cols]\\n    X_test = test[common_cols]\\n    \\n    # Handle numeric conversions and categorical alignment\\n    for name in X_train.columns:\\n        if pd.api.types.is_numeric_dtype(X_train[name]):\\n            X_test[name] = pd.to_numeric(X_test[name], errors=\\\"coerce\\\")\\n        else:\\n            combined = pd.concat([X_train[name], X_test[name]], ignore_index=True)\\n            cat_type = pd.CategoricalDtype(combined.astype(str).unique())\\n            X_train[name] = X_train[name].astype(cat_type)\\n            X_test[name] = X_test[name].astype(cat_type)\\n    \\n    # Train LightGBM with categorical features detection\\n    model = LGBMClassifier(\\n        random_state=20261114,\\n        n_jobs=1,\\n        verbosity=-1,\\n        categorical_feature=[c for c in X_train.columns if pd.api.types.is_categorical_dtype(X_train[c])]\\n    )\\n    model.fit(X_train, y)\\n    return model.predict_proba(X_test)[:, 1].tolist()\\n\",\n  \"notes\": \"Added frequency encoding for high-cardinality categoricals (workclass, occupation, native_country). Frequency maps built from train only to prevent leakage. New _freq columns provide numeric signals about category prevalence. Kept original categoricals too for LightGBM's native handling.\"\n}",
+  "tokens": {
+    "input": 2534,
+    "cached_input": 0,
+    "output": 766,
+    "reasoning": 918
+  },
+  "cost": 4218.0,
+  "error": null
+}

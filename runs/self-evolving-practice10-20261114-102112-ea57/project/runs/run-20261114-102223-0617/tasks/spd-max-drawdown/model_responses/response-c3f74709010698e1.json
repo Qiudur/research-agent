@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "33d325d66450c13efea18c2dc029d9242216384db5b1f8ad6e8d4095957fd004",
+  "response_id": "resp_25e567d0-26b5-93a4-90ed-9006e6e93dfe",
+  "status": "completed",
+  "output_text": "{\"code\":\"\\\"\\\"\\\"O(n) single-pass maximum-drawdown implementation.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\n\\ndef max_drawdown(prices: list[float]) -> float:\\n    if len(prices) < 2:\\n        return 0.0\\n    \\n    largest = 0.0\\n    peak = prices[0]\\n    \\n    for price in prices[1:]:\\n        if price > peak:\\n            peak = price\\n        else:\\n            drawdown = (peak - price) / peak\\n            if drawdown > largest:\\n                largest = drawdown\\n    \\n    return largest\",\"notes\":\"Replaced O(n²) nested loops with O(n) single pass. Track running peak; compute drawdown only when current price falls below peak. Handles edge cases: empty/one-element returns 0.0, non-decreasing series never updates largest, decreasing series captures full drop from initial peak.\"}",
+  "tokens": {
+    "input": 889,
+    "cached_input": 0,
+    "output": 211,
+    "reasoning": 1094
+  },
+  "cost": 2194.0,
+  "error": null
+}

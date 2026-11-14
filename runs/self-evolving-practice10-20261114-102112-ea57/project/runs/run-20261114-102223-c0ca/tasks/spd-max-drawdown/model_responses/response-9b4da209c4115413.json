@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0004",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "c1a1d0187b67b344c4552a07f88c7a046ce0fd6c1f6566c8e155b706e1ac1d82",
+  "response_id": "resp_4739643d-dc14-91e7-b47e-e87e3966ba44",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"O(n) maximum-drawdown implementation.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\n\\ndef max_drawdown(prices: list[float]) -> float:\\n    if len(prices) < 2:\\n        return 0.0\\n    \\n    largest = 0.0\\n    peak = prices[0]\\n    \\n    for i in range(1, len(prices)):\\n        price = prices[i]\\n        if price > peak:\\n            peak = price\\n        else:\\n            drawdown = (peak - price) / peak\\n            if drawdown > largest:\\n                largest = drawdown\\n    \\n    return largest\",\n  \"notes\": \"Optimized from O(n^2) to O(n) by tracking running peak and computing drawdown in single pass. Handles all edge cases correctly: empty/one-price returns 0.0, increasing series returns 0.0, decreasing series computes max drop. Preserves exact output of original within floating-point tolerance.\"\n}",
+  "tokens": {
+    "input": 903,
+    "cached_input": 0,
+    "output": 231,
+    "reasoning": 466
+  },
+  "cost": 1600.0,
+  "error": null
+}

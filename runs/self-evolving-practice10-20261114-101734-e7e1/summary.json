@@ -1,0 +1,9 @@
+{
+  "schema": "self_evolving_campaign/1",
+  "status": "failed",
+  "campaign_dir": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-101734-e7e1",
+  "started_utc": "2026-11-14T10:19:12.054Z",
+  "ended_utc": "2026-11-14T10:19:12.374Z",
+  "elapsed_seconds": 0.3202915000147186,
+  "error": "Model preflight failed; inspect preflight.json before running tasks"
+}

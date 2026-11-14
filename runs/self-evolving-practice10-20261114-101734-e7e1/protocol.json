@@ -1,0 +1,96 @@
+{
+  "schema": "self_evolving_protocol/1",
+  "label": "REAL MODEL DEV; TEST UNIT = ONE REPORTED TOKEN; NOT MONEY",
+  "model": "qwen3.5-27b",
+  "tasks": [
+    "spd-distance-matrix",
+    "spd-rolling-mean",
+    "spd-max-drawdown",
+    "spd-edit-distance",
+    "spd-membership-filter",
+    "tab-adult-income",
+    "tab-mushroom-edibility",
+    "tab-online-shoppers",
+    "tab-phishing-websites",
+    "tab-german-credit"
+  ],
+  "proposal_rounds": 0,
+  "repetitions_per_candidate": 3,
+  "max_workers": 3,
+  "budget_tokens_per_task": 40000,
+  "wall_seconds_per_task": {
+    "spd-distance-matrix": 1800,
+    "spd-rolling-mean": 1800,
+    "spd-max-drawdown": 1800,
+    "spd-edit-distance": 1800,
+    "spd-membership-filter": 1800,
+    "tab-adult-income": 1800,
+    "tab-mushroom-edibility": 1800,
+    "tab-online-shoppers": 1800,
+    "tab-phishing-websites": 1800,
+    "tab-german-credit": 1800
+  },
+  "reserve_tokens_per_call": 12000,
+  "max_output_tokens_requested": 2048,
+  "prices_sha256": "37104378171e3c3488cf1643a15246d1565821c9dd945d8fe09469fa5b327a3f",
+  "default_config_sha256": "f0ba329f64b0592e4e90fe1fb0968611ccd0a34a40b27c1fce9e1e7a139c367b",
+  "source_tasks": {
+    "spd-distance-matrix": {
+      "original_task_sha256": "1dbf322c50351cd64bbb1de9ce5bcc9dd4ca5b966cd069161fbdebec0900c491",
+      "copied_task_sha256": "1dbf322c50351cd64bbb1de9ce5bcc9dd4ca5b966cd069161fbdebec0900c491"
+    },
+    "spd-rolling-mean": {
+      "original_task_sha256": "e5f21f952555ce79095bad02c0f2af248d3bc56bbe084ba69568f047daa29f35",
+      "copied_task_sha256": "e5f21f952555ce79095bad02c0f2af248d3bc56bbe084ba69568f047daa29f35"
+    },
+    "spd-max-drawdown": {
+      "original_task_sha256": "fae5f8838fcdf65513461ede2fcdeb3d97fba382f615f54bcd68737160468ad6",
+      "copied_task_sha256": "fae5f8838fcdf65513461ede2fcdeb3d97fba382f615f54bcd68737160468ad6"
+    },
+    "spd-edit-distance": {
+      "original_task_sha256": "a66da1ab32947a749c7e6c128e205b7789dc637855d2621212086093cfbc91a2",
+      "copied_task_sha256": "a66da1ab32947a749c7e6c128e205b7789dc637855d2621212086093cfbc91a2"
+    },
+    "spd-membership-filter": {
+      "original_task_sha256": "fd6bc65a4ab2b5aa4dc56a651e1d5fa65def21d6722ede861e63dcb5a0a068bf",
+      "copied_task_sha256": "fd6bc65a4ab2b5aa4dc56a651e1d5fa65def21d6722ede861e63dcb5a0a068bf"
+    },
+    "tab-adult-income": {
+      "original_task_sha256": "1a03012baf54eb953768584298c5cfb7cf0218c699369d3614b8bc0e9f6c7c8d",
+      "copied_task_sha256": "1a03012baf54eb953768584298c5cfb7cf0218c699369d3614b8bc0e9f6c7c8d"
+    },
+    "tab-mushroom-edibility": {
+      "original_task_sha256": "bfa3435dfccb436beda2e45161c2c5de6be9eb76aa5828b4d5c41043c50733e1",
+      "copied_task_sha256": "bfa3435dfccb436beda2e45161c2c5de6be9eb76aa5828b4d5c41043c50733e1"
+    },
+    "tab-online-shoppers": {
+      "original_task_sha256": "862c2c79d0495db1c1f3996ef64ae8bb8426447e183647e4868f4ea3fd3238b8",
+      "copied_task_sha256": "862c2c79d0495db1c1f3996ef64ae8bb8426447e183647e4868f4ea3fd3238b8"
+    },
+    "tab-phishing-websites": {
+      "original_task_sha256": "53e9e0421f0e9b079638ecb9d6ba168733ebe31d499819e93be9ff52638f4499",
+      "copied_task_sha256": "53e9e0421f0e9b079638ecb9d6ba168733ebe31d499819e93be9ff52638f4499"
+    },
+    "tab-german-credit": {
+      "original_task_sha256": "45a119a1c88213ac6e11496b33d175a97ffa6086b6d4d0d68207e312532848d5",
+      "copied_task_sha256": "45a119a1c88213ac6e11496b33d175a97ffa6086b6d4d0d68207e312532848d5"
+    }
+  },
+  "study_type": "one_self_evolving_candidate",
+  "code_commit": "811d6139bec4b14970651bc5ce5f75d5c1e3f94a",
+  "base_url": "https://ai-gateway.theunifiedcare.com/v1",
+  "default_model": "qwen3.5-27b",
+  "remote_models": [
+    "gpt-6-astra",
+    "claude-opus-5-5"
+  ],
+  "routing_policy_sha256": "d9e15aa241a0c7a67c9fc2e1af7a2163cd0f0b79a10774a7f5b85314e7d5b2c3",
+  "baseline_summary_sha256": "22840aa929fe232d7d3fbffb3a4c838da166318abdd34f6f28bc0bd0c749d58e",
+  "baseline_report_sha256": "bceeb642e556b656ae5776ad2e6caa0686b8e0b6a8a0a536b56de0cf9afa4c6a",
+  "baseline_code_commit": "482f3efd6e4d3134268a10bec0f75d2928d8e341",
+  "quality_gate": {
+    "task_mean_tolerance": 0.1,
+    "max_regressed_tasks": 2,
+    "scenario_median_tolerance": 0.1
+  }
+}

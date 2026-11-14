@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "ef4527090b47e7979589192e79822c502ea6983af0cacda0bb5f934ed82e03dd",
+  "response_id": "resp_6e9235b3-eaeb-9d60-9281-1f7157c87bd7",
+  "status": "completed",
+  "output_text": "{\n\"code\": \"\\\"\\\"\\\"Optimized implementation using scipy.spatial.distance.cdist.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport numpy as np\\nfrom scipy.spatial.distance import cdist\\n\\n\\ndef distance_matrix(points: list[tuple[float, float]]) -> list[list[float]]:\\n    if len(points) == 0:\\n        return []\\n    \\n    # Convert list of tuples to numpy array\\n    arr = np.array(points)\\n    \\n    # Compute pairwise Euclidean distances using optimized BLAS-backed computation\\n    dist_array = cdist(arr, arr, metric='euclidean')\\n    \\n    # Convert back to list of lists to maintain original return type\\n    return dist_array.tolist()\\n\",\n\"notes\": \"Replaced nested Python loops with scipy.spatial.distance.cdist. Converts input to numpy array, computes pairwise Euclidean distances, then converts result back to list of lists. Handles empty input explicitly. Should achieve significant speedup while maintaining numerical equivalence.\"\n}",
+  "tokens": {
+    "input": 930,
+    "cached_input": 0,
+    "output": 218,
+    "reasoning": 434
+  },
+  "cost": 1582.0,
+  "error": null
+}

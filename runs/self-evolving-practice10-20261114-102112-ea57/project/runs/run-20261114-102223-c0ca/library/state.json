@@ -1,0 +1,150 @@
+{
+  "entries": [
+    {
+      "action": "Convert to O(n) single-pass algorithm tracking running state variables",
+      "conditions": "Python code with nested or multi-pass iteration structure on sequences",
+      "created_version": "lib-1",
+      "credibility": 0.29999999999999993,
+      "effect": {
+        "mean_cost": 2195.3333333333335,
+        "mean_gain": 0.000970401650730445,
+        "uses": 3,
+        "wins": 1
+      },
+      "id": "exp-0001",
+      "kind": "experience",
+      "negative": false,
+      "scenario": "speedup",
+      "schema": "entry/1",
+      "scope": "method",
+      "sources": [
+        {
+          "node_ids": [
+            "n0001"
+          ],
+          "run_id": "run-20261114-102223-c0ca",
+          "task_id": "spd-max-drawdown"
+        },
+        {
+          "node_ids": [
+            "n0001"
+          ],
+          "run_id": "run-20261114-102223-c0ca",
+          "task_id": "spd-edit-distance"
+        },
+        {
+          "node_ids": [
+            "n0002"
+          ],
+          "run_id": "run-20261114-102223-c0ca",
+          "task_id": "spd-edit-distance"
+        },
+        {
+          "node_ids": [
+            "n0003"
+          ],
+          "run_id": "run-20261114-102223-c0ca",
+          "task_id": "spd-edit-distance"
+        }
+      ],
+      "status": "demoted",
+      "triggers": [
+        "nested_python_loop"
+      ],
+      "updated_version": "lib-5"
+    },
+    {
+      "action": "Avoid caching local variables and pre-indexing as the primary optimization",
+      "conditions": "Optimizing Python loops where bytecode overhead reduction is attempted",
+      "created_version": "lib-2",
+      "credibility": 0.04999999999999999,
+      "effect": {
+        "mean_cost": 2074.3333333333335,
+        "mean_gain": -0.0018622236088242797,
+        "uses": 3,
+        "wins": 0
+      },
+      "id": "exp-0002",
+      "kind": "experience",
+      "negative": true,
+      "scenario": "speedup",
+      "schema": "entry/1",
+      "scope": "method",
+      "sources": [
+        {
+          "node_ids": [
+            "n0003"
+          ],
+          "run_id": "run-20261114-102223-c0ca",
+          "task_id": "spd-max-drawdown"
+        },
+        {
+          "node_ids": [
+            "n0004"
+          ],
+          "run_id": "run-20261114-102223-c0ca",
+          "task_id": "spd-edit-distance"
+        },
+        {
+          "node_ids": [
+            "n0005"
+          ],
+          "run_id": "run-20261114-102223-c0ca",
+          "task_id": "spd-edit-distance"
+        },
+        {
+          "node_ids": [
+            "n0006"
+          ],
+          "run_id": "run-20261114-102223-c0ca",
+          "task_id": "spd-edit-distance"
+        }
+      ],
+      "status": "demoted",
+      "triggers": [
+        "nested_python_loop"
+      ],
+      "updated_version": "lib-8"
+    },
+    {
+      "action": "将列表转换为集合以实现O(1)时间复杂度的成员查找",
+      "conditions": "当循环内需要对列表进行多次成员资格检查时",
+      "created_version": "lib-9",
+      "credibility": 0.5,
+      "effect": {
+        "mean_cost": 0.0,
+        "mean_gain": 0.0,
+        "uses": 0,
+        "wins": 0
+      },
+      "id": "exp-0003",
+      "kind": "experience",
+      "negative": false,
+      "scenario": "speedup",
+      "schema": "entry/1",
+      "scope": "method",
+      "sources": [
+        {
+          "node_ids": [
+            "n0001"
+          ],
+          "run_id": "run-20261114-102223-c0ca",
+          "task_id": "spd-membership-filter"
+        }
+      ],
+      "status": "active",
+      "triggers": [
+        "list_membership_in_loop"
+      ],
+      "updated_version": "lib-9"
+    }
+  ],
+  "metadata": {
+    "demoted_losses": {
+      "exp-0001": 0,
+      "exp-0002": 1
+    }
+  },
+  "schema": "library/1",
+  "version": "lib-9"
+}

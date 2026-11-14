@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "bb5d24d0284c65e642c41f86bdab16208c73c12239d62fdca3065f1a3a43725c",
+  "response_id": "resp_38e47813-6893-9cf1-81f1-ff9b0c3d375e",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Tune LightGBM hyperparameters to reduce overfitting (lower max_depth, higher reg_alpha)\",\n      \"rationale\": \"Current model may overfit due to shallow feature set; regularization could improve generalization\",\n      \"estimate\": {\n        \"gain\": 0.03,\n        \"cost\": 3000,\n        \"seconds\": 45\n      },\n      \"cites\": [\"h_3_param_tuning\"]\n    },\n    {\n      \"hypothesis\": \"Replace missing-as-category with mode imputation for numerical stability\",\n      \"rationale\": \"Missing-heavy features might benefit from denser representation under limited tree splits\",\n      \"estimate\": {\n        \"gain\": 0.02,\n        \"cost\": 2000,\n        \"seconds\": 30\n      },\n      \"cites\": [\"h_4_imputation\"]\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 5000,\n    \"seconds\": 75,\n    \"score\": 0.79\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"hypothesis_3_param_tuning\",\n      \"amount\": 3000\n    },\n    {\n      \"direction\": \"hypothesis_4_imputation\",\n      \"amount\": 2000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.5,\n      \"score\": 0.77\n    },\n    {\n      \"spent_ratio\": 1.0,\n      \"score\": 0.79\n    }\n  ]\n}",
+  "tokens": {
+    "input": 4018,
+    "cached_input": 0,
+    "output": 402,
+    "reasoning": 2346
+  },
+  "cost": 6766.0,
+  "error": null
+}

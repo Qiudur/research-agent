@@ -1,0 +1,103 @@
+{
+  "entries": [
+    {
+      "action": "Convert to O(n) single-pass algorithm tracking running state variables",
+      "conditions": "Python code with nested or multi-pass iteration structure on sequences",
+      "created_version": "lib-1",
+      "credibility": 0.29999999999999993,
+      "effect": {
+        "mean_cost": 2195.3333333333335,
+        "mean_gain": 0.000970401650730445,
+        "uses": 3,
+        "wins": 1
+      },
+      "id": "exp-0001",
+      "kind": "experience",
+      "negative": false,
+      "scenario": "speedup",
+      "schema": "entry/1",
+      "scope": "method",
+      "sources": [
+        {
+          "node_ids": [
+            "n0001"
+          ],
+          "run_id": "run-20261114-102223-c0ca",
+          "task_id": "spd-max-drawdown"
+        },
+        {
+          "node_ids": [
+            "n0001"
+          ],
+          "run_id": "run-20261114-102223-c0ca",
+          "task_id": "spd-edit-distance"
+        },
+        {
+          "node_ids": [
+            "n0002"
+          ],
+          "run_id": "run-20261114-102223-c0ca",
+          "task_id": "spd-edit-distance"
+        },
+        {
+          "node_ids": [
+            "n0003"
+          ],
+          "run_id": "run-20261114-102223-c0ca",
+          "task_id": "spd-edit-distance"
+        }
+      ],
+      "status": "demoted",
+      "triggers": [
+        "nested_python_loop"
+      ],
+      "updated_version": "lib-5"
+    },
+    {
+      "action": "Avoid caching local variables and pre-indexing as the primary optimization",
+      "conditions": "Optimizing Python loops where bytecode overhead reduction is attempted",
+      "created_version": "lib-2",
+      "credibility": 0.35,
+      "effect": {
+        "mean_cost": 2135.0,
+        "mean_gain": -0.0009211248921198083,
+        "uses": 1,
+        "wins": 0
+      },
+      "id": "exp-0002",
+      "kind": "experience",
+      "negative": true,
+      "scenario": "speedup",
+      "schema": "entry/1",
+      "scope": "method",
+      "sources": [
+        {
+          "node_ids": [
+            "n0003"
+          ],
+          "run_id": "run-20261114-102223-c0ca",
+          "task_id": "spd-max-drawdown"
+        },
+        {
+          "node_ids": [
+            "n0004"
+          ],
+          "run_id": "run-20261114-102223-c0ca",
+          "task_id": "spd-edit-distance"
+        }
+      ],
+      "status": "active",
+      "triggers": [
+        "nested_python_loop"
+      ],
+      "updated_version": "lib-6"
+    }
+  ],
+  "metadata": {
+    "demoted_losses": {
+      "exp-0001": 0
+    }
+  },
+  "schema": "library/1",
+  "version": "lib-6"
+}

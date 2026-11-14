@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "893aee4ebc0b00947674332980c561cce042d3846704e813558e03f228bb0625",
+  "response_id": "resp_0f01a427-fb35-95a4-bf0c-1efae4fdf3c5",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"LightGBM classifier for phishing website detection.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    X_train = train.copy()\\n    \\n    test = pd.DataFrame(test_rows)\\n    # Align column order with training data\\n    test = test[X_train.columns]\\n    \\n    # Convert numeric columns\\n    for name in X_train.columns:\\n        if pd.api.types.is_numeric_dtype(X_train[name]):\\n            test[name] = pd.to_numeric(test[name], errors='coerce')\\n    \\n    # Fit LightGBM classifier\\n    model = LGBMClassifier(\\n        n_estimators=200,\\n        max_depth=-1,\\n        learning_rate=0.05,\\n        random_state=20261114,\\n        n_jobs=1,\\n        verbosity=-1,\\n        force_col_wise=True\\n    )\\n    model.fit(X_train, y)\\n    return model.predict_proba(test)[:, 1].tolist()\",\n  \"notes\": \"Implemented LightGBM classifier matching baseline architecture. Tree ensembles handle feature interactions better than linear models. Key params: n_estimators=200, lr=0.05 for stability. Columns aligned by order to ensure consistent prediction.\"\n}",
+  "tokens": {
+    "input": 4031,
+    "cached_input": 0,
+    "output": 347,
+    "reasoning": 482
+  },
+  "cost": 4860.0,
+  "error": null
+}

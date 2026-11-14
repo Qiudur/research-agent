@@ -1,0 +1,49 @@
+--- parent/solution.py
++++ solution.py
+@@ -1,10 +1,12 @@
+-"""Single-pass O(n) maximum-drawdown implementation."""
++"""Maximum-drawdown implementation with numpy vectorization."""
+ 
+ from __future__ import annotations
+ 
++import numpy as np
++
+ 
+ def max_drawdown(prices: list[float]) -> float:
+-    """Compute maximum chronological peak-to-trough fraction in O(n) time.
++    """Compute maximum chronological peak-to-trough fraction.
+     
+     Args:
+         prices: List of strictly positive finite float prices.
+@@ -12,22 +14,16 @@
+     Returns:
+         Maximum drawdown as fraction, or 0.0 for empty/non-decreasing series.
+     """
+-    largest = 0.0
++    if len(prices) <= 1:
++        return 0.0
+     
+-    if len(prices) <= 1:
+-        return largest
++    arr = np.array(prices)
+     
+-    peak = prices[0]
++    # Use cummax to get running maximum (peak so far) at each position
++    peak_arr = np.maximum.accumulate(arr)
+     
+-    for i in range(1, len(prices)):
+-        current = prices[i]
+-        
+-        # Update peak if we found a new high
+-        if current > peak:
+-            peak = current
+-        
+-        # Calculate drawdown from current peak to this price
+-        drawdown = (peak - current) / peak
+-        largest = max(largest, drawdown)
++    # Calculate drawdown at each position from the current peak
++    drawdowns = (peak_arr - arr) / peak_arr
+     
+-    return largest
++    # Return maximum drawdown across all positions
++    return float(np.max(drawdowns))

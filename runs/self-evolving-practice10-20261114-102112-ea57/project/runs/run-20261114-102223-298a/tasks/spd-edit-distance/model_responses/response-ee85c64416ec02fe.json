@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "summarizer",
+  "purpose": "summarize",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "51b24a7060d992268ac80a85f163980d58217cb17280e181f19dff03ed3387a5",
+  "response_id": "resp_0316d21a-5367-9100-995c-b814075febb4",
+  "status": "completed",
+  "output_text": "{\n  \"drafts\": [\n    {\n      \"scope\": \"method\",\n      \"scenario\": \"speedup\",\n      \"triggers\": [\"nested_python_loop\"],\n      \"conditions\": \"Task involves distance or similarity computation where SciPy cdist can be adapted despite non-standard use case\",\n      \"action\": \"Replace nested loops with scipy.spatial.distance.cdist for vectorization\",\n      \"negative\": false,\n      \"node_ids\": [\"n0001\"]\n    }\n  ],\n  \"narrowings\": []\n}",
+  "tokens": {
+    "input": 740,
+    "cached_input": 0,
+    "output": 123,
+    "reasoning": 578
+  },
+  "cost": 1441.0,
+  "error": null
+}

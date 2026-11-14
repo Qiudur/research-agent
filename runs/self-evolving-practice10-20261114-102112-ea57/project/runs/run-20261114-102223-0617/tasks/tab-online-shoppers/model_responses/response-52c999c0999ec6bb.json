@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "diagnoser",
+  "purpose": "diagnose",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "01d161e9c7c102dbd57cf5f274d490e7052782603f3ae2b51800e44841afe8d2",
+  "response_id": "resp_082de795-9ce2-9854-a01d-7d3347a6bd18",
+  "status": "completed",
+  "output_text": "{\"hypothesis\":\"Data leakage or feature inconsistency allows model to achieve raw ROC AUC (0.92427) exceeding ceiling (0.92335), causing normalized dev score inflation.\",\"rationale\":\"Raw AUC surpasses predefined ceiling despite minimal absolute gain over baseline. Given ceiling-baseline gap of ~0.00013, any small raw improvement causes massive normalized deviation. Empty cheat_flags don't rule out subtle leakage via feature engineering (e.g., time-dependent features, target-derived attributes, or inconsistent categorical encoding between train/test phases).\",\"advice\":\"Audit feature engineering pipeline for test-set contamination; validate categorical encoding consistency; remove any temporal/leaky features; add explicit checks for train-test distribution mismatch in VisitorType/BounceRates interactions; regenerate baseline features without cross-validation leakage.\"}",
+  "tokens": {
+    "input": 3612,
+    "cached_input": 0,
+    "output": 172,
+    "reasoning": 1327
+  },
+  "cost": 5111.0,
+  "error": null
+}

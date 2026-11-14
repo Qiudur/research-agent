@@ -1,0 +1,42 @@
+{
+  "schema": "opening_plan/1",
+  "run_id": "run-20261114-102223-0617",
+  "task_id": "tab-online-shoppers",
+  "predicted": {
+    "cost": 17000.0,
+    "seconds": 270.0,
+    "score": 0.045
+  },
+  "expected_progress": [
+    {
+      "spent_ratio": 0.2,
+      "score": 0.02
+    },
+    {
+      "spent_ratio": 0.4,
+      "score": 0.035
+    },
+    {
+      "spent_ratio": 0.6,
+      "score": 0.045
+    },
+    {
+      "spent_ratio": 0.9,
+      "score": 0.055
+    }
+  ],
+  "budget_allocation": [
+    {
+      "direction": "hypothesis_1",
+      "amount": 8000
+    },
+    {
+      "direction": "hypothesis_2",
+      "amount": 4000
+    },
+    {
+      "direction": "hypothesis_3",
+      "amount": 5000
+    }
+  ]
+}

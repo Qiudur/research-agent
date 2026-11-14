@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "ff272dfb4e0a5b01e5f86e94cade2ed355c5aba87e40db670f1022753af96b22",
+  "response_id": "resp_6ba4ba88-5647-99f4-85e6-49440cb67bbe",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"LightGBM classifier with default hyperparameters\",\n      \"rationale\": \"Tree-based models handle mixed numeric/categorical data well. Features appear mostly binary/trinary encoded which suits splitting strategies. Should significantly beat 0.0 baseline.\",\n      \"estimate\": {\n        \"gain\": 0.85,\n        \"cost\": 4500,\n        \"seconds\": 120\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Feature-target correlation analysis\",\n      \"rationale\": \"Check which single features strongly predict the target. May reveal direct correlations or potential leakage sources worth exploiting.\",\n      \"estimate\": {\n        \"gain\": 0.1,\n        \"cost\": 800,\n        \"seconds\": 30\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Logistic regression baseline with label transformation\",\n      \"rationale\": \"Convert -1/0/1 to proper categories, transform target to 0/1. Linear model serves as low-complexity sanity check and provides calibration benchmark.\",\n      \"estimate\": {\n        \"gain\": 0.45,\n        \"cost\": 2200,\n        \"seconds\": 60\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 5300,\n    \"seconds\": 150,\n    \"score\": 0.7\n  },\n  \"budget_allocation\": [\n    {\"direction\": \"hypothesis_1\", \"amount\": 4500},\n    {\"direction\": \"hypothesis_2\", \"amount\": 800}\n  ],\n  \"expected_progress\": [\n    {\"spent_ratio\": 0.15, \"score\": 0.35},\n    {\"spent_ratio\": 0.25, \"score\": 0.55},\n    {\"spent_ratio\": 0.4, \"score\": 0.7},\n    {\"spent_ratio\": 0.9, \"score\": 0.95}\n  ]\n}",
+  "tokens": {
+    "input": 4081,
+    "cached_input": 0,
+    "output": 506,
+    "reasoning": 724
+  },
+  "cost": 5311.0,
+  "error": null
+}

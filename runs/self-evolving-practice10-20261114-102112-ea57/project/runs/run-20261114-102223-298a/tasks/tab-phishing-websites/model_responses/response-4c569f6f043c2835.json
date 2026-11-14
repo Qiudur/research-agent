@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "diagnoser",
+  "purpose": "diagnose",
+  "node_id": "n0001",
+  "model": "claude-opus-5-5",
+  "prompt_hash": "60441d4d96ceb211b7cdeed41097d9593351481eb5d375c6427a382e17eaed5b",
+  "response_id": "msg_011Ch2gQn5eySW65VDaKGjMD",
+  "status": "completed",
+  "output_text": "{\"hypothesis\":\"This is a real but small model regression, not a grader crash and not leakage. Raw ROC AUC is 0.9776, while baseline_raw is 0.99356. That is about 0.016 below baseline. The normalization denominator (ceiling_raw - baseline_raw) is only about 1.08e-5, so that gap becomes a dev score of about -1477. The likely cause is that plain logistic regression treats the ordinal {-1,0,1} features as linear. It cannot capture the feature interactions that tree ensembles use to reach about 0.9936 on this dataset.\",\"rationale\":\"The run itself looks valid. correct=true, cheat_flags is empty, there is no runtime error and spread=0. The outputs are valid probabilities, and the ranking is clearly meaningful (AUC 0.978 is far above 0.5). A label inversion would give an AUC of about 0.02, so the 'label transformation' did not flip the positive class. The visible train.csv already uses y in {0,1}, so any remapping is unnecessary at best. An AUC near 0.978 is typical for linear models on UCI phishing. Tree ensembles typically reach about 0.99+, which matches baseline_raw. Because the baseline-to-ceiling window is almost zero, any raw AUC even slightly below 0.99356 will produce a huge negative normalized score. Judge progress by raw AUC, not by the dev magnitude.\",\"advice\":\"1) Remove any custom label mapping. Read y directly from train.csv as 0/1 with positive=1, and return predict_proba[:, 1] in test_rows order. Cast the test dict string values to numeric using the same column order as the training features, excluding y. 2) Replace logistic regression with a tree ensemble, such as RandomForest or ExtraTrees with several hundred trees, or HistGradientBoostingClassifier. Use a fixed random_state so spread stays 0. Optionally average RF and GBM probabilities. 3) If you keep a linear model, one-hot encode every feature as categorical, but expect it to stay below baseline. 4) Validate locally using only train.csv. The UCI phishing data has many duplicate feature vectors, so mimic group_stratified by grouping identical feature rows in GroupKFold or StratifiedGroupKFold. Only accept a change when the local raw AUC is at least about 0.993 and the predictions are finite and within [0,1]. 5) Expect normalized dev scores to swing wildly, by thousands, for tiny raw changes because the ceiling sits almost on the baseline. Do not read a sudden large positive dev score as a breakthrough until you have checked raw AUC and cheat_flags.\"}",
+  "tokens": {
+    "input": 4888,
+    "cached_input": 0,
+    "output": 1400,
+    "reasoning": 0
+  },
+  "cost": 6288.0,
+  "error": null
+}

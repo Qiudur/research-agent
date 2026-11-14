@@ -1,0 +1,78 @@
+--- parent/solution.py
++++ solution.py
+@@ -1,4 +1,4 @@
+-"""Measured LightGBM baseline for this tabular task."""
++"""Measured LightGBM baseline with frequency encoding for high-cardinality categoricals."""
+ 
+ from __future__ import annotations
+ 
+@@ -9,14 +9,59 @@
+ def fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:
+     train = pd.read_csv(train_csv)
+     y = train.pop("y").astype(int)
+-    test = pd.DataFrame(test_rows, columns=train.columns)
+-    for name in train.columns:
+-        if pd.api.types.is_numeric_dtype(train[name]):
+-            test[name] = pd.to_numeric(test[name])
++    
++    # High-cardinality categorical features to encode
++    high_card_features = ["workclass", "occupation", "native_country"]
++    
++    # Build frequency maps from training data only (prevents leakage)
++    freq_maps = {}
++    for feat in high_card_features:
++        if feat in train.columns:
++            value_counts = train[feat].value_counts(normalize=True)
++            freq_maps[feat] = value_counts.to_dict()
++    
++    # Apply frequency encoding to training data
++    for feat in high_card_features:
++        if feat in train.columns:
++            train[f"{feat}_freq"] = train[feat].map(freq_maps[feat]).fillna(0.0)
++    
++    # Prepare test dataframe with same column order as train after processing
++    test = pd.DataFrame(test_rows)
++    
++    # Align columns - ensure all train columns exist in test
++    for col in train.columns:
++        if col not in test.columns:
++            if col.endswith("_freq"):
++                # Will be added via encoding below
++                continue
++            test[col] = train[col].iloc[0]  # Fill missing cols with default
++    
++    # Apply frequency encoding to test using train maps
++    for feat in high_card_features:
++        if feat in test.columns:
++            test[f"{feat}_freq"] = test[feat].map(freq_maps.get(feat, {})).fillna(0.0)
++    
++    # Select only columns that are in both train and test
++    common_cols = [c for c in train.columns if c in test.columns]
++    X_train = train[common_cols]
++    X_test = test[common_cols]
++    
++    # Handle numeric conversions and categorical alignment
++    for name in X_train.columns:
++        if pd.api.types.is_numeric_dtype(X_train[name]):
++            X_test[name] = pd.to_numeric(X_test[name], errors="coerce")
+         else:
+-            categories = pd.Categorical(pd.concat([train[name], test[name]], ignore_index=True)).categories
+-            train[name] = pd.Categorical(train[name], categories=categories)
+-            test[name] = pd.Categorical(test[name], categories=categories)
+-    model = LGBMClassifier(random_state=20261114, n_jobs=1, verbosity=-1)
+-    model.fit(train, y)
+-    return model.predict_proba(test)[:, 1].tolist()
++            combined = pd.concat([X_train[name], X_test[name]], ignore_index=True)
++            cat_type = pd.CategoricalDtype(combined.astype(str).unique())
++            X_train[name] = X_train[name].astype(cat_type)
++            X_test[name] = X_test[name].astype(cat_type)
++    
++    # Train LightGBM with categorical features detection
++    model = LGBMClassifier(
++        random_state=20261114,
++        n_jobs=1,
++        verbosity=-1,
++        categorical_feature=[c for c in X_train.columns if pd.api.types.is_categorical_dtype(X_train[c])]
++    )
++    model.fit(X_train, y)
++    return model.predict_proba(X_test)[:, 1].tolist()

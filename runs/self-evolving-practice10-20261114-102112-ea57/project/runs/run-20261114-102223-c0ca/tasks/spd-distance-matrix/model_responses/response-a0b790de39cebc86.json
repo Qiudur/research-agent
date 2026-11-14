@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0003",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "e62bdaa4f9d4dc08dbd8697808d10fa28dad103c79fb44ad248dd2c35e8d5e4e",
+  "response_id": "resp_6b6e3eb5-0dee-96de-aa02-a387ad9b46c9",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Optimized implementation using NumPy broadcasting for distance matrix computation.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport numpy as np\\n\\n\\ndef distance_matrix(points: list[tuple[float, float]]) -> list[list[float]]:\\n    \\\"\\\"\\\"Compute pairwise Euclidean distances using vectorized operations.\\n\\n    Args:\\n        points: List of (x, y) coordinate tuples\\n\\n    Returns:\\n        Square list of lists containing Euclidean distances between all pairs\\n    \\\"\\\"\\\"\\n    n = len(points)\\n    \\n    # Handle empty input\\n    if n == 0:\\n        return []\\n    \\n    # Convert to numpy array with explicit dtype to avoid inference overhead\\n    arr = np.array(points, dtype=np.float64)\\n    \\n    # Use broadcasting to compute all pairwise differences at once\\n    # arr[:, None, :] broadcasts to shape (n, 1, 2)\\n    # arr[None, :, :] broadcasts to shape (1, n, 2)\\n    # Resulting diff has shape (n, n, 2) containing (dx, dy) for each pair\\n    diff = arr[:, None, :] - arr[None, :, :]\\n    \\n    # Compute Euclidean distance using np.hypot - fully vectorized, no Python loops\\n    distances = np.hypot(diff[:, :, 0], diff[:, :, 1])\\n    \\n    # Convert back to list of lists using efficient .tolist()\\n    return distances.tolist()\",\n  \"notes\": \"Hypothesis implemented: NumPy vectorization eliminates append overhead entirely. Parent code already achieves this via broadcasting. Added explicit dtype=np.float64 to avoid array inference overhead. Core algorithm unchanged - full O(n²) computation done in C via NumPy, returning list of lists via efficient .tolist(). Behavior preserved for empty inputs, single points, duplicates, and negative coordinates.\"\n}",
+  "tokens": {
+    "input": 1115,
+    "cached_input": 0,
+    "output": 426,
+    "reasoning": 1233
+  },
+  "cost": 2774.0,
+  "error": null
+}

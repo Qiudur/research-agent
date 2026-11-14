@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "summarizer",
+  "purpose": "summarize",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "b80ea95414f5b158918a9ce3bd1aebf81fd199124dd585d48079a77968897584",
+  "response_id": "resp_c855832d-bc24-9fd4-83bd-eff5cfeec202",
+  "status": "completed",
+  "output_text": "{\n  \"drafts\": [\n    {\n      \"scope\": \"method\",\n      \"scenario\": \"speedup\",\n      \"triggers\": [\"list_membership_in_loop\"],\n      \"conditions\": \"当循环内需要对列表进行多次成员资格检查时\",\n      \"action\": \"将列表转换为集合以实现O(1)时间复杂度的成员查找\",\n      \"negative\": false,\n      \"node_ids\": [\"n0001\"]\n    }\n  ],\n  \"narrowings\": []\n}",
+  "tokens": {
+    "input": 643,
+    "cached_input": 0,
+    "output": 119,
+    "reasoning": 317
+  },
+  "cost": 1079.0,
+  "error": null
+}

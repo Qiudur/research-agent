@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "summarizer",
+  "purpose": "summarize",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "fc1fa01e2916c7cee11197e761e6bb65d181f8db03541be722927c27d8eca68d",
+  "response_id": "resp_9c08af4a-c904-9a36-b1cb-0b1711e8cbab",
+  "status": "completed",
+  "output_text": "{\n  \"drafts\": [\n    {\n      \"scope\": \"method\",\n      \"scenario\": \"speedup\",\n      \"triggers\": [\n        \"nested_python_loop\"\n      ],\n      \"conditions\": \"Task involves calculating max drawdown metric implemented with nested python loops\",\n      \"action\": \"Implement single-pass O(n) algorithm tracking running peak\",\n      \"negative\": false,\n      \"node_ids\": [\n        \"n0001\"\n      ]\n    },\n    {\n      \"scope\": \"method\",\n      \"scenario\": \"speedup\",\n      \"triggers\": [\n        \"nested_python_loop\"\n      ],\n      \"conditions\": \"Task supports vectorization via SciPy spatial distance functions despite non-standard use case\",\n      \"action\": \"Replace implementation with scipy.spatial.distance.cdist\",\n      \"negative\": false,\n      \"node_ids\": [\n        \"n0002\"\n      ]\n    }\n  ],\n  \"narrowings\": []\n}",
+  "tokens": {
+    "input": 802,
+    "cached_input": 0,
+    "output": 229,
+    "reasoning": 3400
+  },
+  "cost": 4431.0,
+  "error": null
+}

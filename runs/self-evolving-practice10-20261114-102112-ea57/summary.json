@@ -1,0 +1,20 @@
+{
+  "schema": "self_evolving_campaign/1",
+  "status": "completed",
+  "campaign_dir": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57",
+  "started_utc": "2026-11-14T10:22:09.970Z",
+  "ended_utc": "2026-11-14T10:47:31.790Z",
+  "elapsed_seconds": 1521.7599874580046,
+  "run_ids": [
+    "run-20261114-102223-298a",
+    "run-20261114-102223-0617",
+    "run-20261114-102223-c0ca"
+  ],
+  "total_task_tokens": 632347.0,
+  "remote_calls": 23,
+  "remote_tokens": 210431,
+  "preflight_tokens": 19326,
+  "total_research_tokens": 651673.0,
+  "quality_gate_passed": false,
+  "comparison_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/comparison.json"
+}

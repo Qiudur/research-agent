@@ -1,0 +1,429 @@
+{
+  "schema": "route_practice_comparison/1",
+  "label": "EXPLORATORY; SAME PRACTICE TASKS",
+  "baseline_code_commit": "482f3efd6e4d3134268a10bec0f75d2928d8e341",
+  "candidate_code_commit": "c46457f54cdc83bd61a676f6b486a87c22e9813f",
+  "quality_gate": {
+    "task_mean_tolerance": 0.1,
+    "max_regressed_tasks": 2,
+    "scenario_median_tolerance": 0.1
+  },
+  "quality_gate_passed": false,
+  "regressed_tasks": [
+    "spd-rolling-mean",
+    "tab-phishing-websites",
+    "tab-german-credit"
+  ],
+  "scenarios": {
+    "speedup": {
+      "baseline_median_task_mean": 0.9956834790428257,
+      "candidate_median_task_mean": 0.9658151360249227
+    },
+    "tabular": {
+      "baseline_median_task_mean": 0.3025839285681804,
+      "candidate_median_task_mean": 0.5351172319676255
+    }
+  },
+  "tasks": [
+    {
+      "task_id": "spd-distance-matrix",
+      "scenario": "speedup",
+      "baseline_scores": [
+        0.609404286819868,
+        1.1143979374635782,
+        1.0856810578141916
+      ],
+      "candidate_scores": [
+        1.1246884654222982,
+        1.1367660959545118,
+        0.7392284194504608
+      ],
+      "mean_score_delta": 0.06373323290987765,
+      "baseline_tokens": [
+        29013.0,
+        22274.0,
+        19127.0
+      ],
+      "candidate_tokens": [
+        7951.0,
+        5372.0,
+        40652.0
+      ],
+      "candidate_remote_calls": [
+        0,
+        0,
+        1
+      ],
+      "candidate_remote_tokens": [
+        0,
+        0,
+        21275
+      ],
+      "candidate_failed_remote_calls": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "task_id": "spd-rolling-mean",
+      "scenario": "speedup",
+      "baseline_scores": [
+        1.58121625157882,
+        1.1390141726139793,
+        3.805285425076841
+      ],
+      "candidate_scores": [
+        0.959661495320181,
+        0.0372953143087882,
+        0.9974550768105918
+      ],
+      "mean_score_delta": -1.5103679876100267,
+      "baseline_tokens": [
+        15163.0,
+        8004.0,
+        13210.0
+      ],
+      "candidate_tokens": [
+        35801.0,
+        3167.0,
+        39726.0
+      ],
+      "candidate_remote_calls": [
+        1,
+        0,
+        1
+      ],
+      "candidate_remote_tokens": [
+        20987,
+        0,
+        20981
+      ],
+      "candidate_failed_remote_calls": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "task_id": "spd-max-drawdown",
+      "scenario": "speedup",
+      "baseline_scores": [
+        2.431309393189891,
+        1.8021558154291664,
+        2.2331907832981788
+      ],
+      "candidate_scores": [
+        2.57032716845695,
+        2.291558186117177,
+        1.7716825756560026
+      ],
+      "mean_score_delta": 0.055637312770964176,
+      "baseline_tokens": [
+        21697.0,
+        11746.0,
+        9006.0
+      ],
+      "candidate_tokens": [
+        13927.0,
+        7544.0,
+        19975.0
+      ],
+      "candidate_remote_calls": [
+        0,
+        0,
+        0
+      ],
+      "candidate_remote_tokens": [
+        0,
+        0,
+        0
+      ],
+      "candidate_failed_remote_calls": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "task_id": "spd-edit-distance",
+      "scenario": "speedup",
+      "baseline_scores": [
+        0.008163204040380043,
+        0.00915812945430762,
+        0.0075179113659865696
+      ],
+      "candidate_scores": [
+        1.1125266581336755,
+        0.15041791282724978,
+        0.010931799936637641
+      ],
+      "mean_score_delta": 0.41634570867896287,
+      "baseline_tokens": [
+        31035.0,
+        28012.0,
+        35163.0
+      ],
+      "candidate_tokens": [
+        15778.0,
+        30448.0,
+        40427.0
+      ],
+      "candidate_remote_calls": [
+        1,
+        1,
+        1
+      ],
+      "candidate_remote_tokens": [
+        3962,
+        3786,
+        21564
+      ],
+      "candidate_failed_remote_calls": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "task_id": "spd-membership-filter",
+      "scenario": "speedup",
+      "baseline_scores": [
+        1.0078263264095428,
+        0.9763547683364512,
+        1.0028693423824833
+      ],
+      "candidate_scores": [
+        0.9858755613204871,
+        0.9805842489942941,
+        0.9309855977599871
+      ],
+      "mean_score_delta": -0.029868343017902976,
+      "baseline_tokens": [
+        28372.0,
+        28469.0,
+        4642.0
+      ],
+      "candidate_tokens": [
+        9178.0,
+        34436.0,
+        4773.0
+      ],
+      "candidate_remote_calls": [
+        0,
+        1,
+        0
+      ],
+      "candidate_remote_tokens": [
+        0,
+        21507,
+        0
+      ],
+      "candidate_failed_remote_calls": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "task_id": "tab-adult-income",
+      "scenario": "tabular",
+      "baseline_scores": [
+        -2.530268048203705,
+        -2.4467000788376994,
+        -2.530268048203705
+      ],
+      "candidate_scores": [
+        -2.530268048203705,
+        -2.530268048203705,
+        -2.530268048203705
+      ],
+      "mean_score_delta": -0.027855989788668545,
+      "baseline_tokens": [
+        33294.0,
+        28738.0,
+        28831.0
+      ],
+      "candidate_tokens": [
+        38801.0,
+        28209.0,
+        30714.0
+      ],
+      "candidate_remote_calls": [
+        1,
+        2,
+        1
+      ],
+      "candidate_remote_tokens": [
+        22370,
+        11369,
+        4020
+      ],
+      "candidate_failed_remote_calls": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "task_id": "tab-mushroom-edibility",
+      "scenario": "tabular",
+      "baseline_scores": [
+        0.17959059691343152,
+        0.5485705918776781,
+        0.17959059691343152
+      ],
+      "candidate_scores": [
+        0.17959059691343152,
+        0.8771905071117668,
+        0.5485705918776781
+      ],
+      "mean_score_delta": 0.2325333033994451,
+      "baseline_tokens": [
+        31718.0,
+        29683.0,
+        29973.0
+      ],
+      "candidate_tokens": [
+        28119.0,
+        33874.0,
+        26874.0
+      ],
+      "candidate_remote_calls": [
+        1,
+        1,
+        2
+      ],
+      "candidate_remote_tokens": [
+        7008,
+        7648,
+        7044
+      ],
+      "candidate_failed_remote_calls": [
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "task_id": "tab-online-shoppers",
+      "scenario": "tabular",
+      "baseline_scores": [
+        25.58584658049532,
+        25.58584658049532,
+        9.865448422719732
+      ],
+      "candidate_scores": [
+        32.44342098746757,
+        44.55058683701758,
+        25.58584658049532
+      ],
+      "mean_score_delta": 13.847570940423363,
+      "baseline_tokens": [
+        28245.0,
+        28823.0,
+        29213.0
+      ],
+      "candidate_tokens": [
+        26832.0,
+        31924.0,
+        0.0
+      ],
+      "candidate_remote_calls": [
+        1,
+        1,
+        0
+      ],
+      "candidate_remote_tokens": [
+        5596,
+        5093,
+        0
+      ],
+      "candidate_failed_remote_calls": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "task_id": "tab-phishing-websites",
+      "scenario": "tabular",
+      "baseline_scores": [
+        -229.69270946391703,
+        -206.44455262644286,
+        -229.69270946391703
+      ],
+      "candidate_scores": [
+        -229.69270946391703,
+        -229.69270946391703,
+        -229.69270946391703
+      ],
+      "mean_score_delta": -7.7493856124913805,
+      "baseline_tokens": [
+        31685.0,
+        28795.0,
+        28475.0
+      ],
+      "candidate_tokens": [
+        28658.0,
+        28962.0,
+        0.0
+      ],
+      "candidate_remote_calls": [
+        2,
+        2,
+        0
+      ],
+      "candidate_remote_tokens": [
+        13115,
+        13106,
+        0
+      ],
+      "candidate_failed_remote_calls": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "task_id": "tab-german-credit",
+      "scenario": "tabular",
+      "baseline_scores": [
+        0.8724035608308601,
+        0.8382789317507419,
+        0.8575667655786346
+      ],
+      "candidate_scores": [
+        1.1083086053412456,
+        0.531157270029673,
+        0.531157270029673
+      ],
+      "mean_score_delta": -0.13254203758654837,
+      "baseline_tokens": [
+        30037.0,
+        32136.0,
+        33476.0
+      ],
+      "candidate_tokens": [
+        20225.0,
+        0.0,
+        0.0
+      ],
+      "candidate_remote_calls": [
+        2,
+        0,
+        0
+      ],
+      "candidate_remote_tokens": [
+        0,
+        0,
+        0
+      ],
+      "candidate_failed_remote_calls": [
+        2,
+        0,
+        0
+      ]
+    }
+  ]
+}

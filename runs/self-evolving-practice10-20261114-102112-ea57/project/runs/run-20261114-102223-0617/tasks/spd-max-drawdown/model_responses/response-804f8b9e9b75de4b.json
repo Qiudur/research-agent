@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "summarizer",
+  "purpose": "summarize",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "e3d023c07e762e19e24053a611914dcf2382b73be31dd86da7119f4b8ad12c21",
+  "response_id": "resp_fbf7fbda-5266-95f0-9658-67935301d22a",
+  "status": "completed",
+  "output_text": "```json\n{\n  \"drafts\": [\n    {\n      \"scope\": \"method\",\n      \"scenario\": \"speedup\",\n      \"triggers\": [\"nested_python_loop\"],\n      \"conditions\": \"当优化嵌套Python循环结构的性能瓶颈时\",\n      \"action\": \"实施O(n)单次遍历算法跟踪运行峰值价格\",\n      \"negative\": false,\n      \"node_ids\": [\"n0001\"]\n    }\n  ],\n  \"narrowings\": []\n}\n```",
+  "tokens": {
+    "input": 642,
+    "cached_input": 0,
+    "output": 117,
+    "reasoning": 578
+  },
+  "cost": 1337.0,
+  "error": null
+}

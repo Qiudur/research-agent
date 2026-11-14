@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "24f3a9ba91d438eb30dfc7dae8be09455a8135fd4709c104f4f36acbf379c8fb",
+  "response_id": "resp_a3b01d35-768a-91a7-880a-8cd221334b02",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Cache allowed set lookup in local variable within function body\",\n      \"rationale\": \"Function-level set conversion already gives major speedup; caching the set reference may reduce attribute lookup overhead in tight loops\",\n      \"estimate\": {\n        \"gain\": 0.002,\n        \"cost\": 700,\n        \"seconds\": 45\n      },\n      \"cites\": [\"speedup_scenario\", \"list_membership_in_loop\"]\n    },\n    {\n      \"hypothesis\": \"Test generator expression vs list comprehension for memory efficiency\",\n      \"rationale\": \"List comprehension builds full result upfront; generator might save memory though potentially slower for final list materialization\",\n      \"estimate\": {\n        \"gain\": -0.001,\n        \"cost\": 600,\n        \"seconds\": 40\n      },\n      \"cites\": [\"speedup_scenario\"]\n    },\n    {\n      \"hypothesis\": \"Check if handling single-element allowed list separately improves cache locality\",\n      \"rationale\": \"Edge case optimization for common pattern; direct equality comparison instead of set lookup\",\n      \"estimate\": {\n        \"gain\": 0.001,\n        \"cost\": 550,\n        \"seconds\": 35\n      },\n      \"cites\": [\"edge_cases\"]\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 1850,\n    \"score\": 0.997,\n    \"seconds\": 120\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"experiment_set_conversion\",\n      \"amount\": 3000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.15,\n      \"score\": 0.9957\n    },\n    {\n      \"spent_ratio\": 0.2,\n      \"score\": 0.997\n    },\n    {\n      \"spent_ratio\": 0.35,\n      \"score\": 0.9985\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1430,
+    "cached_input": 0,
+    "output": 501,
+    "reasoning": 1014
+  },
+  "cost": 2945.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "ce34b086c00e83a697f6cde9a062c3c69715def15ac2154a4f37e0da8aec4157",
+  "response_id": "resp_8999a448-d563-9e4c-9f8f-a926b1446dcc",
+  "status": "completed",
+  "output_text": "{\n\"code\": \"\\\"\\\"\\\"Measured LightGBM baseline for this tabular task.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    \\n    # High-cardinality categorical features for target encoding\\n    target_encode_cols = [\\\"native_country\\\", \\\"workclass\\\", \\\"occupation\\\"]\\n    \\n    # Fill missing values with mode in training data first\\n    for col in train.columns:\\n        if train[col].isna().any():\\n            mode_val = train[col].mode()[0] if len(train[col].mode()) > 0 else \\\"\\\"\\n            train[col] = train[col].fillna(mode_val)\\n    \\n    # Compute target encoding from training data only (prevents leakage)\\n    encodings = {}\\n    for col in target_encode_cols:\\n        encodings[col] = train.groupby(col)[y].mean().to_dict()\\n    \\n    global_mean = y.mean()\\n    \\n    # Apply target encoding to training data\\n    for col in target_encode_cols:\\n        train[col] = train[col].map(encodings[col]).fillna(global_mean)\\n    \\n    # Prepare test data\\n    test = pd.DataFrame(test_rows)\\n    \\n    # Ensure correct column order\\n    test = test[train.columns]\\n    \\n    # Fill missing values with mode from training data\\n    for col in train.columns:\\n        if test[col].isna().any():\\n            mode_val = train[col].mode()[0] if len(train[col].mode()) > 0 else \\\"\\\"\\n            test[col] = test[col].fillna(mode_val)\\n        \\n        # Apply target encoding for specified columns\\n        if col in target_encode_cols:\\n            test[col] = test[col].map(encodings[col]).fillna(global_mean)\\n        # Convert numeric columns\\n        elif pd.api.types.is_numeric_dtype(train[col]):\\n            test[col] = pd.to_numeric(test[col], errors='coerce')\\n    \\n    # Fit LightGBM model\\n    model = LGBMClassifier(random_state=20261114, n_jobs=1, verbosity=-1)\\n    model.fit(train, y)\\n    \\n    # Predict probabilities\\n    return model.predict_proba(test)[:, 1].tolist()\",\n\"notes\": \"Implemented LightGBM with target encoding for native_country, workclass, occupation. Target encoding computed from train data only (grouped mean of y per category), prevents data leakage. Missing values filled with mode from training set. Numeric columns preserved as-is, other categoricals handled by LightGBM natively.\"\n}",
+  "tokens": {
+    "input": 2559,
+    "cached_input": 0,
+    "output": 628,
+    "reasoning": 786
+  },
+  "cost": 3973.0,
+  "error": null
+}

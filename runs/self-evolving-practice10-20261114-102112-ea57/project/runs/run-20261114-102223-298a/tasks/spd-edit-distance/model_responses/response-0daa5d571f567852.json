@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "72e7c9ca6ea9e41f40571bb9e31f3f41a13059c2cbaeea7028517eb48c1136ef",
+  "response_id": "resp_f9f18b3c-353b-961d-8e30-613890467f96",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Vectorize DP update step using NumPy arrays to eliminate inner Python loop overhead\",\n      \"rationale\": \"The hotspot analysis identifies nested Python loops populating the matrix as the bottleneck. NumPy vectorization can process row calculations in bulk, reducing interpreter overhead significantly.\",\n      \"estimate\": {\n        \"gain\": 0.5,\n        \"cost\": 2000,\n        \"seconds\": 15\n      },\n      \"cites\": [\n        \"exp-0001\"\n      ]\n    },\n    {\n      \"hypothesis\": \"Attempt SciPy cdist vectorization as a non-standard distance matrix alternative\",\n      \"rationale\": \"Despite Levenshtein not being a standard metric, exp-0003 suggests feasibility of cdist-based approaches for distance matrices where native loops exist, potentially offering compiled backend speed.\",\n      \"estimate\": {\n        \"gain\": 0.8,\n        \"cost\": 2500,\n        \"seconds\": 20\n      },\n      \"cites\": [\n        \"exp-0003\"\n      ]\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 4500,\n    \"seconds\": 35,\n    \"score\": 0.95\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"experiment\",\n      \"amount\": 10000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.05,\n      \"score\": 0.5\n    },\n    {\n      \"spent_ratio\": 0.1,\n      \"score\": 0.85\n    },\n    {\n      \"spent_ratio\": 0.2,\n      \"score\": 1.2\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1538,
+    "cached_input": 0,
+    "output": 440,
+    "reasoning": 3671
+  },
+  "cost": 5649.0,
+  "error": null
+}

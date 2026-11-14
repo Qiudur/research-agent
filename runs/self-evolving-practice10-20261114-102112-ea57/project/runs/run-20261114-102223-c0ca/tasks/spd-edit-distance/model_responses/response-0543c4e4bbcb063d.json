@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "gpt-6-astra",
+  "prompt_hash": "38ff02fbdfc20752abb4c378b03071473bb3094b4e4a7365cb03abb671173686",
+  "response_id": "resp_07a89b0a6a3b62a7016af839d6691087d0bdf99983bce14b31",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"在 n0002 的内联最小值实现上增加相等和空串快速返回，并裁去共同前缀、共同后缀，仅对剩余部分执行原动态规划。\",\n      \"rationale\": \"连续四次循环微优化未超过 n0002，先测试减少实际计算规模，而不重复数组替换或索引改写。裁剪必须避免前后缀重叠，并对无共同边界的输入单独检查扫描开销。使用 original.py 对空串、相等串、重复字符、Unicode 和生成的小规模字符串进行差分验证，再运行允许的评测。不得假定可见边界案例的数量代表评测分布。能力库为空，故 cites 留空。增益、token 和耗时均为预测；2300 TOKENS 与近期每次约 2000–2243 TOKENS 的实测调用规模一致。\",\n      \"estimate\": {\n        \"gain\": 0.025,\n        \"cost\": 2300,\n        \"seconds\": 120\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"测试使用 Python 整数位向量实现精确 Levenshtein 距离，以字符位置掩码和逐字符位运算替代逐单元格 Python 内循环。\",\n      \"rationale\": \"现有热点是完整距离矩阵的嵌套 Python 循环，改变计算方式比继续消除少量函数或解包开销更值得测试。保留 n0002 作为对照和回退实现；位向量采用明确的有效位宽处理，字符掩码按原始字符串字符构建，避免字节编码改变 Unicode 语义。先对短字符串组合及随机字符串与 original.py 做差分验证，再覆盖长短悬殊、重复字符和不同字符种类数量的输入，检查掩码构建成本。禁止按评测案例、文件来源或隐藏标签分支，不缓存评测答案。预计增益是相对前一步预测结果的条件增量，不能视为实测或保证；只有正确性通过才进入性能测量。\",\n      \"estimate\": {\n        \"gain\": 0.18,\n        \"cost\": 2500,\n        \"seconds\": 240\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 4800,\n    \"seconds\": 360,\n    \"score\": 0.21858546922114065\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"边界快速返回与共同前后缀裁剪实验，包含正确性验证和性能测量\",\n      \"amount\": 2300\n    },\n    {\n      \"direction\": \"精确位向量实验，包含差分验证和性能测量\",\n      \"amount\": 2500\n    },\n    {\n      \"direction\": \"本轮 token 波动缓冲，不安排独立模型调用；predicted.cost 为本轮预计新增 TOKENS，预计累计花费 23663 TOKENS\",\n      \"amount\": 337\n    },\n    {\n      \"direction\": \"为下一次模型调用保留，不投入本轮实验；全部分配合计 17137 TOKENS，使用后累计不超过常规上限 36000 TOKENS，硬上限仍为 40000 TOKENS；预留不能保证覆盖实际调用消耗\",\n      \"amount\": 12000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.471575,\n      \"score\": 0.013585469221140654\n    },\n    {\n      \"spent_ratio\": 0.529075,\n      \"score\": 0.03858546922114065\n    },\n    {\n      \"spent_ratio\": 0.591575,\n      \"score\": 0.21858546922114065\n    }\n  ]\n}",
+  "tokens": {
+    "input": 20046,
+    "cached_input": 0,
+    "output": 873,
+    "reasoning": 645
+  },
+  "cost": 21564.0,
+  "error": null
+}

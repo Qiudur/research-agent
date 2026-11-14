@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "b3cae90aa6dacafd8ee350e1855cf37e1f3f1fd2c87b84c0f06b0e6b8e82de09",
+  "response_id": "resp_bce26833-b483-9243-b218-986dbeecf7d0",
+  "status": "completed",
+  "output_text": "{\n\"code\": \"\\\"\\\"\\\"Measured LightGBM baseline for this tabular task.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    test = pd.DataFrame(test_rows, columns=train.columns)\\n    \\n    # Normalize empty strings to a consistent placeholder to match train/test encoding\\n    NA_PLACEHOLDER = \\\"__NA__\\\"\\n    for col in train.columns:\\n        train[col] = train[col].fillna(NA_PLACEHOLDER).astype(str)\\n        test[col] = test[col].fillna(NA_PLACEHOLDER).astype(str)\\n        test[col] = test[col].replace('', NA_PLACEHOLDER)\\n    \\n    for name in train.columns:\\n        categories = pd.Categorical(pd.concat([train[name], test[name]], ignore_index=True)).categories\\n        train[name] = pd.Categorical(train[name], categories=categories)\\n        test[name] = pd.Categorical(test[name], categories=categories)\\n    \\n    model = LGBMClassifier(random_state=20261114, n_jobs=1, verbosity=-1)\\n    model.fit(train, y)\\n    return model.predict_proba(test)[:, 1].tolist()\\n\",\n\"notes\": \"Fixed NaN vs empty string mismatch between train/test. pd.read_csv converts '' to NaN in train, while test dicts keep ''. Both now normalized to __NA__ placeholder before category encoding.\"\n}",
+  "tokens": {
+    "input": 3819,
+    "cached_input": 0,
+    "output": 362,
+    "reasoning": 455
+  },
+  "cost": 4636.0,
+  "error": null
+}

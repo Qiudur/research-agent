@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "fix",
+  "node_id": "n0003",
+  "model": "claude-opus-5-5",
+  "prompt_hash": "716f40701bcecbad4abd0c2a3f7883db538081f2a01e28d2957274c7d0483a08",
+  "response_id": null,
+  "status": null,
+  "output_text": null,
+  "tokens": {
+    "input": 0,
+    "cached_input": 0,
+    "output": 0,
+    "reasoning": 0
+  },
+  "cost": 0.0,
+  "error": "Connection error."
+}

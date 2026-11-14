@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0003",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "5ad795a3db1816808f292dc63a148f41f82b952dbd70375b6e99014073a5128a",
+  "response_id": "resp_61f57f93-a3cd-9c54-b5fc-e5cc5d20a036",
+  "status": "completed",
+  "output_text": "{\"code\":\"\\\"\\\"\\\"Logistic regression with group-aware imputation for mushroom classification.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nimport numpy as np\\nfrom sklearn.linear_model import LogisticRegression\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    test = pd.DataFrame(test_rows, columns=train.columns)\\n    \\n    # Replace empty strings with NaN for proper handling\\n    NA_PLACEHOLDER = \\\"\\\"\\n    feature_cols = train.columns.tolist()\\n    \\n    # Compute imputation mapping: mode of stalk_root per cap_shape group\\n    impute_mapping = {}\\n    for shape in train['cap_shape'].dropna().unique():\\n        vals = train.loc[train['cap_shape'] == shape, 'stalk_root'].dropna()\\n        if len(vals) > 0:\\n            impute_mapping[shape] = vals.mode()[0]\\n    \\n    # Default imputation value for unseen cap_shapes\\n    default_impute = train['stalk_root'].mode()[0] if len(train['stalk_root'].mode()) > 0 else ''\\n    \\n    def impute_stalk_root(df):\\n        df = df.copy()\\n        for idx, row in df.iterrows():\\n            val = row['stalk_root']\\n            if pd.isna(val) or str(val).strip() == '':\\n                shape = row['cap_shape']\\n                df.at[idx, 'stalk_root'] = impute_mapping.get(shape, default_impute)\\n        return df\\n    \\n    train = impute_stalk_root(train)\\n    test = impute_stalk_root(test)\\n    \\n    # Ensure all features are strings\\n    for col in feature_cols:\\n        train[col] = train[col].fillna('').astype(str)\\n        test[col] = test[col].fillna('').astype(str)\\n    \\n    # One-hot encode all categorical features\\n    train_encoded = pd.get_dummies(train, prefix_sep='__', columns=feature_cols)\\n    test_encoded = pd.get_dummies(test, prefix_sep='__', columns=feature_cols)\\n    \\n    # Align test columns with train (handle missing categories in test)\\n    for col in train_encoded.columns:\\n        if col not in test_encoded.columns:\\n            test_encoded[col] = 0\\n    test_encoded = test_encoded[train_encoded.columns]\\n    \\n    # Train logistic regression\\n    model = LogisticRegression(random_state=20261114, max_iter=1000)\\n    model.fit(train_encoded, y)\\n    \\n    # Predict probability of positive class (poisonous)\\n    probs = model.predict_proba(test_encoded)[:, 1]\\n    return probs.tolist()\", \"notes\":\"Implemented logistic regression baseline with manual mode imputation for stalk_root grouped by cap_shape. Used sklearn's LogisticRegression with one-hot encoding via pd.get_dummies. All test rows receive valid probabilities in [0,1].\"}",
+  "tokens": {
+    "input": 3598,
+    "cached_input": 0,
+    "output": 678,
+    "reasoning": 1031
+  },
+  "cost": 5307.0,
+  "error": null
+}

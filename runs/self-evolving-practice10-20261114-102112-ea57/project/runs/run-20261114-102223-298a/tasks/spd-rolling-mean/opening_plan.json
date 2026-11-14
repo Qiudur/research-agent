@@ -1,0 +1,26 @@
+{
+  "schema": "opening_plan/1",
+  "run_id": "run-20261114-102223-298a",
+  "task_id": "spd-rolling-mean",
+  "predicted": {
+    "cost": 18000.0,
+    "seconds": 180.0,
+    "score": 0.82
+  },
+  "expected_progress": [
+    {
+      "spent_ratio": 0.45,
+      "score": 0.35
+    },
+    {
+      "spent_ratio": 0.75,
+      "score": 0.65
+    }
+  ],
+  "budget_allocation": [
+    {
+      "direction": "core_optimization",
+      "amount": 12000
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "summarizer",
+  "purpose": "summarize",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "c5e888bec2e4ea12906ae6507f25a7d8d103a625bba212df6894d3b9129a4886",
+  "response_id": "resp_dd9207b5-cb43-9c90-a994-bd407f97076b",
+  "status": "completed",
+  "output_text": "{\"drafts\":[{\"scope\":\"domain\",\"scenario\":\"tabular\",\"triggers\":[\"tabular\",\"class_imbalance\",\"many_numeric\"],\"conditions\":\"task is tab-online-shoppers containing 'VisitorType' and 'BounceRates' columns\",\"action\":\"do not create interaction terms between 'VisitorType' and 'BounceRates'\",\"negative\":true,\"node_ids\":[\"n0001\",\"n0002\"]}],\"narrowings\":[]}",
+  "tokens": {
+    "input": 828,
+    "cached_input": 0,
+    "output": 95,
+    "reasoning": 5038
+  },
+  "cost": 5961.0,
+  "error": null
+}

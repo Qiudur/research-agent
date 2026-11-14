@@ -1,0 +1,46 @@
+--- parent/solution.py
++++ solution.py
+@@ -1,4 +1,4 @@
+-"""Optimized edit distance with inlined min logic."""
++"""Optimized edit distance with two-row buffer swapping."""
+ 
+ from __future__ import annotations
+ 
+@@ -12,22 +12,27 @@
+     if n == 0:
+         return m
+     
+-    previous = list(range(n + 1))
++    # Pre-allocate two fixed-size buffers
++    prev_row = list(range(n + 1))
++    curr_row = [0] * (n + 1)
++    
+     for i, left in enumerate(a, 1):
+-        row = [i]
++        curr_row[0] = i
+         for j, right in enumerate(b, 1):
+             # Compute three candidate costs
+-            ins_cost = row[j - 1] + 1
+-            del_cost = previous[j] + 1
+-            sub_cost = previous[j - 1] + (left != right)
++            ins_cost = curr_row[j - 1] + 1
++            del_cost = prev_row[j] + 1
++            sub_cost = prev_row[j - 1] + (left != right)
+             
+             # Inline min comparison to avoid function call overhead
+             if ins_cost <= del_cost and ins_cost <= sub_cost:
+-                row.append(ins_cost)
++                curr_row[j] = ins_cost
+             elif del_cost <= sub_cost:
+-                row.append(del_cost)
++                curr_row[j] = del_cost
+             else:
+-                row.append(sub_cost)
+-        previous = row
++                curr_row[j] = sub_cost
++        
++        # Swap references instead of allocating new lists
++        prev_row, curr_row = curr_row, prev_row
+     
+-    return previous[-1]
++    return prev_row[-1]

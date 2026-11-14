@@ -1,0 +1,44 @@
+{
+  "schema": "route_preflight/1",
+  "ts": "2026-11-14T10:19:12.374Z",
+  "purpose": "Responses JSON contract and model availability",
+  "models": [
+    {
+      "model": "claude-opus-5-5",
+      "ok": false,
+      "tokens": {
+        "input": 0,
+        "cached_input": 0,
+        "output": 0,
+        "reasoning": 0
+      },
+      "seconds": null,
+      "error": "Error code: 401 - 无效的令牌 (request id: 20261114101912476255011VSriuqeO)"
+    },
+    {
+      "model": "gpt-6-astra",
+      "ok": false,
+      "tokens": {
+        "input": 0,
+        "cached_input": 0,
+        "output": 0,
+        "reasoning": 0
+      },
+      "seconds": null,
+      "error": "Error code: 401 - 无效的令牌 (request id: 20261114101912516358360pdMG5zsV)"
+    },
+    {
+      "model": "qwen3.5-27b",
+      "ok": false,
+      "tokens": {
+        "input": 0,
+        "cached_input": 0,
+        "output": 0,
+        "reasoning": 0
+      },
+      "seconds": null,
+      "error": "Error code: 401 - 无效的令牌 (request id: 20261114101912556090161fcLHQiCE)"
+    }
+  ],
+  "total_reported_tokens": 0
+}

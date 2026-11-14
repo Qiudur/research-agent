@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "95d78945bbad4790ca5110724d64dfa167d1a0b5a86c1872ab7d70eb27297147",
+  "response_id": "resp_de29592d-fbe4-9ba5-8461-f187e35d1ae8",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Measured LightGBM baseline for this tabular task.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    \\n    # Add explicit missing indicator for stalk_root\\n    if \\\"stalk_root\\\" in train.columns:\\n        train[\\\"stalk_root_missing\\\"] = train[\\\"stalk_root\\\"].isna().astype(int)\\n    \\n    test = pd.DataFrame(test_rows)\\n    \\n    # Add missing indicator for stalk_root in test\\n    if \\\"stalk_root\\\" in test.columns:\\n        test[\\\"stalk_root_missing\\\"] = test[\\\"stalk_root\\\"].isna().astype(int)\\n    elif \\\"stalk_root_missing\\\" in train.columns:\\n        test[\\\"stalk_root_missing\\\"] = pd.Series([0], index=test.index).astype(int)\\n    \\n    # Align test columns with train\\n    for col in train.columns:\\n        if col not in test.columns:\\n            test[col] = pd.NA\\n    test = test[train.columns]\\n    \\n    for name in train.columns:\\n        if pd.api.types.is_numeric_dtype(train[name]):\\n            test[name] = pd.to_numeric(test[name])\\n        else:\\n            categories = pd.Categorical(pd.concat([train[name], test[name]], ignore_index=True)).categories\\n            train[name] = pd.Categorical(train[name], categories=categories)\\n            test[name] = pd.Categorical(test[name], categories=categories)\\n    model = LGBMClassifier(random_state=20261114, n_jobs=1, verbosity=-1)\\n    model.fit(train, y)\\n    return model.predict_proba(test)[:, 1].tolist()\\n\",\n  \"notes\": \"Added explicit 'stalk_root_missing' binary indicator column to capture missing value patterns. Indicator is computed before categorical encoding to avoid NaN propagation issues. Columns are aligned between train and test to ensure consistent feature sets.\"\n}",
+  "tokens": {
+    "input": 3545,
+    "cached_input": 0,
+    "output": 480,
+    "reasoning": 623
+  },
+  "cost": 4648.0,
+  "error": null
+}

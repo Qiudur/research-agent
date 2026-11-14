@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "bba64aab5e496c1b11e93155e2cd58865d67597c94302f5eff5cbce778b8ae57",
+  "response_id": "resp_6d016ade-5919-9a4a-8a61-09626541ca96",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"from __future__ import annotations\\n\\ndef membership_filter(values: list[int], allowed: list[int]) -> list[int]:\\n    allowed_set = set(allowed)\\n    return [value for value in values if value in allowed_set]\",\n  \"notes\": \"Converted allowed list to set for O(1) membership lookups instead of O(n) list scans. Preserves original order and duplicates in output.\"\n}",
+  "tokens": {
+    "input": 727,
+    "cached_input": 0,
+    "output": 98,
+    "reasoning": 254
+  },
+  "cost": 1079.0,
+  "error": null
+}

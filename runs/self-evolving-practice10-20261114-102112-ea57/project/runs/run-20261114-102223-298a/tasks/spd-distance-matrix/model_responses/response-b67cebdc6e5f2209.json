@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "08b24fd805a8ab3fae4c0f9c20840738230b19f7bfec0cb5bed237aec85edc55",
+  "response_id": "resp_e1cd38fc-bb90-9b50-9eca-272484c008af",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Optimized distance matrix implementation using scipy.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport numpy as np\\nfrom scipy.spatial.distance import cdist\\n\\n\\ndef distance_matrix(points: list[tuple[float, float]]) -> list[list[float]]:\\n    # Handle empty case\\n    if not points:\\n        return []\\n    \\n    # Convert to numpy array\\n    arr = np.array(points)\\n    \\n    # Compute distance matrix using scipy's optimized cdist\\n    dist_matrix = cdist(arr, arr, metric='euclidean')\\n    \\n    # Convert back to list of lists\\n    result = dist_matrix.tolist()\\n    \\n    return result\",\n  \"notes\": \"Replaced nested Python loops with scipy.spatial.distance.cdist which uses optimized C implementations. Handles empty input explicitly. Converts numpy array back to list-of-lists format to match original signature and behavior.\"\n}",
+  "tokens": {
+    "input": 926,
+    "cached_input": 0,
+    "output": 208,
+    "reasoning": 384
+  },
+  "cost": 1518.0,
+  "error": null
+}

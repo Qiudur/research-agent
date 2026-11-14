@@ -1,0 +1,838 @@
+{
+  "schema": "run_report/1",
+  "run_id": "run-20261114-102223-0617",
+  "phase": "dev",
+  "config": "self_evolving",
+  "rep": 2,
+  "currency": "TEST",
+  "total_cost": 203936.0,
+  "tasks": [
+    {
+      "schema": "task_report/1",
+      "run_id": "run-20261114-102223-0617",
+      "task_id": "spd-distance-matrix",
+      "best_node": "n0001",
+      "dev_score": 1.1195515706547199,
+      "holdout_score": 1.1367660959545118,
+      "total_cost": 5372.0,
+      "currency": "TEST",
+      "seconds": {
+        "llm": 40.6643142910325,
+        "run": 7.559355541015975,
+        "queue": 8.412403985857964e-05,
+        "wall": 51.996117
+      },
+      "quote": {
+        "cost": 900.0,
+        "seconds": 70.0,
+        "score": 0.8
+      },
+      "quote_error": {
+        "cost": 4472.0,
+        "seconds": -18.003883000000002,
+        "score": 0.3367660959545118
+      },
+      "model_calls": 3,
+      "tokens": {
+        "input": 2952,
+        "cached_input": 0,
+        "output": 870,
+        "reasoning": 1550
+      },
+      "cost_by_role": {
+        "planner": 2415.0,
+        "executor": 1582.0,
+        "diagnoser": 0,
+        "summarizer": 1375.0
+      },
+      "experiments": 1,
+      "accepted_nodes": [
+        "n0001"
+      ],
+      "evidence": {
+        "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/spd-distance-matrix/ledger.jsonl",
+        "task_end_seq": 14,
+        "stop_seq": 13,
+        "quote_seq": 5,
+        "model_call_seqs": [
+          3,
+          6,
+          10
+        ],
+        "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/spd-distance-matrix/tree.jsonl",
+        "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/spd-distance-matrix/holdout_score.json"
+      },
+      "routing": {
+        "default_model": "qwen3.5-27b",
+        "remote_calls": 0,
+        "remote_tokens": 0,
+        "remote_cost": 0,
+        "failed_remote_calls": 0,
+        "failed_calls_without_reported_usage": 0,
+        "calls_by_model": {
+          "claude-opus-5-5": 0,
+          "gpt-6-astra": 0,
+          "qwen3.5-27b": 3
+        },
+        "cost_by_model": {
+          "claude-opus-5-5": 0,
+          "gpt-6-astra": 0,
+          "qwen3.5-27b": 5372.0
+        },
+        "route_decision_seqs": [
+          4,
+          7,
+          11
+        ]
+      }
+    },
+    {
+      "schema": "task_report/1",
+      "run_id": "run-20261114-102223-0617",
+      "task_id": "spd-rolling-mean",
+      "best_node": "n0000",
+      "dev_score": 0.04503757149224239,
+      "holdout_score": 0.0372953143087882,
+      "total_cost": 3167.0,
+      "currency": "TEST",
+      "seconds": {
+        "llm": 24.35691679100273,
+        "run": 1.4559351250063628,
+        "queue": 7.945799734443426e-05,
+        "wall": 25.831959
+      },
+      "quote": {
+        "cost": 350.0,
+        "seconds": 6300.0,
+        "score": 0.8
+      },
+      "quote_error": {
+        "cost": 2817.0,
+        "seconds": -6274.168041,
+        "score": -0.7627046856912119
+      },
+      "model_calls": 2,
+      "tokens": {
+        "input": 1960,
+        "cached_input": 0,
+        "output": 424,
+        "reasoning": 783
+      },
+      "cost_by_role": {
+        "planner": 2108.0,
+        "executor": 0,
+        "diagnoser": 0,
+        "summarizer": 1059.0
+      },
+      "experiments": 0,
+      "accepted_nodes": [],
+      "evidence": {
+        "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/spd-rolling-mean/ledger.jsonl",
+        "task_end_seq": 9,
+        "stop_seq": 8,
+        "quote_seq": 5,
+        "model_call_seqs": [
+          3,
+          6
+        ],
+        "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/spd-rolling-mean/tree.jsonl",
+        "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/spd-rolling-mean/holdout_score.json"
+      },
+      "routing": {
+        "default_model": "qwen3.5-27b",
+        "remote_calls": 0,
+        "remote_tokens": 0,
+        "remote_cost": 0,
+        "failed_remote_calls": 0,
+        "failed_calls_without_reported_usage": 0,
+        "calls_by_model": {
+          "claude-opus-5-5": 0,
+          "gpt-6-astra": 0,
+          "qwen3.5-27b": 2
+        },
+        "cost_by_model": {
+          "claude-opus-5-5": 0,
+          "gpt-6-astra": 0,
+          "qwen3.5-27b": 3167.0
+        },
+        "route_decision_seqs": [
+          4,
+          7
+        ]
+      }
+    },
+    {
+      "schema": "task_report/1",
+      "run_id": "run-20261114-102223-0617",
+      "task_id": "spd-max-drawdown",
+      "best_node": "n0001",
+      "dev_score": 2.3807661946607737,
+      "holdout_score": 2.291558186117177,
+      "total_cost": 7544.0,
+      "currency": "TEST",
+      "seconds": {
+        "llm": 89.70814970805077,
+        "run": 1.5639119580155239,
+        "queue": 8.416693890467286e-05,
+        "wall": 91.876626
+      },
+      "quote": {
+        "cost": 2500.0,
+        "seconds": 35.0,
+        "score": 0.5
+      },
+      "quote_error": {
+        "cost": 5044.0,
+        "seconds": 56.876626,
+        "score": 1.791558186117177
+      },
+      "model_calls": 4,
+      "tokens": {
+        "input": 3720,
+        "cached_input": 0,
+        "output": 1030,
+        "reasoning": 2794
+      },
+      "cost_by_role": {
+        "planner": 2675.0,
+        "executor": 2194.0,
+        "diagnoser": 1338.0,
+        "summarizer": 1337.0
+      },
+      "experiments": 1,
+      "accepted_nodes": [
+        "n0001"
+      ],
+      "evidence": {
+        "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/spd-max-drawdown/ledger.jsonl",
+        "task_end_seq": 16,
+        "stop_seq": 15,
+        "quote_seq": 5,
+        "model_call_seqs": [
+          3,
+          6,
+          10,
+          12
+        ],
+        "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/spd-max-drawdown/tree.jsonl",
+        "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/spd-max-drawdown/holdout_score.json"
+      },
+      "routing": {
+        "default_model": "qwen3.5-27b",
+        "remote_calls": 0,
+        "remote_tokens": 0,
+        "remote_cost": 0,
+        "failed_remote_calls": 0,
+        "failed_calls_without_reported_usage": 0,
+        "calls_by_model": {
+          "claude-opus-5-5": 0,
+          "gpt-6-astra": 0,
+          "qwen3.5-27b": 4
+        },
+        "cost_by_model": {
+          "claude-opus-5-5": 0,
+          "gpt-6-astra": 0,
+          "qwen3.5-27b": 7544.0
+        },
+        "route_decision_seqs": [
+          4,
+          7,
+          11,
+          13
+        ]
+      }
+    },
+    {
+      "schema": "task_report/1",
+      "run_id": "run-20261114-102223-0617",
+      "task_id": "spd-edit-distance",
+      "best_node": "n0002",
+      "dev_score": 0.16322447315513572,
+      "holdout_score": 0.15041791282724978,
+      "total_cost": 30448.0,
+      "currency": "TEST",
+      "seconds": {
+        "llm": 335.7231239170651,
+        "run": 1.5820547520415857,
+        "queue": 0.00013420789036899805,
+        "wall": 340.118201
+      },
+      "quote": {
+        "cost": 6000.0,
+        "seconds": 100.0,
+        "score": 0.12
+      },
+      "quote_error": {
+        "cost": 24448.0,
+        "seconds": 240.118201,
+        "score": 0.030417912827249788
+      },
+      "model_calls": 8,
+      "tokens": {
+        "input": 12101,
+        "cached_input": 0,
+        "output": 4888,
+        "reasoning": 13459
+      },
+      "cost_by_role": {
+        "planner": 10242.0,
+        "executor": 20206.0,
+        "diagnoser": 0,
+        "summarizer": 0
+      },
+      "experiments": 5,
+      "accepted_nodes": [
+        "n0001",
+        "n0002"
+      ],
+      "evidence": {
+        "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/spd-edit-distance/ledger.jsonl",
+        "task_end_seq": 37,
+        "stop_seq": 36,
+        "quote_seq": 5,
+        "model_call_seqs": [
+          3,
+          6,
+          10,
+          14,
+          19,
+          25,
+          27,
+          31
+        ],
+        "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/spd-edit-distance/tree.jsonl",
+        "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/spd-edit-distance/holdout_score.json"
+      },
+      "routing": {
+        "default_model": "qwen3.5-27b",
+        "remote_calls": 1,
+        "remote_tokens": 3786,
+        "remote_cost": 3786.0,
+        "failed_remote_calls": 0,
+        "failed_calls_without_reported_usage": 0,
+        "calls_by_model": {
+          "claude-opus-5-5": 1,
+          "gpt-6-astra": 0,
+          "qwen3.5-27b": 7
+        },
+        "cost_by_model": {
+          "claude-opus-5-5": 3786.0,
+          "gpt-6-astra": 0,
+          "qwen3.5-27b": 26662.0
+        },
+        "route_decision_seqs": [
+          4,
+          7,
+          11,
+          15,
+          20,
+          26,
+          28,
+          32,
+          35
+        ]
+      }
+    },
+    {
+      "schema": "task_report/1",
+      "run_id": "run-20261114-102223-0617",
+      "task_id": "spd-membership-filter",
+      "best_node": "n0001",
+      "dev_score": 0.9956896220081176,
+      "holdout_score": 0.9805842489942941,
+      "total_cost": 34436.0,
+      "currency": "TEST",
+      "seconds": {
+        "llm": 172.25885708391434,
+        "run": 2.232281958858948,
+        "queue": 0.00016229198081418872,
+        "wall": 178.249955
+      },
+      "quote": {
+        "cost": 6000.0,
+        "seconds": 40.0,
+        "score": 0.88
+      },
+      "quote_error": {
+        "cost": 28436.0,
+        "seconds": 138.249955,
+        "score": 0.10058424899429408
+      },
+      "model_calls": 8,
+      "tokens": {
+        "input": 26165,
+        "cached_input": 0,
+        "output": 2258,
+        "reasoning": 6013
+      },
+      "cost_by_role": {
+        "planner": 27039.0,
+        "executor": 7397.0,
+        "diagnoser": 0,
+        "summarizer": 0
+      },
+      "experiments": 5,
+      "accepted_nodes": [
+        "n0001"
+      ],
+      "evidence": {
+        "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/spd-membership-filter/ledger.jsonl",
+        "task_end_seq": 34,
+        "stop_seq": 33,
+        "quote_seq": 5,
+        "model_call_seqs": [
+          3,
+          6,
+          10,
+          15,
+          17,
+          21,
+          25,
+          30
+        ],
+        "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/spd-membership-filter/tree.jsonl",
+        "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/spd-membership-filter/holdout_score.json"
+      },
+      "routing": {
+        "default_model": "qwen3.5-27b",
+        "remote_calls": 1,
+        "remote_tokens": 21507,
+        "remote_cost": 21507.0,
+        "failed_remote_calls": 0,
+        "failed_calls_without_reported_usage": 0,
+        "calls_by_model": {
+          "claude-opus-5-5": 0,
+          "gpt-6-astra": 1,
+          "qwen3.5-27b": 7
+        },
+        "cost_by_model": {
+          "claude-opus-5-5": 0,
+          "gpt-6-astra": 21507.0,
+          "qwen3.5-27b": 12929.0
+        },
+        "route_decision_seqs": [
+          4,
+          7,
+          11,
+          16,
+          18,
+          22,
+          26,
+          31,
+          32
+        ]
+      }
+    },
+    {
+      "schema": "task_report/1",
+      "run_id": "run-20261114-102223-0617",
+      "task_id": "tab-adult-income",
+      "best_node": "n0000",
+      "dev_score": 0.0,
+      "holdout_score": -2.530268048203705,
+      "total_cost": 28209.0,
+      "currency": "TEST",
+      "seconds": {
+        "llm": 141.469746251998,
+        "run": 6.211388667055871,
+        "queue": 0.0,
+        "wall": 157.605101
+      },
+      "quote": {
+        "cost": 5500.0,
+        "seconds": 390.0,
+        "score": 0.58
+      },
+      "quote_error": {
+        "cost": 22709.0,
+        "seconds": -232.394899,
+        "score": -3.110268048203705
+      },
+      "model_calls": 6,
+      "tokens": {
+        "input": 19530,
+        "cached_input": 0,
+        "output": 5168,
+        "reasoning": 3511
+      },
+      "cost_by_role": {
+        "planner": 7731.0,
+        "executor": 15651.0,
+        "diagnoser": 4827.0,
+        "summarizer": 0
+      },
+      "experiments": 1,
+      "accepted_nodes": [],
+      "evidence": {
+        "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/tab-adult-income/ledger.jsonl",
+        "task_end_seq": 25,
+        "stop_seq": 24,
+        "quote_seq": 5,
+        "model_call_seqs": [
+          3,
+          6,
+          10,
+          14,
+          18,
+          20
+        ],
+        "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/tab-adult-income/tree.jsonl",
+        "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/tab-adult-income/holdout_score.json"
+      },
+      "routing": {
+        "default_model": "qwen3.5-27b",
+        "remote_calls": 2,
+        "remote_tokens": 11369,
+        "remote_cost": 11369.0,
+        "failed_remote_calls": 0,
+        "failed_calls_without_reported_usage": 0,
+        "calls_by_model": {
+          "claude-opus-5-5": 2,
+          "gpt-6-astra": 0,
+          "qwen3.5-27b": 4
+        },
+        "cost_by_model": {
+          "claude-opus-5-5": 11369.0,
+          "gpt-6-astra": 0,
+          "qwen3.5-27b": 16840.0
+        },
+        "route_decision_seqs": [
+          4,
+          7,
+          11,
+          15,
+          19,
+          21,
+          23
+        ]
+      }
+    },
+    {
+      "schema": "task_report/1",
+      "run_id": "run-20261114-102223-0617",
+      "task_id": "tab-mushroom-edibility",
+      "best_node": "n0002",
+      "dev_score": 0.7667588848691211,
+      "holdout_score": 0.8771905071117668,
+      "total_cost": 33874.0,
+      "currency": "TEST",
+      "seconds": {
+        "llm": 137.9136305009597,
+        "run": 7.442796126008034,
+        "queue": 0.0,
+        "wall": 158.376902
+      },
+      "quote": {
+        "cost": 7000.0,
+        "seconds": 300.0,
+        "score": 0.48
+      },
+      "quote_error": {
+        "cost": 26874.0,
+        "seconds": -141.623098,
+        "score": 0.39719050711176684
+      },
+      "model_calls": 6,
+      "tokens": {
+        "input": 25845,
+        "cached_input": 0,
+        "output": 3582,
+        "reasoning": 4447
+      },
+      "cost_by_role": {
+        "planner": 11547.0,
+        "executor": 22327.0,
+        "diagnoser": 0,
+        "summarizer": 0
+      },
+      "experiments": 3,
+      "accepted_nodes": [
+        "n0001",
+        "n0002"
+      ],
+      "evidence": {
+        "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/tab-mushroom-edibility/ledger.jsonl",
+        "task_end_seq": 27,
+        "stop_seq": 26,
+        "quote_seq": 5,
+        "model_call_seqs": [
+          3,
+          6,
+          10,
+          14,
+          18,
+          23
+        ],
+        "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/tab-mushroom-edibility/tree.jsonl",
+        "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/tab-mushroom-edibility/holdout_score.json"
+      },
+      "routing": {
+        "default_model": "qwen3.5-27b",
+        "remote_calls": 1,
+        "remote_tokens": 7648,
+        "remote_cost": 7648.0,
+        "failed_remote_calls": 0,
+        "failed_calls_without_reported_usage": 0,
+        "calls_by_model": {
+          "claude-opus-5-5": 1,
+          "gpt-6-astra": 0,
+          "qwen3.5-27b": 5
+        },
+        "cost_by_model": {
+          "claude-opus-5-5": 7648.0,
+          "gpt-6-astra": 0,
+          "qwen3.5-27b": 26226.0
+        },
+        "route_decision_seqs": [
+          4,
+          7,
+          11,
+          15,
+          19,
+          24,
+          25
+        ]
+      }
+    },
+    {
+      "schema": "task_report/1",
+      "run_id": "run-20261114-102223-0617",
+      "task_id": "tab-online-shoppers",
+      "best_node": "n0002",
+      "dev_score": 7.886792452829386,
+      "holdout_score": 44.55058683701758,
+      "total_cost": 31924.0,
+      "currency": "TEST",
+      "seconds": {
+        "llm": 202.20361949899234,
+        "run": 5.2687433759565465,
+        "queue": 0.0,
+        "wall": 214.486788
+      },
+      "quote": {
+        "cost": 17000.0,
+        "seconds": 270.0,
+        "score": 0.045
+      },
+      "quote_error": {
+        "cost": 14924.0,
+        "seconds": -55.51321200000001,
+        "score": 44.50558683701758
+      },
+      "model_calls": 6,
+      "tokens": {
+        "input": 20172,
+        "cached_input": 0,
+        "output": 3006,
+        "reasoning": 8746
+      },
+      "cost_by_role": {
+        "planner": 5150.0,
+        "executor": 10609.0,
+        "diagnoser": 10204.0,
+        "summarizer": 5961.0
+      },
+      "experiments": 2,
+      "accepted_nodes": [
+        "n0002"
+      ],
+      "evidence": {
+        "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/tab-online-shoppers/ledger.jsonl",
+        "task_end_seq": 21,
+        "stop_seq": 20,
+        "quote_seq": 5,
+        "model_call_seqs": [
+          3,
+          6,
+          10,
+          12,
+          16,
+          18
+        ],
+        "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/tab-online-shoppers/tree.jsonl",
+        "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/tab-online-shoppers/holdout_score.json"
+      },
+      "routing": {
+        "default_model": "qwen3.5-27b",
+        "remote_calls": 1,
+        "remote_tokens": 5093,
+        "remote_cost": 5093.0,
+        "failed_remote_calls": 0,
+        "failed_calls_without_reported_usage": 0,
+        "calls_by_model": {
+          "claude-opus-5-5": 1,
+          "gpt-6-astra": 0,
+          "qwen3.5-27b": 5
+        },
+        "cost_by_model": {
+          "claude-opus-5-5": 5093.0,
+          "gpt-6-astra": 0,
+          "qwen3.5-27b": 26831.0
+        },
+        "route_decision_seqs": [
+          4,
+          7,
+          11,
+          13,
+          17,
+          19
+        ]
+      }
+    },
+    {
+      "schema": "task_report/1",
+      "run_id": "run-20261114-102223-0617",
+      "task_id": "tab-phishing-websites",
+      "best_node": "n0000",
+      "dev_score": 0.0,
+      "holdout_score": -229.69270946391703,
+      "total_cost": 28962.0,
+      "currency": "TEST",
+      "seconds": {
+        "llm": 110.88197833410231,
+        "run": 4.747542666038498,
+        "queue": 0.0,
+        "wall": 123.01491
+      },
+      "quote": {
+        "cost": 2600.0,
+        "seconds": 70.0,
+        "score": 0.5
+      },
+      "quote_error": {
+        "cost": 26362.0,
+        "seconds": 53.01491,
+        "score": -230.19270946391703
+      },
+      "model_calls": 5,
+      "tokens": {
+        "input": 21864,
+        "cached_input": 0,
+        "output": 4362,
+        "reasoning": 2736
+      },
+      "cost_by_role": {
+        "planner": 5531.0,
+        "executor": 10325.0,
+        "diagnoser": 13106.0,
+        "summarizer": 0
+      },
+      "experiments": 2,
+      "accepted_nodes": [],
+      "evidence": {
+        "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/tab-phishing-websites/ledger.jsonl",
+        "task_end_seq": 20,
+        "stop_seq": 19,
+        "quote_seq": 5,
+        "model_call_seqs": [
+          3,
+          6,
+          10,
+          12,
+          16
+        ],
+        "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/tab-phishing-websites/tree.jsonl",
+        "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/tab-phishing-websites/holdout_score.json"
+      },
+      "routing": {
+        "default_model": "qwen3.5-27b",
+        "remote_calls": 2,
+        "remote_tokens": 13106,
+        "remote_cost": 13106.0,
+        "failed_remote_calls": 0,
+        "failed_calls_without_reported_usage": 0,
+        "calls_by_model": {
+          "claude-opus-5-5": 2,
+          "gpt-6-astra": 0,
+          "qwen3.5-27b": 3
+        },
+        "cost_by_model": {
+          "claude-opus-5-5": 13106.0,
+          "gpt-6-astra": 0,
+          "qwen3.5-27b": 15856.0
+        },
+        "route_decision_seqs": [
+          4,
+          7,
+          11,
+          13,
+          17,
+          18
+        ]
+      }
+    },
+    {
+      "schema": "task_report/1",
+      "run_id": "run-20261114-102223-0617",
+      "task_id": "tab-german-credit",
+      "best_node": "n0000",
+      "dev_score": 0.0,
+      "holdout_score": 0.531157270029673,
+      "total_cost": 0.0,
+      "currency": "TEST",
+      "seconds": {
+        "llm": 5.005568291991949,
+        "run": 2.6706524159526452,
+        "queue": 0.0,
+        "wall": 7.730575
+      },
+      "quote": null,
+      "quote_error": {
+        "cost": null,
+        "seconds": null,
+        "score": null
+      },
+      "model_calls": 1,
+      "tokens": {
+        "input": 0,
+        "cached_input": 0,
+        "output": 0,
+        "reasoning": 0
+      },
+      "cost_by_role": {
+        "planner": 0.0,
+        "executor": 0,
+        "diagnoser": 0,
+        "summarizer": 0
+      },
+      "experiments": 0,
+      "accepted_nodes": [],
+      "evidence": {
+        "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/tab-german-credit/ledger.jsonl",
+        "task_end_seq": 6,
+        "stop_seq": 5,
+        "quote_seq": null,
+        "model_call_seqs": [
+          3
+        ],
+        "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/tab-german-credit/tree.jsonl",
+        "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/tasks/tab-german-credit/holdout_score.json"
+      },
+      "routing": {
+        "default_model": "qwen3.5-27b",
+        "remote_calls": 0,
+        "remote_tokens": 0,
+        "remote_cost": 0,
+        "failed_remote_calls": 0,
+        "failed_calls_without_reported_usage": 1,
+        "calls_by_model": {
+          "claude-opus-5-5": 0,
+          "gpt-6-astra": 0,
+          "qwen3.5-27b": 1
+        },
+        "cost_by_model": {
+          "claude-opus-5-5": 0,
+          "gpt-6-astra": 0,
+          "qwen3.5-27b": 0.0
+        },
+        "route_decision_seqs": [
+          4
+        ]
+      }
+    }
+  ],
+  "evidence": {
+    "run_ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-self-evolving/runs/self-evolving-practice10-20261114-102112-ea57/project/runs/run-20261114-102223-0617/ledger.jsonl",
+    "run_end_seq": 2
+  }
+}

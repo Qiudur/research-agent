@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "ab66e4fedc7392e4929c7023aef6c4dd96ea510bc760a85f4c490f6cb7b0804c",
+  "response_id": "resp_e90ca4d7-b2ea-960b-b6c9-6c6cb1b4301c",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"LightGBM with target/frequency encoding for high-cardinality categoricals (workclass, occupation, native_country)\",\n      \"rationale\": \"Dataset has 14 predictors with categorical features showing high cardinality; proper encoding prevents information loss vs one-hot explosion\",\n      \"cites\": [],\n      \"estimate\": {\n        \"gain\": 0.12,\n        \"cost\": 700,\n        \"seconds\": 45\n      }\n    },\n    {\n      \"hypothesis\": \"Feature interactions: log(capital_gain+1) and capital_gain*hours_per_week\",\n      \"rationale\": \"Adult dataset literature shows capital_gain is highly predictive; nonlinear transforms and interactions capture threshold effects\",\n      \"cites\": [],\n      \"estimate\": {\n        \"gain\": 0.08,\n        \"cost\": 500,\n        \"seconds\": 35\n      }\n    },\n    {\n      \"hypothesis\": \"Missing value indicators for empty workclass/occupation fields observed in samples\",\n      \"rationale\": \"Some visible rows have empty string values (e.g., row with age=17); explicit missingness flags help model distinguish unknown from valid nulls\",\n      \"cites\": [],\n      \"estimate\": {\n        \"gain\": 0.04,\n        \"cost\": 350,\n        \"seconds\": 25\n      }\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 1550,\n    \"score\": 0.24,\n    \"seconds\": 105\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"hypothesis_testing\",\n      \"amount\": 1550\n    },\n    {\n      \"direction\": \"reserve_for_future_calls\",\n      \"amount\": 12000\n    },\n    {\n      \"direction\": \"unused_flexibility\",\n      \"amount\": 22450\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.02,\n      \"score\": 0.08\n    },\n    {\n      \"spent_ratio\": 0.04,\n      \"score\": 0.16\n    },\n    {\n      \"spent_ratio\": 0.06,\n      \"score\": 0.24\n    },\n    {\n      \"spent_ratio\": 0.3,\n      \"score\": 0.75\n    },\n    {\n      \"spent_ratio\": 0.6,\n      \"score\": 0.92\n    },\n    {\n      \"spent_ratio\": 0.9,\n      \"score\": 0.97\n    }\n  ]\n}",
+  "tokens": {
+    "input": 2840,
+    "cached_input": 0,
+    "output": 651,
+    "reasoning": 802
+  },
+  "cost": 4293.0,
+  "error": null
+}

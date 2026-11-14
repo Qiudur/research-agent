@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0005",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "8009df8386c95fe8c854d00fce9cb0fafffa4aba819d502aff8dda565c889465",
+  "response_id": "resp_0b2564d5-8edc-9124-a4d9-992279acf114",
+  "status": "completed",
+  "output_text": "{\n\"code\":\"\\\"\\\"\\\"Optimized trailing-window implementation using sliding window sum.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\n\\ndef rolling_mean(values: list[float], window: int) -> list[float]:\\n    if window <= 0:\\n        raise ValueError(\\\"window must be positive\\\")\\n    \\n    result = []\\n    result_append = result.append\\n    window_sum = 0.0\\n    \\n    for index, value in enumerate(values):\\n        # Add new value to window sum\\n        window_sum += value\\n        \\n        # Remove oldest value when window is full-sized\\n        if index >= window:\\n            window_sum -= values[index - window]\\n        \\n        # Actual window size (grows during initial partial windows)\\n        current_window_size = min(index + 1, window)\\n        \\n        result_append(window_sum / current_window_size)\\n    \\n    return result\",\n\"notes\":\"Cached result.append method in local variable result_append to reduce per-iteration attribute lookup overhead. Preserved all original logic including sliding window sum, early partial window handling, and error checking. Handles all edge cases: empty input, window=1, partial prefixes, window>input length.\"\n}",
+  "tokens": {
+    "input": 971,
+    "cached_input": 0,
+    "output": 270,
+    "reasoning": 939
+  },
+  "cost": 2180.0,
+  "error": null
+}

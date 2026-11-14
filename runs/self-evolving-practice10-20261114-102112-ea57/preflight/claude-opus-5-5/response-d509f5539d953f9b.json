@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "claude-opus-5-5",
+  "prompt_hash": "8e88afbd00541cf338b9a0bf1b74158aeeb6f0bda82c935894c37ca43ac3cb52",
+  "response_id": "msg_011Ch2evHneUV58H5JXhkX8z",
+  "status": "completed",
+  "output_text": "{\"ok\":true}",
+  "tokens": {
+    "input": 690,
+    "cached_input": 0,
+    "output": 9,
+    "reasoning": 0
+  },
+  "cost": 0.0,
+  "error": null
+}

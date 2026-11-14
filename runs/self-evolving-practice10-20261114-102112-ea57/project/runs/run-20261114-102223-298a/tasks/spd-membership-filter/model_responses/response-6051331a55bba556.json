@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "a72495477ae7281aa35b475b168e263818282ba29bb0cf011e6611919c0206db",
+  "response_id": "resp_4c40e638-6090-9316-919c-b54d8d410bb9",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Convert allowed list to set for O(1) membership lookup\",\n      \"rationale\": \"Current implementation uses 'value in allowed' which is O(len(allowed)) per value. Converting to set gives O(1) average lookup, drastically reducing complexity from O(n*m) to O(n+m). This is a standard optimization for membership filtering.\",\n      \"estimate\": {\n        \"gain\": 0.85,\n        \"cost\": 800,\n        \"seconds\": 20\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Early return for empty allowed list\",\n      \"rationale\": \"Edge case handling: if allowed is empty, immediately return empty list without processing. Provides small gain and ensures correctness on edge cases.\",\n      \"estimate\": {\n        \"gain\": 0.05,\n        \"cost\": 400,\n        \"seconds\": 10\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 2000,\n    \"seconds\": 40,\n    \"score\": 0.87\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"set_conversion_optimization\",\n      \"amount\": 1200\n    },\n    {\n      \"direction\": \"edge_case_handling\",\n      \"amount\": 600\n    },\n    {\n      \"direction\": \"reserve\",\n      \"amount\": 12000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.025,\n      \"score\": 0.87\n    },\n    {\n      \"spent_ratio\": 0.1,\n      \"score\": 0.92\n    },\n    {\n      \"spent_ratio\": 0.3,\n      \"score\": 0.95\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1277,
+    "cached_input": 0,
+    "output": 466,
+    "reasoning": 440
+  },
+  "cost": 2183.0,
+  "error": null
+}

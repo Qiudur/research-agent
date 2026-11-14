@@ -1,0 +1,33 @@
+"""Single-pass O(n) maximum-drawdown implementation."""
+
+from __future__ import annotations
+
+
+def max_drawdown(prices: list[float]) -> float:
+    """Compute maximum chronological peak-to-trough fraction in O(n) time.
+    
+    Args:
+        prices: List of strictly positive finite float prices.
+        
+    Returns:
+        Maximum drawdown as fraction, or 0.0 for empty/non-decreasing series.
+    """
+    largest = 0.0
+    
+    if len(prices) <= 1:
+        return largest
+    
+    peak = prices[0]
+    
+    for i in range(1, len(prices)):
+        current = prices[i]
+        
+        # Update peak if we found a new high
+        if current > peak:
+            peak = current
+        
+        # Calculate drawdown from current peak to this price
+        drawdown = (peak - current) / peak
+        largest = max(largest, drawdown)
+    
+    return largest

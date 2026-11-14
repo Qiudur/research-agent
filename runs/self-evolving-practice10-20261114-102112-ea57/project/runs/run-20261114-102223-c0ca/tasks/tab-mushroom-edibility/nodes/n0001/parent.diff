@@ -1,0 +1,29 @@
+--- parent/solution.py
++++ solution.py
+@@ -9,7 +9,25 @@
+ def fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:
+     train = pd.read_csv(train_csv)
+     y = train.pop("y").astype(int)
+-    test = pd.DataFrame(test_rows, columns=train.columns)
++    
++    # Add explicit missing indicator for stalk_root
++    if "stalk_root" in train.columns:
++        train["stalk_root_missing"] = train["stalk_root"].isna().astype(int)
++    
++    test = pd.DataFrame(test_rows)
++    
++    # Add missing indicator for stalk_root in test
++    if "stalk_root" in test.columns:
++        test["stalk_root_missing"] = test["stalk_root"].isna().astype(int)
++    elif "stalk_root_missing" in train.columns:
++        test["stalk_root_missing"] = pd.Series([0], index=test.index).astype(int)
++    
++    # Align test columns with train
++    for col in train.columns:
++        if col not in test.columns:
++            test[col] = pd.NA
++    test = test[train.columns]
++    
+     for name in train.columns:
+         if pd.api.types.is_numeric_dtype(train[name]):
+             test[name] = pd.to_numeric(test[name])

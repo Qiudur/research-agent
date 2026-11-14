@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0004",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "0d186b49da4c49b08143bdd18a30b8dd66494ce46b3ff803bb389fa5a38038c1",
+  "response_id": "resp_5908fd14-b744-9103-81c4-5eb7036fb912",
+  "status": "completed",
+  "output_text": "{\"code\":\"from __future__ import annotations\\n\\ndef membership_filter(values: list[int], allowed: list[int]) -> list[int]:\\n    if not allowed:\\n        return []\\n    elif len(allowed) == 1:\\n        target = allowed[0]\\n        return [value for value in values if value == target]\\n    else:\\n        return [value for value in values if value in allowed]\", \"notes\":\"Implemented single-element allowed list optimization: extracts target value and uses direct equality comparison instead of list membership check. Empty allowed returns empty list immediately. Multi-element case retains original list scan behavior to isolate the single-element optimization effect.\"}",
+  "tokens": {
+    "input": 711,
+    "cached_input": 0,
+    "output": 142,
+    "reasoning": 726
+  },
+  "cost": 1579.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "diagnoser",
+  "purpose": "diagnose",
+  "node_id": "n0001",
+  "model": "claude-opus-5-5",
+  "prompt_hash": "d8a34c1b33160e91467f1bb89de8dd366438cfe97d680c42ce42a608bb3b6b69",
+  "response_id": "msg_011Ch2g6NoRSjGSDvFXaxGPd",
+  "status": "completed",
+  "output_text": "{\"hypothesis\":\"这是真实的模型退步，不是评分器崩溃，也不是泄漏。raw ROC AUC 为 0.733，低于 baseline 0.850；dev=(0.733-0.850)/(0.968-0.850)≈-0.99，与 raw 一致。correct=true、cheat_flags 为空、spread=0，说明输出合法且结果稳定。最可能的根因是加入 cap_shape×cap_color 交叉特征后，训练和预测两条路径的编码不一致。训练时 read_csv 把 stalk_root 的空串读成 NaN，而 test_rows 中是空字符串 ''；另外，训练和测试若各自做 get_dummies 或类别映射，列顺序和列集合会错位，导致测试特征被系统性错配。次要可能：稀疏的高基数交叉类别未经正则化，造成过拟合。\",\"rationale\":\"在 4 个类别特征的 Mushroom 子集上，单纯加一个交叉特征通常不会让 AUC 从 0.85 掉到 0.73。降幅这么大且 spread=0，更符合确定性的特征错配。AUC 仍明显高于 0.5，说明不是概率方向整体反转，而是部分信号被破坏。任务标注了 missing_heavy，stalk_root 大量为空，空值在两条路径上表示不一致是高概率触发点。交叉特征会在测试端产生训练中未见的组合；如果编码器没有 handle_unknown 或没有按训练列 reindex，就会出错或静默错位。\",\"advice\":\"1) 在 train.csv 上做分层 K 折本地验证。验证集必须转成 list[dict[str,str]]，并走与 fit_predict 完全相同的预测路径，用这个流程复现 0.73 左右的 AUC。2) 统一缺失值表示：read_csv 时设 keep_default_na=False 或 dtype=str，并把 '' 和 NaN 都映射为显式类别 'missing'；对 test_rows 做同样处理。3) 只在训练集上拟合编码器，例如 OneHotEncoder(handle_unknown='ignore')，再用同一个对象 transform 测试集。不要对 train 和 test 分别 get_dummies；如果手工编码，就用训练列 reindex 并以 0 填充。4) 交叉特征使用正则化 logistic 回归（调 C），或对交叉类别做平滑的目标编码（只在折内计算）。也可以对全部 4 列的组合按频次做平滑统计。5) 用本地 CV 对比三种版本：不加交叉、加交叉、修复编码后加交叉。只有本地 AUC 稳定高于无交叉版本时才保留交叉特征。6) 检查 predict_proba 取的是 classes_ 中标签 1 对应的那一列，输出长度和行序与 test_rows 一致，所有值有限且在 [0,1] 内。\"}",
+  "tokens": {
+    "input": 5554,
+    "cached_input": 0,
+    "output": 1454,
+    "reasoning": 0
+  },
+  "cost": 7008.0,
+  "error": null
+}

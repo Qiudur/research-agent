@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "7dacb6ee37acc8df33be8a4bb63e092debfe88e52bd168b57e9897f6e1c95274",
+  "response_id": "resp_daf7ff56-dc1e-902c-aa0c-df5aa8d754be",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Test scipy-based alternative via exp-0001 despite non-standard use case\",\n      \"rationale\": \"Current baseline has extremely low score (0.001) indicating severe performance issues from O(n²) nested loops. While cdist is designed for distance matrices, it may provide vectorized acceleration. Low-cost hypothesis to rule out.\",\n      \"estimate\": {\n        \"gain\": 0.15,\n        \"cost\": 3000,\n        \"seconds\": 60\n      },\n      \"cites\": [\"exp-0001\"]\n    },\n    {\n      \"hypothesis\": \"Implement single-pass O(n) algorithm tracking running peak\",\n      \"rationale\": \"Maximum drawdown can be computed in linear time by maintaining a running maximum peak and computing drawdown at each step. This eliminates the need for nested iteration entirely, which should dramatically improve speed on large inputs (benchmark_size=1800).\",\n      \"estimate\": {\n        \"gain\": 0.85,\n        \"cost\": 4000,\n        \"seconds\": 90\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 7000,\n    \"score\": 0.95,\n    \"seconds\": 150\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"exp-0001 test\",\n      \"amount\": 3000\n    },\n    {\n      \"direction\": \"linear-algorithm implementation\",\n      \"amount\": 4000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.075,\n      \"score\": 0.15\n    },\n    {\n      \"spent_ratio\": 0.175,\n      \"score\": 0.95\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1399,
+    "cached_input": 0,
+    "output": 459,
+    "reasoning": 476
+  },
+  "cost": 2334.0,
+  "error": null
+}

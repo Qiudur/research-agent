@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "ba777d8f559d5b8619f76df6b0ef1a304753fd2eedab31cf3e9d00b9f3bc320a",
+  "response_id": "resp_3e461f1f-e270-9dfe-80ea-58d36c764a9c",
+  "status": "completed",
+  "output_text": "{\"code\":\"\\\"\\\"\\\"Measured LightGBM baseline for this tabular task.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    \\\"\\\"\\\"Predict income >50K using LightGBM with target encoding for categorical features.\\\"\\\"\\\"\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    global_mean = float(y.mean())\\n    \\n    test = pd.DataFrame(test_rows, columns=train.columns)\\n    \\n    # Identify categorical vs numeric columns\\n    cat_cols = []\\n    num_cols = []\\n    for name in train.columns:\\n        if pd.api.types.is_numeric_dtype(train[name]):\\n            num_cols.append(name)\\n            test[name] = pd.to_numeric(test[name])\\n        else:\\n            cat_cols.append(name)\\n    \\n    # Create target encoding for categorical columns (mean target per category)\\n    cat_encodings = {}\\n    for col in cat_cols:\\n        # Compute mean target value for each category in training data\\n        cat_mean = train.groupby(col).apply(lambda g: y[g.index].mean()).to_dict()\\n        # Fill NA categories with 0 (they won't occur after groupby but safety)\\n        cat_mean = {k: v for k, v in cat_mean.items() if pd.notna(v)}\\n        cat_encodings[col] = cat_mean\\n    \\n    # Apply encoding: replace category with its mean target value\\n    for col in cat_cols:\\n        train[col] = train[col].map(cat_encodings[col]).fillna(global_mean)\\n        test[col] = test[col].map(cat_encodings[col]).fillna(global_mean)\\n        train[col] = train[col].astype(float)\\n        test[col] = test[col].astype(float)\\n    \\n    # Use all columns as features\\n    feature_cols = list(train.columns)\\n    X_train = train[feature_cols]\\n    X_test = test[feature_cols]\\n    \\n    # Fit LightGBM classifier\\n    model = LGBMClassifier(random_state=20261114, n_jobs=1, verbosity=-1)\\n    model.fit(X_train, y)\\n    return model.predict_proba(X_test)[:, 1].tolist()\\n\",\"notes\":\"Implemented target encoding for high-cardinality categorical features. Each category is replaced by the mean target value from training data; unseen categories use global mean. Numeric columns kept as-is. Returns probability scores matching original API.\"}",
+  "tokens": {
+    "input": 2520,
+    "cached_input": 0,
+    "output": 583,
+    "reasoning": 1818
+  },
+  "cost": 4921.0,
+  "error": null
+}

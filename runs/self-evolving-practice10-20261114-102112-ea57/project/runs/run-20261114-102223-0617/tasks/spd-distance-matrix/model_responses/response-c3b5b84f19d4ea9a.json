@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "d5136320fc2465ff95963ce079b80015f2b4fea5a55977939761d054838e0d77",
+  "response_id": "resp_5ce912a9-c8ef-9ebf-ad40-c544b8c1de6e",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Vectorize using NumPy broadcasting to replace nested Python loops\",\n      \"rationale\": \"Current bottleneck is O(n²) Python loop overhead. NumPy arrays enable element-wise operations in optimized C backend, eliminating interpreter overhead while preserving sqrt-based distance calculation for numerical consistency.\",\n      \"estimate\": {\n        \"gain\": 0.35,\n        \"cost\": 800,\n        \"seconds\": 60\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Use scipy.spatial.distance.cdist as drop-in replacement\",\n      \"rationale\": \"Highly optimized BLAS-backed pairwise distance computation. Must verify output matches reference within float tolerance. Fastest potential solution if precision acceptable.\",\n      \"estimate\": {\n        \"gain\": 0.40,\n        \"cost\": 600,\n        \"seconds\": 45\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Apply Numba @njit decorator to existing loop structure\",\n      \"rationale\": \"Compiles to machine code while preserving identical algorithm and control flow. Minimal risk of numerical deviation; good fallback if vectorized approaches fail edge case validation.\",\n      \"estimate\": {\n        \"gain\": 0.25,\n        \"cost\": 700,\n        \"seconds\": 50\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 900,\n    \"score\": 0.80,\n    \"seconds\": 70\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"numpy_vectorization\",\n      \"amount\": 600\n    },\n    {\n      \"direction\": \"reserve_fallback\",\n      \"amount\": 300\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.0225,\n      \"score\": 0.80\n    },\n    {\n      \"spent_ratio\": 0.05,\n      \"score\": 0.85\n    },\n    {\n      \"spent_ratio\": 0.10,\n      \"score\": 0.90\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1382,
+    "cached_input": 0,
+    "output": 537,
+    "reasoning": 496
+  },
+  "cost": 2415.0,
+  "error": null
+}

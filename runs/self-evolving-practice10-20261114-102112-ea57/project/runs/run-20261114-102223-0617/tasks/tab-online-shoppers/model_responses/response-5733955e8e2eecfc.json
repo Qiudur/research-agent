@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "11754682c7c5ced7c4ff1e878ebf2bf3e4adc8ba4b553fa70501b35720d1e8eb",
+  "response_id": "resp_f4882efd-b06e-9809-aa3e-2279b0f7ee19",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"LightGBM classifier with class weight balancing\",\n      \"rationale\": \"Dataset has 15.5% positive rate indicating class imbalance; weighted loss function can improve ROC AUC by better handling minority class without changing features\",\n      \"estimate\": {\n        \"gain\": 0.02,\n        \"cost\": 8000,\n        \"seconds\": 120\n      },\n      \"cites\": [\"gradient_boosting\", \"class_weight_adjustment\"]\n    },\n    {\n      \"hypothesis\": \"Duration-based ratio features (e.g., ProductDuration/PageValues)\",\n      \"rationale\": \"Interaction ratios between duration and value fields may capture browsing intensity signal not present in raw values alone\",\n      \"estimate\": {\n        \"gain\": 0.01,\n        \"cost\": 4000,\n        \"seconds\": 60\n      },\n      \"cites\": [\"feature_engineering\", \"ratio_features\"]\n    },\n    {\n      \"hypothesis\": \"VisitorType interaction terms with BounceRates\",\n      \"rationale\": \"New_Visitor vs Returning_Visitor behavior patterns likely differ in their response to bounce rates, capturing important non-linear effects\",\n      \"estimate\": {\n        \"gain\": 0.015,\n        \"cost\": 5000,\n        \"seconds\": 90\n      },\n      \"cites\": [\"interaction_features\", \"categorical_encoding\"]\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 17000,\n    \"score\": 0.045,\n    \"seconds\": 270\n  },\n  \"budget_allocation\": [\n    {\"direction\": \"hypothesis_1\", \"amount\": 8000},\n    {\"direction\": \"hypothesis_2\", \"amount\": 4000},\n    {\"direction\": \"hypothesis_3\", \"amount\": 5000}\n  ],\n  \"expected_progress\": [\n    {\"spent_ratio\": 0.2, \"score\": 0.02},\n    {\"spent_ratio\": 0.4, \"score\": 0.035},\n    {\"spent_ratio\": 0.6, \"score\": 0.045},\n    {\"spent_ratio\": 0.9, \"score\": 0.055}\n  ]\n}",
+  "tokens": {
+    "input": 4044,
+    "cached_input": 0,
+    "output": 562,
+    "reasoning": 544
+  },
+  "cost": 5150.0,
+  "error": null
+}

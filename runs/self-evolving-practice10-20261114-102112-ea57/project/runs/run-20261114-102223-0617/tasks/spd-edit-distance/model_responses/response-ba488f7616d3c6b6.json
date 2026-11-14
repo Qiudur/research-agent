@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "6cda99d96666882c6396f8185f0af36092751a1bf815ba72cbd561db2c99830c",
+  "response_id": "resp_42d9e09f-30e3-921a-8409-0cf1a357bfa1",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Replace nested Python loops with NumPy vectorized operations for DP matrix updates.\",\n      \"rationale\": \"The hotspot is nested Python loops populating the edit-distance matrix. Exp-0002 identifies nested loops as performance bottlenecks; vectorization moves iteration to C-level backend reducing interpreter overhead significantly compared to pure Python lists.\",\n      \"estimate\": {\n        \"gain\": 0.09,\n        \"cost\": 2500,\n        \"seconds\": 40\n      },\n      \"cites\": [\n        \"exp-0002\"\n      ]\n    },\n    {\n      \"hypothesis\": \"Investigate scipy.spatial.distance utilities for accelerating matrix computation.\",\n      \"rationale\": \"Exp-0001 suggests using scipy for distance matrices. Although edit distance is sequential, partial reuse of optimized pairwise distance kernels may reduce latency in specific edge cases or enable hybrid approaches.\",\n      \"estimate\": {\n        \"gain\": 0.04,\n        \"cost\": 2500,\n        \"seconds\": 40\n      },\n      \"cites\": [\n        \"exp-0001\"\n      ]\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 6000,\n    \"seconds\": 100,\n    \"score\": 0.12\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"NumPy_Vectorization_Test\",\n      \"amount\": 2500\n    },\n    {\n      \"direction\": \"SciPy_Distance_Test\",\n      \"amount\": 2500\n    },\n    {\n      \"direction\": \"Execution_Overhead\",\n      \"amount\": 1000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.1,\n      \"score\": 0.05\n    },\n    {\n      \"spent_ratio\": 0.2,\n      \"score\": 0.12\n    },\n    {\n      \"spent_ratio\": 0.5,\n      \"score\": 0.3\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1493,
+    "cached_input": 0,
+    "output": 510,
+    "reasoning": 5144
+  },
+  "cost": 7147.0,
+  "error": null
+}

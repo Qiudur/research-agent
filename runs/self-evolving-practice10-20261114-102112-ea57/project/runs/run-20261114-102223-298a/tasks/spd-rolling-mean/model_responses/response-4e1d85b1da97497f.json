@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0003",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "6695ecb4a35a90fa7b0684b01640810be4750e115cf2c75378d725b6ea31aaaa",
+  "response_id": "resp_56b2d666-9d57-9dae-ae4c-c29d7a16666c",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Optimized trailing-window implementation using sliding window sum.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\n\\ndef rolling_mean(values: list[float], window: int) -> list[float]:\\n    if window <= 0:\\n        raise ValueError(\\\"window must be positive\\\")\\n    \\n    # Edge case: window == 1 means each element is its own mean\\n    if window == 1:\\n        return values.copy()\\n    \\n    result = []\\n    window_sum = 0.0\\n    \\n    for index, value in enumerate(values):\\n        # Add new value to window sum\\n        window_sum += value\\n        \\n        # Remove oldest value when window is full-sized\\n        if index >= window:\\n            window_sum -= values[index - window]\\n        \\n        # Actual window size (grows during initial partial windows)\\n        current_window_size = min(index + 1, window)\\n        \\n        result.append(window_sum / current_window_size)\\n    \\n    return result\",\n  \"notes\": \"Added special case for window==1: when window equals 1, each output is simply the corresponding input value (mean of one element is the element itself). Using values.copy() avoids the loop entirely and eliminates division operations, providing a significant speedup for this common edge case.\"\n}",
+  "tokens": {
+    "input": 984,
+    "cached_input": 0,
+    "output": 299,
+    "reasoning": 628
+  },
+  "cost": 1911.0,
+  "error": null
+}

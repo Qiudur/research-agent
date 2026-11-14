@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "review",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "885a7d0a6a3119867cabe1d57959c2f85ecb3b1f0c956c70b83f9520190080ae",
+  "response_id": "resp_31c46bcf-b648-947d-9207-7e210a571786",
+  "status": "completed",
+  "output_text": "{\n  \"decision\": \"stop\",\n  \"budget_moves\": [],\n  \"note\": \"Trigger behind_schedule. Spent 24428/40000 tokens, only ~15572 remain. After reserving 12000 for next call, effectively 3572 usable. Best score still 0.0; first LightGBM+target_encoding hypothesis rejected with normalized score -1.37 (worse than baseline). Raw baseline AUC is 0.930 vs ceiling 0.931, leaving minimal headroom (~1 unit gap). Insufficient tokens remaining to pursue additional hypotheses with meaningful success probability. Stopping to preserve resources.\"\n}",
+  "tokens": {
+    "input": 2727,
+    "cached_input": 0,
+    "output": 156,
+    "reasoning": 898
+  },
+  "cost": 3781.0,
+  "error": null
+}

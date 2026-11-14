@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0004",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "98224cda10ab172692f6eb0a931da16192c4384080b57e6391cd0c828fdb657e",
+  "response_id": "resp_1bc98b74-c925-90d0-b7f6-4088d0779ffe",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Optimized rolling mean using numpy cumsum approach.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\nimport numpy as np\\n\\n\\ndef rolling_mean(values: list[float], window: int) -> list[float]:\\n    if window <= 0:\\n        raise ValueError(\\\"window must be positive\\\")\\n    \\n    n = len(values)\\n    if n == 0:\\n        return []\\n    \\n    # Convert to numpy array for efficient cumsum\\n    arr = np.array(values, dtype=np.float64)\\n    \\n    # Compute cumulative sums with leading zero\\n    cumsum = np.zeros(n + 1, dtype=np.float64)\\n    cumsum[1:] = np.cumsum(arr)\\n    \\n    # Pre-compute reciprocal for full window to avoid repeated division\\n    window_reciprocal = 1.0 / float(window)\\n    \\n    # Build result using cumsum differences\\n    result = []\\n    \\n    # Prefix region: window not yet full, count varies\\n    for i in range(min(n, window)):\\n        total = cumsum[i + 1]\\n        count = i + 1\\n        result.append(total.item() / count)\\n    \\n    # Full window region: count always equals window, use reciprocal\\n    for i in range(window, n):\\n        start = i - window + 1\\n        total = cumsum[i + 1] - cumsum[start]\\n        result.append(total.item() * window_reciprocal)\\n    \\n    return result\",\n  \"notes\": \"Split the loop into two regions: (1) prefix where count varies 1..window-1, still use division; (2) from index window-1 onward, count is constant=window, so precompute reciprocal and multiply instead of divide. This reduces division operations in the steady-state portion which dominates for large inputs.\"\n}",
+  "tokens": {
+    "input": 1068,
+    "cached_input": 0,
+    "output": 425,
+    "reasoning": 573
+  },
+  "cost": 2066.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "summarizer",
+  "purpose": "summarize",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "5bfbc588908ee52b0684c52c0f948d395b9204d06a90cd2017fe4584ac0aefa0",
+  "response_id": "resp_e63bd081-4a24-9273-8bfb-a0656e7aa564",
+  "status": "completed",
+  "output_text": "{\n  \"drafts\": [\n    {\n      \"scope\": \"method\",\n      \"scenario\": \"speedup\",\n      \"triggers\": [\n        \"list_membership_in_loop\"\n      ],\n      \"conditions\": \"Loop performs repeated membership checks against a collection\",\n      \"action\": \"Convert the collection to a set for O(1) lookup\",\n      \"negative\": false,\n      \"node_ids\": [\n        \"n0001\"\n      ]\n    },\n    {\n      \"scope\": \"method\",\n      \"scenario\": \"speedup\",\n      \"triggers\": [\n        \"list_membership_in_loop\"\n      ],\n      \"conditions\": \"Filter function accepts an optional allow list parameter\",\n      \"action\": \"Implement early return if allow list is empty\",\n      \"negative\": false,\n      \"node_ids\": [\n        \"n0002\"\n      ]\n    }\n  ],\n  \"narrowings\": []\n}",
+  "tokens": {
+    "input": 703,
+    "cached_input": 0,
+    "output": 223,
+    "reasoning": 3725
+  },
+  "cost": 4651.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "gpt-6-astra",
+  "prompt_hash": "8e88afbd00541cf338b9a0bf1b74158aeeb6f0bda82c935894c37ca43ac3cb52",
+  "response_id": "resp_084b9b15ecec96dd016af83656612087d1842bb7b833cfb81f",
+  "status": "completed",
+  "output_text": "{\"ok\":true}",
+  "tokens": {
+    "input": 18090,
+    "cached_input": 0,
+    "output": 9,
+    "reasoning": 0
+  },
+  "cost": 0.0,
+  "error": null
+}

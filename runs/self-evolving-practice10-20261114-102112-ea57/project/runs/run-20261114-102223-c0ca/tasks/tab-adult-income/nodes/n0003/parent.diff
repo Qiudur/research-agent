@@ -1,0 +1,30 @@
+--- parent/solution.py
++++ solution.py
+@@ -9,14 +9,26 @@
+ def fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:
+     train = pd.read_csv(train_csv)
+     y = train.pop("y").astype(int)
+-    test = pd.DataFrame(test_rows, columns=train.columns)
++    test = pd.DataFrame(test_rows, columns=list(train.columns))
++    
++    # Add missing value indicators for categorical fields with empty strings
++    missing_cols = ['workclass', 'occupation']
++    for col in missing_cols:
++        if col in train.columns:
++            train[col + '_missing'] = (train[col] == '').astype(int)
++            test[col + '_missing'] = (test[col] == '').astype(int)
++    
+     for name in train.columns:
+         if pd.api.types.is_numeric_dtype(train[name]):
+             test[name] = pd.to_numeric(test[name])
+         else:
++            # Replace empty strings with special MISSING marker
++            train[name] = train[name].replace('', '<MISSING>')
++            test[name] = test[name].replace('', '<MISSING>')
+             categories = pd.Categorical(pd.concat([train[name], test[name]], ignore_index=True)).categories
+             train[name] = pd.Categorical(train[name], categories=categories)
+             test[name] = pd.Categorical(test[name], categories=categories)
++    
+     model = LGBMClassifier(random_state=20261114, n_jobs=1, verbosity=-1)
+     model.fit(train, y)
+     return model.predict_proba(test)[:, 1].tolist()

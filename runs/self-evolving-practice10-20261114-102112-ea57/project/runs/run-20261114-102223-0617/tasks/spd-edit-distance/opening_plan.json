@@ -1,0 +1,38 @@
+{
+  "schema": "opening_plan/1",
+  "run_id": "run-20261114-102223-0617",
+  "task_id": "spd-edit-distance",
+  "predicted": {
+    "cost": 6000.0,
+    "seconds": 100.0,
+    "score": 0.12
+  },
+  "expected_progress": [
+    {
+      "spent_ratio": 0.1,
+      "score": 0.05
+    },
+    {
+      "spent_ratio": 0.2,
+      "score": 0.12
+    },
+    {
+      "spent_ratio": 0.5,
+      "score": 0.3
+    }
+  ],
+  "budget_allocation": [
+    {
+      "direction": "NumPy_Vectorization_Test",
+      "amount": 2500
+    },
+    {
+      "direction": "SciPy_Distance_Test",
+      "amount": 2500
+    },
+    {
+      "direction": "Execution_Overhead",
+      "amount": 1000
+    }
+  ]
+}

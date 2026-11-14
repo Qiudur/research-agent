@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "a1086e2c58d3598bccf8c65f79062894b7b97110c23700355f6c689552bdeca4",
+  "response_id": "resp_84557014-5ca9-99fa-a3ea-c53f8854130a",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Replace Python list with array/bytearray for reduced per-element allocation overhead\",\n      \"rationale\": \"Current implementation creates new lists each row. Using array('i') or similar reduces dynamic typing and allocation costs in tight loops\",\n      \"estimate\": {\n        \"gain\": 0.015,\n        \"cost\": 2500,\n        \"seconds\": 45\n      },\n      \"cites\": [\"exp-0001\"]\n    },\n    {\n      \"hypothesis\": \"Inline min() calls and eliminate function dispatch in inner loop\",\n      \"rationale\": \"Function call overhead dominates Python micro-loops. Manual comparison logic avoids bytecode dispatch penalty\",\n      \"estimate\": {\n        \"gain\": 0.012,\n        \"cost\": 2000,\n        \"seconds\": 35\n      },\n      \"cites\": [\"exp-0001\"]\n    },\n    {\n      \"hypothesis\": \"Two-row buffer swapping instead of append/pop pattern\",\n      \"rationale\": \"Pre-allocate two fixed-size buffers and toggle references, avoiding repeated list construction during row updates\",\n      \"estimate\": {\n        \"gain\": 0.010,\n        \"cost\": 2200,\n        \"seconds\": 40\n      },\n      \"cites\": [\"exp-0001\"]\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 7000,\n    \"score\": 0.025,\n    \"seconds\": 120\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"hypothesis_exp_1\",\n      \"amount\": 2500\n    },\n    {\n      \"direction\": \"hypothesis_exp_2\",\n      \"amount\": 2000\n    },\n    {\n      \"direction\": \"hypothesis_exp_3\",\n      \"amount\": 2200\n    },\n    {\n      \"direction\": \"reserve_for_next\",\n      \"amount\": 12000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.05,\n      \"score\": 0.012\n    },\n    {\n      \"spent_ratio\": 0.10,\n      \"score\": 0.018\n    },\n    {\n      \"spent_ratio\": 0.175,\n      \"score\": 0.025\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1496,
+    "cached_input": 0,
+    "output": 604,
+    "reasoning": 592
+  },
+  "cost": 2692.0,
+  "error": null
+}

@@ -1,0 +1,28 @@
+--- parent/solution.py
++++ solution.py
+@@ -4,17 +4,22 @@
+ 
+ 
+ def max_drawdown(prices: list[float]) -> float:
+-    if len(prices) <= 1:
++    n = len(prices)
++    if n <= 1:
+         return 0.0
+     
+     largest = 0.0
+     peak = prices[0]
++    _max = max  # Cache builtin to local variable
+     
+-    for price in prices[1:]:
++    # Use range indexing to avoid slice copying
++    for i in range(1, n):
++        price = prices[i]
+         if price > peak:
+             peak = price
+         else:
+             drawdown = (peak - price) / peak
+-            largest = max(largest, drawdown)
++            if drawdown > largest:
++                largest = drawdown
+     
+     return largest

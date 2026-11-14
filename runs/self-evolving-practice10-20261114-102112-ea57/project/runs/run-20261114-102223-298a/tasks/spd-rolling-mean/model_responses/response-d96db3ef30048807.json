@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "956b01320cf289acd0368f8ab313fdfa1441afea3e8e07bba366fa40a23a1f00",
+  "response_id": "resp_34b52fb3-a265-90f3-9d8c-8f227d5853bb",
+  "status": "completed",
+  "output_text": "```json\n{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Replace slicing with sliding window sum maintenance\",\n      \"rationale\": \"Current implementation repeatedly slices and sums identical elements; maintaining a running sum avoids O(window) per-element work\",\n      \"estimate\": {\"gain\": 0.7, \"cost\": 8000, \"seconds\": 45},\n      \"cites\": [\"algo-opt-01\"]\n    },\n    {\n      \"hypothesis\": \"Use accumulator pattern for prefix calculations\",\n      \"rationale\": \"Explicitly manage window boundaries to prevent redundant operations in edge cases (partial prefixes, large windows)\",\n      \"estimate\": {\"gain\": 0.15, \"cost\": 5000, \"seconds\": 30},\n      \"cites\": [\"edge-case-handling\"]\n    }\n  ],\n  \"predicted\": {\"cost\": 18000, \"score\": 0.82, \"seconds\": 180},\n  \"budget_allocation\": [{\"direction\": \"core_optimization\", \"amount\": 12000}],\n  \"expected_progress\": [\n    {\"spent_ratio\": 0.45, \"score\": 0.35},\n    {\"spent_ratio\": 0.75, \"score\": 0.65}\n  ]\n}\n```",
+  "tokens": {
+    "input": 1382,
+    "cached_input": 0,
+    "output": 311,
+    "reasoning": 640
+  },
+  "cost": 2333.0,
+  "error": null
+}

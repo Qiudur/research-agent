@@ -1,0 +1,33 @@
+--- parent/solution.py
++++ solution.py
+@@ -18,18 +18,21 @@
+     if len(points) == 0:
+         return []
+ 
+-    # Convert to numpy array for vectorized computation
+-    arr = np.array(points)  # shape: (n, 2)
+-    n = len(arr)
+-
++    # Pre-compute X and Y coordinate arrays separately - avoids tuple indexing later
++    x = np.array([p[0] for p in points])  # shape: (n,)
++    y = np.array([p[1] for p in points])  # shape: (n,)
++    
++    n = len(x)
++    
+     # Use broadcasting to compute all pairwise differences at once
+-    # arr[:, None, :] broadcasts to shape (n, 1, 2)
+-    # arr[None, :, :] broadcasts to shape (1, n, 2)
+-    # Resulting diff has shape (n, n, 2) containing (dx, dy) for each pair
+-    diff = arr[:, None, :] - arr[None, :, :]
++    # x[:, None] broadcasts to shape (n, 1)
++    # x[None, :] broadcasts to shape (1, n)
++    # Resulting dx/dy has shape (n, n)
++    dx = x[:, None] - x[None, :]
++    dy = y[:, None] - y[None, :]
+ 
+     # Compute Euclidean distance using np.hypot(dx, dy) - vectorized
+-    distances = np.hypot(diff[:, :, 0], diff[:, :, 1])
++    distances = np.hypot(dx, dy)
+ 
+     # Convert back to list of lists to match original interface
+     return distances.tolist()

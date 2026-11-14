@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "db46ecd74560fa4f0a367cf4512d04bff133f86ccec636b2ea3f010e4ac7dd42",
+  "response_id": "resp_9390f667-bd61-9bce-8bd1-005ec121ec89",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Optimized trailing-window implementation using sliding window sum.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\n\\ndef rolling_mean(values: list[float], window: int) -> list[float]:\\n    if window <= 0:\\n        raise ValueError(\\\"window must be positive\\\")\\n    \\n    result = []\\n    window_sum = 0.0\\n    \\n    for index, value in enumerate(values):\\n        # Add new value to window sum\\n        window_sum += value\\n        \\n        # Remove oldest value when window is full-sized\\n        if index >= window:\\n            window_sum -= values[index - window]\\n        \\n        # Actual window size (grows during initial partial windows)\\n        current_window_size = min(index + 1, window)\\n        \\n        result.append(window_sum / current_window_size)\\n    \\n    return result\",\n  \"notes\": \"Replaced O(window) slicing+sum per element with O(1) sliding window maintenance. Window sum accumulates new values and removes values that slide out. Current window size tracked via min(index+1, window). Behavior identical to original on all edge cases (empty, small windows, mixed signs).\"\n}",
+  "tokens": {
+    "input": 900,
+    "cached_input": 0,
+    "output": 271,
+    "reasoning": 737
+  },
+  "cost": 1908.0,
+  "error": null
+}

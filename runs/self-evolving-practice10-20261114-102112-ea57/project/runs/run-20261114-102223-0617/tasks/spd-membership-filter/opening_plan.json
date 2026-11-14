@@ -1,0 +1,42 @@
+{
+  "schema": "opening_plan/1",
+  "run_id": "run-20261114-102223-0617",
+  "task_id": "spd-membership-filter",
+  "predicted": {
+    "cost": 6000.0,
+    "seconds": 40.0,
+    "score": 0.88
+  },
+  "expected_progress": [
+    {
+      "spent_ratio": 0.15,
+      "score": 0.75
+    },
+    {
+      "spent_ratio": 0.25,
+      "score": 0.88
+    },
+    {
+      "spent_ratio": 0.4,
+      "score": 0.92
+    },
+    {
+      "spent_ratio": 0.9,
+      "score": 0.95
+    }
+  ],
+  "budget_allocation": [
+    {
+      "direction": "experiment_set_conversion",
+      "amount": 5000
+    },
+    {
+      "direction": "reserve_for_next_call",
+      "amount": 12000
+    },
+    {
+      "direction": "available_remainder",
+      "amount": 19000
+    }
+  ]
+}

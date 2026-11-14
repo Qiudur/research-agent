@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "8a98ee04d950cffa75f418608fa9889179ffab1357505dfd8aea4d67b90bd233",
+  "response_id": "resp_29a347b9-ae18-9a2f-94c6-8eda6bf79d9a",
+  "status": "completed",
+  "output_text": "{\n\"code\":\"\\\"\\\"\\\"Measured LightGBM baseline for this tabular task.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    test = pd.DataFrame(test_rows, columns=train.columns)\\n    for name in train.columns:\\n        if pd.api.types.is_numeric_dtype(train[name]):\\n            test[name] = pd.to_numeric(test[name])\\n        else:\\n            categories = pd.Categorical(pd.concat([train[name], test[name]], ignore_index=True)).categories\\n            train[name] = pd.Categorical(train[name], categories=categories)\\n            test[name] = pd.Categorical(test[name], categories=categories)\\n    \\n    # Calculate scale_pos_weight based on actual class distribution\\n    neg_count = (y == 0).sum()\\n    pos_count = (y == 1).sum()\\n    scale_pos_weight = neg_count / pos_count\\n    \\n    model = LGBMClassifier(random_state=20261114, n_jobs=1, verbosity=-1, scale_pos_weight=scale_pos_weight)\\n    model.fit(train, y)\\n    return model.predict_proba(test)[:, 1].tolist()\",\n\"notes\":\"Added scale_pos_weight=neg_count/pos_count (~5.5 for 15.5% positive rate) to LGBMClassifier to address class imbalance. This tells the model to weigh positive samples more heavily during training, which should improve recall on the minority class without changing preprocessing logic.\"\n}",
+  "tokens": {
+    "input": 3740,
+    "cached_input": 0,
+    "output": 382,
+    "reasoning": 454
+  },
+  "cost": 4576.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "ff272dfb4e0a5b01e5f86e94cade2ed355c5aba87e40db670f1022753af96b22",
+  "response_id": "resp_ee8554c7-b4d4-9ef9-aec3-37ce444b5c0e",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"LightGBM with balanced class weights on numeric features\",\n      \"rationale\": \"Baseline score of 0.0 suggests model not trained; this dataset has 30 numeric features and binary target suitable for gradient boosting. Class imbalance may exist given phishing detection context.\",\n      \"estimate\": {\n        \"gain\": 0.45,\n        \"cost\": 1200,\n        \"seconds\": 35\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Logistic regression with L2 regularization as sanity check\",\n      \"rationale\": \"Low-cost baseline to verify data pipeline works correctly before investing in complex models. Linear model should achieve reasonable performance on tabular binary data.\",\n      \"estimate\": {\n        \"gain\": 0.35,\n        \"cost\": 800,\n        \"seconds\": 20\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Remove near-constant or highly correlated features before modeling\",\n      \"rationale\": \"Dataset has 30 features; some may be redundant or uninformative. Feature reduction can reduce overfitting and improve generalization on stratified test set.\",\n      \"estimate\": {\n        \"gain\": 0.08,\n        \"cost\": 600,\n        \"seconds\": 15\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 2600,\n    \"seconds\": 70,\n    \"score\": 0.5\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"lightgbm_baseline\",\n      \"amount\": 1200\n    },\n    {\n      \"direction\": \"logreg_sanity\",\n      \"amount\": 800\n    },\n    {\n      \"direction\": \"feature_selection\",\n      \"amount\": 600\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.02,\n      \"score\": 0.5\n    },\n    {\n      \"spent_ratio\": 0.1,\n      \"score\": 0.65\n    },\n    {\n      \"spent_ratio\": 0.25,\n      \"score\": 0.8\n    }\n  ]\n}",
+  "tokens": {
+    "input": 4081,
+    "cached_input": 0,
+    "output": 563,
+    "reasoning": 887
+  },
+  "cost": 5531.0,
+  "error": null
+}

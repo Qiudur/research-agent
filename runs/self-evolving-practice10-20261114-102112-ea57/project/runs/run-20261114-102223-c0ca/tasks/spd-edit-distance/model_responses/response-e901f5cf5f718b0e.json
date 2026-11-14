@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "7c02e92552cedd7b91cae4e2e6023f28a0202c02f14330adce14d17116216133",
+  "response_id": "resp_c3694953-1be4-96e0-9310-0e811838ec3b",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Replace enumerate() with direct range indexing to eliminate tuple unpacking overhead\",\n      \"rationale\": \"Previous inlining of min() showed bytecode dispatch matters. enumerate() creates tuples each iteration; direct integer indexing avoids this allocation in the hot inner loop.\",\n      \"estimate\": {\n        \"gain\": 0.003,\n        \"cost\": 800,\n        \"seconds\": 25\n      },\n      \"cites\": [\"exp-0002\"]\n    },\n    {\n      \"hypothesis\": \"Pre-compute string lengths and use cached integer indices instead of enumerate character unpacking\",\n      \"rationale\": \"String indexing via enumerate yields character objects; using int indices keeps values as integers and may reduce type coercion overhead during comparisons.\",\n      \"estimate\": {\n        \"gain\": 0.0025,\n        \"cost\": 700,\n        \"seconds\": 22\n      },\n      \"cites\": [\"exp-0002\"]\n    },\n    {\n      \"hypothesis\": \"Combine two-row buffer with range-based indexing and remove enumerate tuple overhead\",\n      \"rationale\": \"Two-row swap was tried but used enumerate. Combining it with direct indexing may recover its space benefits while gaining the bytecode efficiency of the accepted n0002 approach.\",\n      \"estimate\": {\n        \"gain\": 0.0035,\n        \"cost\": 900,\n        \"seconds\": 28\n      },\n      \"cites\": [\"exp-0002\"]\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 3500,\n    \"score\": 0.017,\n    \"seconds\": 80\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"hypothesis_exp_1\",\n      \"amount\": 900\n    },\n    {\n      \"direction\": \"hypothesis_exp_2\",\n      \"amount\": 800\n    },\n    {\n      \"direction\": \"hypothesis_exp_3\",\n      \"amount\": 900\n    },\n    {\n      \"direction\": \"reserve_for_next\",\n      \"amount\": 12000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.2,\n      \"score\": 0.0155\n    },\n    {\n      \"spent_ratio\": 0.4,\n      \"score\": 0.0165\n    },\n    {\n      \"spent_ratio\": 0.6,\n      \"score\": 0.017\n    },\n    {\n      \"spent_ratio\": 0.8,\n      \"score\": 0.0175\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1700,
+    "cached_input": 0,
+    "output": 662,
+    "reasoning": 1000
+  },
+  "cost": 3362.0,
+  "error": null
+}

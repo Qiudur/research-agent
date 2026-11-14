@@ -1,0 +1,44 @@
+{
+  "schema": "route_preflight/1",
+  "ts": "2026-11-14T10:22:23.912Z",
+  "purpose": "Responses JSON contract and model availability",
+  "models": [
+    {
+      "model": "claude-opus-5-5",
+      "ok": true,
+      "tokens": {
+        "input": 690,
+        "cached_input": 0,
+        "output": 9,
+        "reasoning": 0
+      },
+      "seconds": 2.8475402499898337,
+      "response_id": "msg_011Ch2evHneUV58H5JXhkX8z"
+    },
+    {
+      "model": "gpt-6-astra",
+      "ok": true,
+      "tokens": {
+        "input": 18090,
+        "cached_input": 0,
+        "output": 9,
+        "reasoning": 0
+      },
+      "seconds": 3.796501708973665,
+      "response_id": "resp_084b9b15ecec96dd016af83656612087d1842bb7b833cfb81f"
+    },
+    {
+      "model": "qwen3.5-27b",
+      "ok": true,
+      "tokens": {
+        "input": 132,
+        "cached_input": 0,
+        "output": 9,
+        "reasoning": 387
+      },
+      "seconds": 7.295560915954411,
+      "response_id": "resp_20522daf-fa6a-9f59-8eb5-7b18dd0bac43"
+    }
+  ],
+  "total_reported_tokens": 19326
+}

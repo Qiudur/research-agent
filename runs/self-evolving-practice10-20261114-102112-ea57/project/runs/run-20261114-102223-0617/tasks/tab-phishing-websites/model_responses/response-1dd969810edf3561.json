@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "432ff3d2becaa98bf22e82e7a0527e519b46f0d4a782934577fde743af5b202c",
+  "response_id": "resp_3af878b4-aa30-9345-8c41-170c4b89ef80",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Logistic regression with L2 regularization as sanity check.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom sklearn.linear_model import LogisticRegression\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\")\\n    test = pd.DataFrame(test_rows, columns=train.columns)\\n    \\n    # Align types between train and test\\n    for name in train.columns:\\n        if pd.api.types.is_numeric_dtype(train[name]):\\n            test[name] = pd.to_numeric(test[name])\\n        else:\\n            categories = pd.Categorical(pd.concat([train[name], test[name]], ignore_index=True)).categories\\n            train[name] = pd.Categorical(train[name], categories=categories)\\n            test[name] = pd.Categorical(test[name], categories=categories)\\n    \\n    # L2 regularization is default (penalty='l2', solver='lbfgs')\\n    model = LogisticRegression(random_state=20261114, max_iter=1000)\\n    model.fit(train, y)\\n    return model.predict_proba(test)[:, 1].tolist()\\n\",\n  \"notes\": \"Replaced LightGBM with sklearn LogisticRegression. Uses default L2 regularization (C=1.0). Fixed seed and increased max_iter for convergence. Keeps same data preprocessing pipeline as parent code.\"\n}",
+  "tokens": {
+    "input": 3766,
+    "cached_input": 0,
+    "output": 332,
+    "reasoning": 1367
+  },
+  "cost": 5465.0,
+  "error": null
+}

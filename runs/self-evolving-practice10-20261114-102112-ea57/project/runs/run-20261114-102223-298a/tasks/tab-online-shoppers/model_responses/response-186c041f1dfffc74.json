@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "11754682c7c5ced7c4ff1e878ebf2bf3e4adc8ba4b553fa70501b35720d1e8eb",
+  "response_id": "resp_97367c08-1293-9117-9a6b-d55e2876c61f",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Train LightGBM classifier with scale_pos_weight to address class imbalance (positive_rate=15.5%)\",\n      \"rationale\": \"Gradient boosting handles tabular data well; scale_pos_weight accounts for 6.5x negative-to-positive ratio without changing preprocessing\",\n      \"estimate\": {\n        \"gain\": 0.2,\n        \"cost\": 5000,\n        \"seconds\": 60\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Engineer interaction features between ProductRelated_Duration and PageValues\",\n      \"rationale\": \"Product engagement time combined with cart value may signal purchase intent more strongly than individual features\",\n      \"estimate\": {\n        \"gain\": 0.05,\n        \"cost\": 3000,\n        \"seconds\": 45\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Feature selection using permutation importance to identify noise features like Month/Region\",\n      \"rationale\": \"Domain knowledge suggests temporal and regional effects may be weaker; removing low-importance features can reduce overfitting on small dataset\",\n      \"estimate\": {\n        \"gain\": 0.03,\n        \"cost\": 2500,\n        \"seconds\": 40\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 10500,\n    \"score\": 0.28,\n    \"seconds\": 145\n  },\n  \"budget_allocation\": [\n    {\"direction\": \"H1_LightGBM_class_weights\", \"amount\": 5000},\n    {\"direction\": \"H2_interaction_features\", \"amount\": 3000},\n    {\"direction\": \"H3_feature_selection\", \"amount\": 2500}\n  ],\n  \"expected_progress\": [\n    {\"spent_ratio\": 0.0, \"score\": 0.0},\n    {\"spent_ratio\": 0.125, \"score\": 0.2},\n    {\"spent_ratio\": 0.25, \"score\": 0.25},\n    {\"spent_ratio\": 0.35, \"score\": 0.28}\n  ]\n}",
+  "tokens": {
+    "input": 4044,
+    "cached_input": 0,
+    "output": 542,
+    "reasoning": 598
+  },
+  "cost": 5184.0,
+  "error": null
+}

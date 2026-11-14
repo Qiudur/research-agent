@@ -1,0 +1,8 @@
+--- parent/solution.py
++++ solution.py
+@@ -1,4 +1,4 @@
+-"""NumPy-vectorized Levenshtein distance (row-wise, with prefix-min for the left dependency)."""
++"""NumPy-vectorized Levenshtein distance with 2-row space optimization."""
+ 
+ from __future__ import annotations
+ import numpy as np

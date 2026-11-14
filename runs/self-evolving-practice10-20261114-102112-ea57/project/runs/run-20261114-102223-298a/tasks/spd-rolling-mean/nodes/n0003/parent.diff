@@ -1,0 +1,13 @@
+--- parent/solution.py
++++ solution.py
+@@ -6,6 +6,10 @@
+ def rolling_mean(values: list[float], window: int) -> list[float]:
+     if window <= 0:
+         raise ValueError("window must be positive")
++    
++    # Edge case: window == 1 means each element is its own mean
++    if window == 1:
++        return values.copy()
+     
+     result = []
+     window_sum = 0.0

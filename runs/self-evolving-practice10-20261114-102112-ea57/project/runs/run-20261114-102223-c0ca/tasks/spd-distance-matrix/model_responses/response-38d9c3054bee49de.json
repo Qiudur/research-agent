@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "1c0978709faac4451c2395ee63ab3c4ea0303d3060aaeeae482022bdc2e294b2",
+  "response_id": "resp_f0b8958d-444a-98a2-a2e1-ed4e873fcb8d",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Implement full NumPy broadcasting for O(n^2) distance computation: convert points to arrays and use (x[:,None]-x[None,:])**2 + (y[:,None]-y[None,:])**2 then np.sqrt\",\n      \"rationale\": \"Node n0001 achieved only 0.57 with 'NumPy vectorization' but likely used partial vectorization. Full matrix broadcasting eliminates ALL Python-level loop overhead entirely. This is the standard fastest pure-Python/numpy approach for this problem.\",\n      \"estimate\": {\n        \"gain\": 0.25,\n        \"cost\": 3500,\n        \"seconds\": 45\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Add small-input threshold to switch between naive loop and vectorized computation when len(points) < 50\",\n      \"rationale\": \"Vectorization has overhead from array creation and indexing. For very small point sets (<50 points), the original nested loops may actually be faster due to lower overhead. Hybrid approach maximizes speedup across all input sizes.\",\n      \"estimate\": {\n        \"gain\": 0.05,\n        \"cost\": 1500,\n        \"seconds\": 25\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Pre-compute coordinates as separate X and Y arrays once, avoid tuple unpacking in inner loop even with vectorization fallback\",\n      \"rationale\": \"Tuple unpacking (x1,y1 = points[i]) in tight loops adds measurable overhead. Extracting all x and y values upfront reduces repeated attribute/sequence access during distance computation.\",\n      \"estimate\": {\n        \"gain\": 0.03,\n        \"cost\": 1200,\n        \"seconds\": 20\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 18000,\n    \"score\": 1.15,\n    \"seconds\": 240\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"hypothesis_testing\",\n      \"amount\": 14500\n    },\n    {\n      \"direction\": \"reserve_for_next_call\",\n      \"amount\": 3500\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.15,\n      \"score\": 0.98\n    },\n    {\n      \"spent_ratio\": 0.3,\n      \"score\": 1.05\n    },\n    {\n      \"spent_ratio\": 0.45,\n      \"score\": 1.12\n    },\n    {\n      \"spent_ratio\": 0.6,\n      \"score\": 1.15\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1622,
+    "cached_input": 0,
+    "output": 673,
+    "reasoning": 928
+  },
+  "cost": 3223.0,
+  "error": null
+}

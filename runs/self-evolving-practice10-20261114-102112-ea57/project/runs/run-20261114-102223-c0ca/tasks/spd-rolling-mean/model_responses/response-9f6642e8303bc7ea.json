@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "98e8564c20d39150743edfde7cf42a360afc7162d4ede6754b84026e56570700",
+  "response_id": "resp_2ea26e29-7b96-9fe9-a806-f2903f6b6107",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Implement O(n) sliding window with running sum maintenance instead of O(n*w) slicing and re-summing\",\n      \"rationale\": \"The profile explicitly states every position slices and sums the same trailing window repeatedly. Maintaining a running total by subtracting the outgoing element and adding the incoming one reduces complexity from quadratic to linear time.\",\n      \"estimate\": {\n        \"gain\": 0.45,\n        \"cost\": 800,\n        \"seconds\": 45\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Use numpy cumsum approach if external libraries are permitted, computing prefix sums once then differencing for window totals\",\n      \"rationale\": \"Vectorized operations in numpy can achieve significant speedups over pure Python loops. The cumsum method avoids loop overhead entirely though requires verifying library import permissions.\",\n      \"estimate\": {\n        \"gain\": 0.65,\n        \"cost\": 900,\n        \"seconds\": 50\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 800,\n    \"score\": 0.50,\n    \"seconds\": 45\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"primary_optimization\",\n      \"amount\": 800\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.02,\n      \"score\": 0.50\n    },\n    {\n      \"spent_ratio\": 0.1,\n      \"score\": 0.70\n    },\n    {\n      \"spent_ratio\": 0.5,\n      \"score\": 0.85\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1384,
+    "cached_input": 0,
+    "output": 427,
+    "reasoning": 511
+  },
+  "cost": 2322.0,
+  "error": null
+}

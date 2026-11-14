@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "74c20992fcacff239f4f76828a87ba916496cb524006587c88442ae01c4758da",
+  "response_id": "resp_c7012eba-b921-9139-a9d8-9f9b5bfc26af",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Convert allowed list to set for O(1) membership lookup\",\n      \"rationale\": \"Hotspot identifies repeated O(m) linear scans. Set conversion reduces total complexity from O(n*m) to O(n+m), expected dramatic speedup on benchmark size 9000\",\n      \"estimate\": {\n        \"gain\": 0.75,\n        \"cost\": 4000,\n        \"seconds\": 45\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Add early-return when allowed is empty\",\n      \"rationale\": \"Edge case from profile; immediate return avoids scanning entire values list unnecessarily\",\n      \"estimate\": {\n        \"gain\": 0.08,\n        \"cost\": 2500,\n        \"seconds\": 30\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 6500,\n    \"score\": 0.83,\n    \"seconds\": 75\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"set_conversion_baseline\",\n      \"amount\": 4000\n    },\n    {\n      \"direction\": \"empty_allowed_optimization\",\n      \"amount\": 2500\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.1,\n      \"score\": 0.75\n    },\n    {\n      \"spent_ratio\": 0.2,\n      \"score\": 0.83\n    },\n    {\n      \"spent_ratio\": 0.5,\n      \"score\": 0.92\n    },\n    {\n      \"spent_ratio\": 0.9,\n      \"score\": 0.98\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1277,
+    "cached_input": 0,
+    "output": 444,
+    "reasoning": 811
+  },
+  "cost": 2532.0,
+  "error": null
+}

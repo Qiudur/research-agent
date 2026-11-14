@@ -1,0 +1,21 @@
+--- parent/solution.py
++++ solution.py
+@@ -7,7 +7,10 @@
+     if window <= 0:
+         raise ValueError("window must be positive")
+     
++    n = len(values)
+     result = []
++    result_append = result.append  # Cache method lookup
++    
+     window_sum = 0.0
+     
+     for index, value in enumerate(values):
+@@ -21,6 +24,6 @@
+         # Actual window size (grows during initial partial windows)
+         current_window_size = min(index + 1, window)
+         
+-        result.append(window_sum / current_window_size)
++        result_append(window_sum / current_window_size)
+     
+     return result

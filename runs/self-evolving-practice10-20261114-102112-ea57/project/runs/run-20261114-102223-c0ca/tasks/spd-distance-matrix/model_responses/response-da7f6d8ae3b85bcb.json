@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0004",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "72ab387074295aa1cf6494cfb8dca2bc90659b9f5e8c20f9b780f2196c21cc28",
+  "response_id": "resp_8ad484b0-438a-948e-bcbc-2e77e266c8d6",
+  "status": "completed",
+  "output_text": "{\"code\":\"\\\"\\\"\\\"Optimized implementation using NumPy broadcasting for distance matrix computation.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport numpy as np\\n\\n\\ndef distance_matrix(points: list[tuple[float, float]]) -> list[list[float]]:\\n    \\\"\\\"\\\"Compute pairwise Euclidean distances using vectorized operations.\\n\\n    Args:\\n        points: List of (x, y) coordinate tuples\\n\\n    Returns:\\n        Square list of lists containing Euclidean distances between all pairs\\n    \\\"\\\"\\\"\\n    # Handle empty input\\n    if len(points) == 0:\\n        return []\\n\\n    # Convert to numpy array for vectorized computation\\n    arr = np.array(points)  # shape: (n, 2)\\n    n = len(arr)\\n\\n    # Use broadcasting to compute all pairwise differences at once\\n    # arr[:, None, :] broadcasts to shape (n, 1, 2)\\n    # arr[None, :, :] broadcasts to shape (1, n, 2)\\n    # Resulting diff has shape (n, n, 2) containing (dx, dy) for each pair\\n    diff = arr[:, None, :] - arr[None, :, :]\\n\\n    # Compute Euclidean distance: sqrt(dx^2 + dy^2)\\n    distances = np.sqrt(np.sum(diff ** 2, axis=2))\\n\\n    # Convert back to list of lists to match original interface\\n    return distances.tolist()\", \"notes\":\"Implemented full NumPy broadcasting per hypothesis. Uses arr[:,None,:] - arr[None,:,:] for O(n^2) vectorized distance computation without Python loops. Handles empty input edge case. Returns list[list[float]] as required.\"}",
+  "tokens": {
+    "input": 1172,
+    "cached_input": 0,
+    "output": 375,
+    "reasoning": 634
+  },
+  "cost": 2181.0,
+  "error": null
+}

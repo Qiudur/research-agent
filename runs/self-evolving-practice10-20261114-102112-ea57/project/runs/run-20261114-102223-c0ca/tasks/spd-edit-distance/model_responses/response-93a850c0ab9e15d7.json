@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0003",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "a7842ea89490776ae967e10a9d73da23694719a1b12e8523f983aa90ce6b6d1d",
+  "response_id": "resp_d20e7e0e-51e2-9835-a7e6-0af700b8ce90",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Optimized edit distance with two-row buffer swapping.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\n\\ndef edit_distance(a: str, b: str) -> int:\\n    m, n = len(a), len(b)\\n    \\n    # Edge cases\\n    if m == 0:\\n        return n\\n    if n == 0:\\n        return m\\n    \\n    # Pre-allocate two fixed-size buffers\\n    prev_row = list(range(n + 1))\\n    curr_row = [0] * (n + 1)\\n    \\n    for i, left in enumerate(a, 1):\\n        curr_row[0] = i\\n        for j, right in enumerate(b, 1):\\n            # Compute three candidate costs\\n            ins_cost = curr_row[j - 1] + 1\\n            del_cost = prev_row[j] + 1\\n            sub_cost = prev_row[j - 1] + (left != right)\\n            \\n            # Inline min comparison to avoid function call overhead\\n            if ins_cost <= del_cost and ins_cost <= sub_cost:\\n                curr_row[j] = ins_cost\\n            elif del_cost <= sub_cost:\\n                curr_row[j] = del_cost\\n            else:\\n                curr_row[j] = sub_cost\\n        \\n        # Swap references instead of allocating new lists\\n        prev_row, curr_row = curr_row, prev_row\\n    \\n    return prev_row[-1]\",\n  \"notes\": \"Pre-allocated two fixed-size buffers (prev_row and curr_row) and swapped references at end of each iteration instead of allocating new list per row. Uses index assignment rather than append. Maintains identical semantics including all edge cases.\"\n}",
+  "tokens": {
+    "input": 1061,
+    "cached_input": 0,
+    "output": 384,
+    "reasoning": 662
+  },
+  "cost": 2107.0,
+  "error": null
+}

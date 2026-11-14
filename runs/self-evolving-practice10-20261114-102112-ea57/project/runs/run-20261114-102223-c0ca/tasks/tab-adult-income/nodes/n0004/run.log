@@ -1,0 +1,16 @@
+
+=== attempt 1 ===
+exit_code: 0
+timed_out: False
+oom: False
+seconds: 1.2215418750420213
+stdout_tail: 
+stderr_tail: 
+
+=== attempt 2 ===
+exit_code: 0
+timed_out: False
+oom: False
+seconds: 0.9455116660101339
+stdout_tail: 
+stderr_tail: 

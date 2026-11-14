@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "5887ff6a9e7bcea701612ccbcf302a03961622e656ff388cc8c5234236dd928c",
+  "response_id": "resp_7f2500cf-d042-9e95-8b84-0dabd7dad15f",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Add explicit missing indicator column for stalk_root and train LightGBM classifier\",\n      \"rationale\": \"Dataset profile indicates 'missing_heavy' feature; stalk_root appears heavily nullified in visible sample. Creating a missing-flag feature allows model to learn patterns where value is absent versus present.\",\n      \"estimate\": {\n        \"gain\": 0.15,\n        \"cost\": 2200,\n        \"seconds\": 45\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Create cap_shape and cap_color interaction terms as new categorical features\",\n      \"rationale\": \"Only 4 visible predictors available; interaction between morphology and pigmentation may capture latent toxicity signals not visible in individual features.\",\n      \"estimate\": {\n        \"gain\": 0.08,\n        \"cost\": 1800,\n        \"seconds\": 40\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Train logistic regression with manual imputation of missing stalk_root using mode grouped by cap_shape\",\n      \"rationale\": \"Simpler baseline to establish minimum viable performance; group-aware imputation preserves potential relationships between stem and cap characteristics.\",\n      \"estimate\": {\n        \"gain\": 0.10,\n        \"cost\": 1600,\n        \"seconds\": 35\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 2200,\n    \"score\": 0.15,\n    \"seconds\": 45\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"feature_engineering_missing_indicator\",\n      \"amount\": 2200\n    },\n    {\n      \"direction\": \"model_training_lightgbm\",\n      \"amount\": 2200\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.055,\n      \"score\": 0.15\n    },\n    {\n      \"spent_ratio\": 0.15,\n      \"score\": 0.22\n    },\n    {\n      \"spent_ratio\": 0.3,\n      \"score\": 0.35\n    },\n    {\n      \"spent_ratio\": 0.5,\n      \"score\": 0.5\n    }\n  ]\n}",
+  "tokens": {
+    "input": 3846,
+    "cached_input": 0,
+    "output": 574,
+    "reasoning": 819
+  },
+  "cost": 5239.0,
+  "error": null
+}

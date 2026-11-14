@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "gpt-6-astra",
+  "prompt_hash": "ab2f4e6b397c262fcb1ded6d5bc43980e8367412c5390e4d7eb72155c9a10748",
+  "response_id": "resp_05e58f3f6891b715016af837514fe087d08b0ddf47f7e214e3",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Retain n0002's computation structure and replace avoidable intermediate NumPy arrays with reusable scratch buffers and in-place ufunc operations.\",\n      \"rationale\": \"n0002 is the accepted best at 0.9704654854399966; full broadcasting and output-list reconstruction already regressed. Inspect its actual implementation first, then change only temporary allocation where safe, preserving subtraction, squaring, addition, square root, and list-of-lists output. Compare against unchanged n0002 with repeated interleaved timings and correctness checks for empty, singleton, duplicate, and negative-coordinate inputs. This is conditional on finding removable allocations, not an assertion about unseen code. Estimates are forecasts; token cost is comparable to recent 1807–2774-token experiments. No capability-library entries were supplied.\",\n      \"estimate\": {\n        \"gain\": 0.009,\n        \"cost\": 2200,\n        \"seconds\": 90\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Test bounded row-block distance computation with reusable buffers, rather than allocating a full pairwise matrix of intermediates.\",\n      \"rationale\": \"The rejected full-broadcast experiment suggests that vectorization alone is insufficient. Test small fixed block sizes such as 32 and 128 against the unchanged accepted implementation, retaining direct coordinate differences and converting completed rows to lists exactly once. Proceed only if inspection shows this differs materially from n0002. Block sizes are execution parameters, not branches keyed to the benchmark size. Validate on additional ordinary input sizes and all specified edge cases. The rejected 1.0260528244400278 result is not an accepted improvement and should not be promoted without evidence. Avoid hidden labels, reference solutions, other-task files, and benchmark-specific shortcuts. Estimates are forecasts, with no available capability-library IDs to cite.\",\n      \"estimate\": {\n        \"gain\": 0.006,\n        \"cost\": 2400,\n        \"seconds\": 110\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 23977,\n    \"seconds\": 200,\n    \"score\": 0.982\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"Scratch-buffer hypothesis, including baseline inspection, correctness checks, and repeated timing; additional four-bucket TOKENS\",\n      \"amount\": 2200\n    },\n    {\n      \"direction\": \"Conditional bounded-row-block hypothesis and verification; additional four-bucket TOKENS\",\n      \"amount\": 2400\n    },\n    {\n      \"direction\": \"Preserve for the next model call; this reserve is not a guarantee against actual token overruns\",\n      \"amount\": 12000\n    },\n    {\n      \"direction\": \"Uncommitted margin within the supplied 16623-TOKEN remaining-to-cap allowance; predicted cost is cumulative spending including the existing 19377, excluding unused reserves\",\n      \"amount\": 23\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.484425,\n      \"score\": 0.9704654854399966\n    },\n    {\n      \"spent_ratio\": 0.539425,\n      \"score\": 0.978\n    },\n    {\n      \"spent_ratio\": 0.599425,\n      \"score\": 0.982\n    }\n  ]\n}",
+  "tokens": {
+    "input": 20082,
+    "cached_input": 0,
+    "output": 721,
+    "reasoning": 472
+  },
+  "cost": 21275.0,
+  "error": null
+}

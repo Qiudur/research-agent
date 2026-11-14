@@ -1,0 +1,151 @@
+{
+  "entries": [
+    {
+      "action": "Replace implementation with scipy.spatial.distance.cdist",
+      "conditions": "Task involves calculating distance matrices implemented with nested python loops",
+      "created_version": "lib-1",
+      "credibility": 0.6,
+      "effect": {
+        "mean_cost": 3195.0,
+        "mean_gain": 1.4387551254188984,
+        "uses": 1,
+        "wins": 1
+      },
+      "id": "exp-0001",
+      "kind": "experience",
+      "negative": false,
+      "scenario": "speedup",
+      "schema": "entry/1",
+      "scope": "method",
+      "sources": [
+        {
+          "node_ids": [
+            "n0001"
+          ],
+          "run_id": "run-20261114-102223-298a",
+          "task_id": "spd-distance-matrix"
+        },
+        {
+          "node_ids": [
+            "n0002"
+          ],
+          "run_id": "run-20261114-102223-298a",
+          "task_id": "spd-max-drawdown"
+        }
+      ],
+      "status": "active",
+      "triggers": [
+        "nested_python_loop"
+      ],
+      "updated_version": "lib-2"
+    },
+    {
+      "action": "Implement single-pass O(n) algorithm tracking running peak",
+      "conditions": "Task involves calculating max drawdown metric implemented with nested python loops",
+      "created_version": "lib-3",
+      "credibility": 0.5,
+      "effect": {
+        "mean_cost": 0.0,
+        "mean_gain": 0.0,
+        "uses": 0,
+        "wins": 0
+      },
+      "id": "exp-0002",
+      "kind": "experience",
+      "negative": false,
+      "scenario": "speedup",
+      "schema": "entry/1",
+      "scope": "method",
+      "sources": [
+        {
+          "node_ids": [
+            "n0001"
+          ],
+          "run_id": "run-20261114-102223-298a",
+          "task_id": "spd-max-drawdown"
+        }
+      ],
+      "status": "active",
+      "triggers": [
+        "nested_python_loop"
+      ],
+      "updated_version": "lib-3"
+    },
+    {
+      "action": "Replace implementation with scipy.spatial.distance.cdist",
+      "conditions": "Task supports vectorization via SciPy spatial distance functions despite non-standard use case",
+      "created_version": "lib-4",
+      "credibility": 0.6,
+      "effect": {
+        "mean_cost": 8688.0,
+        "mean_gain": 1.0481525019101086,
+        "uses": 1,
+        "wins": 1
+      },
+      "id": "exp-0003",
+      "kind": "experience",
+      "negative": false,
+      "scenario": "speedup",
+      "schema": "entry/1",
+      "scope": "method",
+      "sources": [
+        {
+          "node_ids": [
+            "n0002"
+          ],
+          "run_id": "run-20261114-102223-298a",
+          "task_id": "spd-max-drawdown"
+        },
+        {
+          "node_ids": [
+            "n0001"
+          ],
+          "run_id": "run-20261114-102223-298a",
+          "task_id": "spd-edit-distance"
+        }
+      ],
+      "status": "active",
+      "triggers": [
+        "nested_python_loop"
+      ],
+      "updated_version": "lib-5"
+    },
+    {
+      "action": "Replace nested loops with scipy.spatial.distance.cdist for vectorization",
+      "conditions": "Task involves distance or similarity computation where SciPy cdist can be adapted despite non-standard use case",
+      "created_version": "lib-6",
+      "credibility": 0.5,
+      "effect": {
+        "mean_cost": 0.0,
+        "mean_gain": 0.0,
+        "uses": 0,
+        "wins": 0
+      },
+      "id": "exp-0004",
+      "kind": "experience",
+      "negative": false,
+      "scenario": "speedup",
+      "schema": "entry/1",
+      "scope": "method",
+      "sources": [
+        {
+          "node_ids": [
+            "n0001"
+          ],
+          "run_id": "run-20261114-102223-298a",
+          "task_id": "spd-edit-distance"
+        }
+      ],
+      "status": "active",
+      "triggers": [
+        "nested_python_loop"
+      ],
+      "updated_version": "lib-6"
+    }
+  ],
+  "metadata": {
+    "demoted_losses": {}
+  },
+  "schema": "library/1",
+  "version": "lib-6"
+}

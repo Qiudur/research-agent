@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "diagnoser",
+  "purpose": "diagnose",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "eb48721ae814897cb4f69bd421abec172fdabb5c1cf55d2e5bb9126e2cd1fde1",
+  "response_id": "resp_9f4c25d6-a186-9899-9d22-a6e06be2a5ce",
+  "status": "completed",
+  "output_text": "{\n  \"hypothesis\": \"模型表现疑似存在数据泄漏或测试集分布偏移。raw AUC (0.9243) 已超越 ceiling_raw (0.9234)，表明可能有信息泄露使模型能够过度拟合或接触目标相关信号。PageValues 特征值在训练和测试间分布可能不一致，导致验证时获得不合理的增益。\",\n  \"rationale\": \"归一化公式 dev = (raw - baseline_raw)/(ceiling_raw - baseline_raw) 中分母极小(约 0.000133)，因此即使 raw 仅有微小提升也会被放大到 7.8。但关键问题是 raw 本身已经超过 ceiling_raw，这理论上不应发生除非：1) PageValues 等数值特征在测试时有目标相关信息；2) fit_predict 内部使用了 train 中不该用的信息；3) 类别编码引入泄漏。cheat_flags 为空不能排除逻辑层面的泄漏。\",\n  \"advice\": \"检查 fit_predict 是否只在 train_csv 上训练、是否对 test_rows 做额外处理；检查 PageValues 在训练集中是否有缺失或特殊分布；临时移除 PageValues 重新评估看 raw AUC 是否回落至天花板以下；验证类别编码（OneHot/Ordinal）是否无意中利用了排序信息。让执行者实现这些诊断并报告新的 raw/dev 分数。\"\n}",
+  "tokens": {
+    "input": 3655,
+    "cached_input": 0,
+    "output": 301,
+    "reasoning": 598
+  },
+  "cost": 4554.0,
+  "error": null
+}

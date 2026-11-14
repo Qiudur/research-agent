@@ -1,0 +1,38 @@
+{
+  "schema": "opening_plan/1",
+  "run_id": "run-20261114-102223-0617",
+  "task_id": "tab-adult-income",
+  "predicted": {
+    "cost": 5500.0,
+    "seconds": 390.0,
+    "score": 0.58
+  },
+  "expected_progress": [
+    {
+      "spent_ratio": 0.06,
+      "score": 0.45
+    },
+    {
+      "spent_ratio": 0.09,
+      "score": 0.53
+    },
+    {
+      "spent_ratio": 0.14,
+      "score": 0.58
+    }
+  ],
+  "budget_allocation": [
+    {
+      "direction": "LightGBM baseline implementation",
+      "amount": 2500
+    },
+    {
+      "direction": "Feature engineering",
+      "amount": 1200
+    },
+    {
+      "direction": "Hyperparameter tuning",
+      "amount": 1800
+    }
+  ]
+}

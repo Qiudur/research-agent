@@ -1,0 +1,33 @@
+"""Optimized O(n) single-pass maximum-drawdown implementation."""
+
+from __future__ import annotations
+
+
+def max_drawdown(prices: list[float]) -> float:
+    """Calculate the maximum drawdown from a sequence of prices.
+    
+    Args:
+        prices: List of strictly positive finite float prices in chronological order.
+        
+    Returns:
+        Maximum chronological peak-to-trough fraction. Returns 0.0 for empty,
+        single-price, or non-decreasing sequences.
+    """
+    # Edge case: insufficient data for drawdown calculation
+    if len(prices) <= 1:
+        return 0.0
+    
+    # Edge case: all None/NaN values would be caught by problem constraints
+    # (prices are guaranteed strictly positive finite floats)
+    
+    largest = 0.0
+    peak = prices[0]
+    
+    for price in prices[1:]:
+        if price > peak:
+            peak = price
+        else:
+            drawdown = (peak - price) / peak
+            largest = max(largest, drawdown)
+    
+    return largest

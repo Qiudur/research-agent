@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "diagnoser",
+  "purpose": "diagnose",
+  "node_id": "n0001",
+  "model": "claude-opus-5-5",
+  "prompt_hash": "6bf30a8d447e59322209f46e807447e24822fef14f16758ba5e852650e6f15e1",
+  "response_id": "msg_011Ch2gbPhYp58ZNE6zgsWfg",
+  "status": "completed",
+  "output_text": "{\"hypothesis\":\"这不是评分器崩溃，也不是泄漏或无效输出。L2 逻辑回归的真实 raw AUC 是 0.9776，比 baseline_raw 0.99356 低约 0.016，属于模型本身的真实退步。归一化分母 ceiling_raw - baseline_raw 只有约 1.08e-5，被放大了约 9 万倍，所以得到 -1476。根因是线性模型的表达能力不够：30 个特征都是 {-1,0,1} 三值类别，被当作单一线性数值输入，学不到特征之间的交互和非单调效应；baseline 很可能是树集成，已经接近上限。\",\"rationale\":\"correct=true，cheat_flags 为空，spread=0，没有运行错误，说明输出格式和顺序有效。raw 0.978 在合理范围内，远高于随机（0.5），也远离反向预测（约 0.02），因此标签方向基本没错。phishing 数据集上，树模型 AUC 通常能到 0.99 以上，线性模型通常在 0.97 到 0.98，正好对应当前结果。baseline 与 ceiling 几乎重合，任何 raw 低于 0.99356 的方案都会得到很大的负归一化分，所以需要先追平 baseline 级别的模型，再追求微小提升。\",\"advice\":\"1）换成树集成模型作为主模型，例如 HistGradientBoosting、RandomForest 或 ExtraTrees（几百到上千棵树，固定 random_state）。也可以做 RF+GBM 的概率平均或 rank 平均，进一步压低方差。2）如果保留线性模型，只把它作为低权重的融合成员，并先把每个特征做 one-hot 编码（每个三值特征拆成 3 列），让它能表达非单调关系。3）实现细节自检：按 train.csv 表头的列名从 test_rows 的 dict 中取值，不要依赖 dict 的迭代顺序；字符串转 float；取 predict_proba 中 classes_ 等于 1 的那一列；clip 到 [0,1] 并检查全部有限。4）可验证的方式：在 train.csv 上做 5 折分层 CV，并尽量模拟分组切分，例如对重复的特征向量做 GroupKFold，避免完全相同的行同时出现在训练和验证中。对比 LR、one-hot LR 和树模型的 OOF AUC，只有树模型 OOF AUC 稳定在 0.99 以上时才提交。5）提交后如果 raw 突然大于 0.996，要先排查是否误用了 y 列，或是否把测试行混进了训练。\"}",
+  "tokens": {
+    "input": 4892,
+    "cached_input": 0,
+    "output": 1220,
+    "reasoning": 0
+  },
+  "cost": 6112.0,
+  "error": null
+}
