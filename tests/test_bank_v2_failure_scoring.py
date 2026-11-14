@@ -14,6 +14,7 @@ import tabular_harness
 
 
 TASK = "spd-fixture"
+SECRET = "SENSITIVE_HIDDEN_ROW_AND_PREDICTION_12345"
 
 
 class BankV2FailureScoringTests(unittest.TestCase):
@@ -28,9 +29,9 @@ class BankV2FailureScoringTests(unittest.TestCase):
 
     def _speed(self, tasks: Path, node: Path, split: str, *, kind: str, host_error: bool = False) -> dict:
         meta = {"timed_out": kind == "timeout", "oom": kind == "oom",
-                "exit_code": 1, "stderr_tail": "sandbox traceback"}
-        payload = {"ok": False, "cheat_flags": [], "error":
-                   {"kind": kind, "message": "candidate failed", "trace_tail": "trace"}}
+                "exit_code": 1, "stderr_tail": SECRET}
+        payload = {"ok": False, "cheat_flags": ["network", SECRET], "error":
+                   {"kind": kind, "message": SECRET, "trace_tail": SECRET, "extra": SECRET}}
         task = {"scenario": "speedup", "benchmark": {"dev_size": 2, "holdout_size": 2}}
         with patch.object(harness, "_tasks_root", return_value=tasks), \
                 patch.object(harness, "_project_root", return_value=tasks.parent), \
@@ -49,8 +50,9 @@ class BankV2FailureScoringTests(unittest.TestCase):
                     self.assertEqual((result["schema"], result["ok"], result["score"], result["raw"], result["correct"]),
                                      ("score/1", True, 0.0, 0.0, False))
                     self.assertEqual(result["error"]["kind"], kind)
-                    self.assertEqual(result["error"]["trace_tail"], "trace" if kind == "exception" else
-                                     ("sandbox traceback" if kind == "oom" else ""))
+                    self.assertEqual(set(result["error"]), {"kind", "message"})
+                    self.assertEqual(result["cheat_flags"], ["network"])
+                    self.assertNotIn(SECRET, json.dumps(result))
 
     def test_speedup_baseline_old_bank_unknown_error_and_host_failure_abort(self):
         for version, node_name, kind in (("bank-v2", "n0000", "exception"),
@@ -62,6 +64,7 @@ class BankV2FailureScoringTests(unittest.TestCase):
                 self.assertFalse(result["ok"])
                 self.assertIsNone(result["score"])
                 self.assertEqual(result["error"]["kind"], kind)
+                self.assertIn(SECRET, json.dumps(result))  # Legacy/unknown failures are unchanged.
         with TemporaryDirectory() as temp:
             tasks, node = self._fixture(Path(temp), "bank-v2", "n0001")
             with self.assertRaisesRegex(RuntimeError, "host failed"):
@@ -76,8 +79,9 @@ class BankV2FailureScoringTests(unittest.TestCase):
             for kind in ("timeout", "oom", "exception"):
                 with self.subTest(split=split, kind=kind), TemporaryDirectory() as temp:
                     tasks, node = self._fixture(Path(temp), "bank-v2", "n0001")
-                    failure = {"ok": False, "raw": None, "correct": False, "cheat_flags": [],
-                               "error": {"kind": kind, "message": "candidate failed", "trace_tail": "trace"},
+                    failure = {"ok": False, "raw": None, "correct": False,
+                               "cheat_flags": ["network", SECRET],
+                               "error": {"kind": kind, "message": SECRET, "trace_tail": SECRET, "extra": SECRET},
                                "seconds": 0.2, "seed": 13}
                     with patch.object(harness, "_tasks_root", return_value=tasks), \
                             patch.object(harness, "load_task", return_value=task), \
@@ -87,7 +91,10 @@ class BankV2FailureScoringTests(unittest.TestCase):
                     worker.assert_called_once_with(TASK, node, split, 13)
                     self.assertEqual((result["schema"], result["ok"], result["score"], result["raw"], result["correct"]),
                                      ("score/1", True, 0.0, 0.0, False))
-                    self.assertEqual(result["error"], failure["error"])
+                    self.assertEqual(set(result["error"]), {"kind", "message"})
+                    self.assertEqual(result["error"]["kind"], kind)
+                    self.assertEqual(result["cheat_flags"], ["network"])
+                    self.assertNotIn(SECRET, json.dumps(result))
 
     def test_tabular_baseline_old_bank_unknown_error_and_host_failure_abort(self):
         task = {"metric": {"baseline_raw": 0.5, "ceiling_raw": 0.9}}

@@ -6,7 +6,9 @@ from pathlib import Path
 import shutil
 from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import patch
 
+import harness
 from evaluation.finalize import finish_run, finish_task, start_run
 from evaluation.manifest import create_manifest
 from evaluation.report import extract_summary, run_report, task_report
@@ -70,6 +72,30 @@ class ReturnedHarness:
 
 
 class FinalizeTests(unittest.TestCase):
+    def test_bank_v2_candidate_exception_redacts_persisted_holdout_score(self):
+        secret = "SENSITIVE_HIDDEN_ROW_AND_PREDICTION_12345"
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            run = setup(root, best_node="n0001")
+            bank = root / "tasks/bank.json"
+            bank.parent.mkdir(exist_ok=True)
+            bank.write_text(json.dumps({"schema": "bank/1", "version": "bank-v2"}))
+            task = {"scenario": "speedup", "benchmark": {"holdout_size": 2}}
+            payload = {"ok": False, "cheat_flags": ["network", secret],
+                       "error": {"kind": "exception", "message": secret, "trace_tail": secret}}
+            meta = {"timed_out": False, "oom": False, "exit_code": 1, "stderr_tail": secret}
+            with patch.object(harness, "_tasks_root", return_value=bank.parent), \
+                    patch.object(harness, "_project_root", return_value=root), \
+                    patch.object(harness, "load_task", return_value=task), \
+                    patch.object(harness, "_execute", return_value=(payload, meta)) as worker:
+                result = finish_task(run, TASK, harness)
+            worker.assert_called_once()
+            saved = (run / "tasks" / TASK / "holdout_score.json").read_text()
+            self.assertNotIn(secret, saved)
+            self.assertEqual(json.loads(saved)["error"],
+                             {"kind": "exception", "message": "Candidate execution failed"})
+            self.assertEqual(result["task_end"]["holdout_score"], 0.0)
+
     def test_zero_candidate_holdout_reconciles_and_retains_failure_kind(self):
         with TemporaryDirectory() as temp:
             run = setup(Path(temp), best_node="n0001")

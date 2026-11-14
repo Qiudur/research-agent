@@ -224,6 +224,8 @@ def score(task_id: str, node_dir: Path, split: str, seed: int | None = None) -> 
             result["ok"] = True
             result["raw"] = 0.0
             result["score"] = 0.0
+            result["error"], result["cheat_flags"] = harness._safe_candidate_failure(
+                failed["error"], failed["cheat_flags"])
     else:
         scores = [(item["raw"] - baseline) / (ceiling - baseline) for item in measurements]
         result["raw"] = statistics.median(item["raw"] for item in measurements)

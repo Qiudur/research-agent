@@ -275,9 +275,21 @@ def _bank_v2_candidate_failure(node: Path, error: dict) -> bool:
             and isinstance(error, dict) and error.get("kind") in {"timeout", "oom", "exception"})
 
 
+def _safe_candidate_failure(error: dict, flags: list[str] | None) -> tuple[dict, list[str]]:
+    """Only fixed, non-candidate-controlled fields may leave a failed sandbox."""
+    messages = {"timeout": "Candidate timed out", "oom": "Candidate exceeded memory",
+                "exception": "Candidate execution failed"}
+    allowed_flags = {"network", "subprocess", "reads_hidden", "writes_outside_node"}
+    kind = error["kind"]
+    safe_flags = sorted({flag for flag in flags if type(flag) is str and flag in allowed_flags}) if isinstance(flags, list) else []
+    return {"kind": kind, "message": messages[kind]}, safe_flags
+
+
 def _score_error(split: str, seed: int, elapsed: float, queue: float,
                  error: dict, node: Path, flags: list[str] | None = None) -> dict:
     zero = _bank_v2_candidate_failure(node, error)
+    if zero:
+        error, flags = _safe_candidate_failure(error, flags)
     return {"schema": SCORE_SCHEMA, "ok": zero, "split": split, "score": 0.0 if zero else None,
             "raw": 0.0 if zero else None, "spread": 0.0, "correct": False, "cheat_flags": flags or [],
             "error": error, "seconds": {"run": elapsed, "queue": queue}, "seed": seed}
