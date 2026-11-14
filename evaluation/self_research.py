@@ -69,8 +69,9 @@ _PROPOSAL_PROMPT = (
     "loss it can reduce."
 )
 
-# Inclusive bounds of every tunable value. Integers and floats listed under
-# "optional" also accept 0 (thinking: "unchanged") meaning the setting is unset.
+# Inclusive bounds of every tunable number. The optional levers (everything but
+# the first three) additionally accept 0, and thinking accepts "unchanged",
+# meaning the setting is not set.
 _BOUNDS = {
     "plateau_nodes": (2, 12), "explore_every": (2, 8), "query_k": (1, 12),
     "first_n_no_gain": (1, 4), "consecutive_no_gain": (2, 8),

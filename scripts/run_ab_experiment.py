@@ -186,7 +186,10 @@ def parse_config_specs(project_root: Path, specs: list[str]) -> dict[str, Path]:
             prompt = (project_root / relative).resolve()
             if not prompt.is_relative_to(project_root) or not prompt.is_file():
                 raise SystemExit(f"{label} points at a missing or external prompt: {relative}")
-        signature = _agent_signature(project_root, config)
+        try:
+            signature = _agent_signature(project_root, config)
+        except ValueError as exc:
+            raise SystemExit(f"{label}: {exc}") from None
         if signature in signatures:
             raise SystemExit(f"{label} has the same settings and prompts as {signatures[signature]}; "
                              "an A/B comparison needs different configurations")

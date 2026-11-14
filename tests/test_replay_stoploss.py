@@ -191,6 +191,18 @@ class ReplayTests(unittest.TestCase):
             empty.mkdir()
             self.assertEqual(quiet([str(empty), "--output", str(Path(temp) / "none.json")]), 2)
             self.assertFalse((Path(temp) / "none.json").exists())
+            # Runs from another phase are skipped, and the error says why nothing was used.
+            dev_run = Path(temp) / "dev-only/run-20261115-000009-eeee"
+            write_manifest(dev_run, phase="dev", tasks=["tab-one"])
+            tab_early_miss_then_gain(dev_run)
+            errors = io.StringIO()
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(errors):
+                self.assertEqual(main([str(Path(temp) / "dev-only"), "--output",
+                                       str(Path(temp) / "none.json")]), 2)
+            self.assertIn("phase=dev x1", errors.getvalue())
+            self.assertEqual(quiet([str(Path(temp) / "dev-only"), "--phases", "dev",
+                                    "--output", str(Path(temp) / "dev.json")]), 0)
+            self.assertTrue((Path(temp) / "dev.json").is_file())
             with self.assertRaises(SystemExit):
                 quiet([str(root), "--output", str(output), "--phases", "exam"])
 

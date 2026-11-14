@@ -81,6 +81,10 @@ class DriverValidationTests(unittest.TestCase):
         shutil.copyfile(self.source / "config/agent.json", self.source / "config/same.json")
         self.fails(base + ["--configs", "a=config/agent.json", "--configs", "b=config/same.json"],
                    "same settings and prompts")
+        broken = json.loads((self.source / "config/agent.json").read_text())
+        del broken["prompts"]["summarizer"]
+        (self.source / "config/broken.json").write_text(json.dumps(broken))
+        self.fails(base + ["--configs", "a=config/broken.json"], "exactly four role prompts")
 
     def test_counts_and_output_location_are_bounded(self):
         for flag, value in (("--reps", "4"), ("--reps", "0"), ("--workers", "5"), ("--workers", "0")):

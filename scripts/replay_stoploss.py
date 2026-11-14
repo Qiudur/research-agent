@@ -28,6 +28,7 @@ best dev score. Nothing here calls a model or a scorer.
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import json
 from pathlib import Path
 import sys
@@ -235,7 +236,10 @@ def main(argv: list[str] | None = None) -> int:
                     consecutive=args.consecutive, completion=args.completion,
                     details=args.details)
     if not report["runs"]["used"]:
-        print("No usable runs found (check --phases and that the runs finished).", file=sys.stderr)
+        reasons = Counter(item["reason"] for item in report["runs"]["skipped"])
+        detail = ", ".join(f"{reason} x{count}" for reason, count in sorted(reasons.items()))
+        print("No usable runs found (check --phases and that the runs finished)"
+              + (f"; skipped: {detail}" if detail else "") + ".", file=sys.stderr)
         return 2
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
