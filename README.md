@@ -25,7 +25,7 @@
 
 ## 真实模型 dev 试点
 
-选择可本地部署的 qwen3.5-27b，经授权网关进行真实模型调用。每题自定 40,000 个四桶合计 token 预算，常规扩展阈值 36,000，每次调用前预留 5,000，墙钟 900 秒。价目表 config/prices_token_pilot.json 的币种为 TOKENS、四桶权重均为 1、test_only=true；它只计量资源，不是现金价格。运行脚本 scripts/run_token_pilot.py 将练习题复制进被 Git 忽略的 runs 目录，不修改原题，并留下 manifest、账本、实验树、单次 holdout、回放上下文和报告。密钥仅通过进程环境临时注入。实验配置、所有尝试和负结果见 docs/真实模型试点.md。
+选择可本地部署的 qwen3.5-27b，经授权网关进行真实模型调用。每题自定 40,000 个四桶合计 token 预算，常规扩展阈值 36,000，当前每次调用前预留 12,000（早期试验为 5,000），墙钟 900 秒。价目表 config/prices_token_pilot.json 的币种为 TOKENS、四桶权重均为 1、test_only=true；它只计量资源，不是现金价格。运行脚本 scripts/run_token_pilot.py 将练习题复制进被 Git 忽略的 runs 目录，不修改原题，并留下 manifest、账本、实验树、单次 holdout、回放上下文和报告。密钥仅通过进程环境临时注入。实验配置、所有尝试和负结果见 docs/真实模型试点.md。
 
     .venv/bin/python -m scripts.run_token_pilot
     .venv/bin/python -m scripts.run_token_pilot --task tab-mushroom-edibility --agent-config config/agent_token_pilot_v2.json
