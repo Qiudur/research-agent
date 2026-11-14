@@ -514,25 +514,33 @@ def auto_evaluate_candidates(
                 raise
         if any(_hash(Path(path)) != digest for path, digest in {**protected, **default_hashes}.items()):
             raise ValueError("A protected or default proposal source changed")
-    winner = max(ranking, key=lambda item: (item["score_per_currency"],
-                                            item["mean_score"], -item["research_cost"]))
+    rank_key = lambda item: (item["score_per_currency"], item["mean_score"],
+                             -item["research_cost"])
+    overall_winner = max(ranking, key=rank_key)
+    generated = [item for item in ranking if item["candidate"] != "default"]
+    winner = max(generated, key=rank_key) if generated else None
     all_reports = [report for result in evaluations.values() for report in result["reports"]]
     task_cost = sum(report["total_cost"] for report in all_reports)
     proposal_cost = proposal_ledger.spent()
-    selected = evaluations[winner["candidate"]]
+    selected = evaluations[winner["candidate"]] if winner is not None else None
     result = {"schema": "auto_self_research/1", "label": "FORMAL" if formal else "TEST ONLY",
               "currency": prices["currency"], "practice_tasks": practice,
               "proposal_ledger_path": str(proposal_ledger.path),
               "proposal_ledger_sha256": _hash(proposal_ledger.path),
               "proposal_attempts": proposal_attempts, "evaluations": evaluations,
               "reports": all_reports, "ranking": ranking,
-              "selection": {**winner, "config_path": selected["selection"]["config_path"],
-                            "config_sha256": selected["selection"]["config_sha256"]},
+              "overall_best_on_practice": overall_winner["candidate"],
+              "selection": ({**winner, "config_path": selected["selection"]["config_path"],
+                             "config_sha256": selected["selection"]["config_sha256"],
+                             "beats_default_on_practice": rank_key(winner) > rank_key(ranking[0])}
+                            if winner is not None else None),
               "total_task_cost": task_cost, "total_proposal_cost": proposal_cost,
               "total_research_cost": task_cost + proposal_cost,
               "budget_policy": "no overall cap; positive inner task budgets"
               if formal else "no overall cap; TEST-only inner task budgets",
-              "next_step": "Verify selected files, then run batch validation admission once"}
+              "next_step": ("Verify the best generated candidate, then run validation admission once"
+                            if winner is not None else
+                            "No valid generated candidate; stop before validation and exam")}
     (study_dir / "auto_self_research_report.json").write_text(
         json.dumps(result, ensure_ascii=False, indent=2) + chr(10), encoding="utf-8")
     return result
@@ -541,6 +549,8 @@ def auto_evaluate_candidates(
 def verify_auto_selected(study_report: Mapping) -> Path:
     if study_report.get("schema") != "auto_self_research/1":
         raise ValueError("Expected auto_self_research/1")
+    if not isinstance(study_report.get("selection"), Mapping):
+        raise ValueError("Automatic self-research produced no valid tuned candidate")
     name = study_report["selection"]["candidate"]
     return verify_selected(study_report["evaluations"][name])
 

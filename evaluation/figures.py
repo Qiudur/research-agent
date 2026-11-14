@@ -34,7 +34,7 @@ def _finite(value, name, nonnegative=False):
 
 def build_study(reports, *, research_reports=None, research_total_cost=None,
                 research_run_ids=None, admission=None):
-    """Require four configs x three paired runs; keep TEST visibly separate."""
+    """Require three paired runs per eligible config; keep TEST separate."""
     grouped = defaultdict(dict)
     phases, currencies, ids = set(), set(), set()
     tasks = None
@@ -62,21 +62,26 @@ def build_study(reports, *, research_reports=None, research_total_cost=None,
                 raise ValueError("Missing task_end ledger citation")
             for key in ("llm", "run", "queue", "wall"):
                 _finite(task.get("seconds", {}).get(key), "seconds." + key, True)
-    if set(grouped) != set(CONFIGS) or any(set(grouped[c]) != {1, 2, 3} for c in CONFIGS):
-        raise ValueError("Study needs four configurations and three repetitions each")
+    active = tuple(config for config in CONFIGS if config in grouped)
+    rejected = (isinstance(admission, dict) and admission.get("claim") == "rejected"
+                and admission.get("baseline") == "default_lib"
+                and admission.get("candidate") == "tuned_lib")
+    expected = CONFIGS[:3] if rejected else CONFIGS
+    if active != expected or any(set(grouped[c]) != {1, 2, 3} for c in active):
+        raise ValueError("Study needs three repetitions of each eligible configuration")
     if len(phases) != 1 or len(currencies) != 1:
         raise ValueError("Do not mix phases or currencies")
     phase, currency = phases.pop(), currencies.pop()
     test_only = phase == "dev" and currency == "TEST"
     if not (phase == "exam" and currency != "TEST") and not test_only:
         raise ValueError("Only exam or explicitly TEST dev runs can be plotted")
-    if phase == "exam" and (not isinstance(admission, dict)
-                            or admission.get("claim") != "admitted"
-                            or admission.get("baseline") != "default_lib"
-                            or admission.get("candidate") != "tuned_lib"):
-        raise ValueError("Formal four-line study requires recorded tuning admission")
+    if phase == "exam" and not (rejected or (isinstance(admission, dict)
+            and admission.get("claim") == "admitted"
+            and admission.get("baseline") == "default_lib"
+            and admission.get("candidate") == "tuned_lib")):
+        raise ValueError("Formal study requires recorded tuning admission")
     stats, rows = {}, []
-    for config in CONFIGS:
+    for config in active:
         runs = [grouped[config][i] for i in (1, 2, 3)]
         scores = [mean(task["holdout_score"] for task in run["tasks"]) for run in runs]
         costs = [run["total_cost"] for run in runs]
@@ -91,9 +96,10 @@ def build_study(reports, *, research_reports=None, research_total_cost=None,
                              "quote_error": task.get("quote_error"),
                              "task_end_seq": task["evidence"]["task_end_seq"]})
     comparisons = {}
-    for baseline, candidate, key in (("naive", "default", "scheduler"),
-                                     ("default", "default_lib", "library"),
-                                     ("default_lib", "tuned_lib", "self_research")):
+    pairs = [("naive", "default", "scheduler"), ("default", "default_lib", "library")]
+    if not rejected:
+        pairs.append(("default_lib", "tuned_lib", "self_research"))
+    for baseline, candidate, key in pairs:
         pair = [grouped[c][i] for c in (baseline, candidate) for i in (1, 2, 3)]
         comparisons[key] = compare_configurations(pair, baseline=baseline, candidate=candidate)
     if research_reports and research_total_cost is not None:
@@ -112,14 +118,16 @@ def build_study(reports, *, research_reports=None, research_total_cost=None,
     if research_total_cost is not None:
         research_cost = _finite(research_total_cost, "total research cost", True)
         research_ids = list(research_run_ids or [])
-    savings = (stats["default_lib"]["cost_mean"] - stats["tuned_lib"]["cost_mean"]) / len(tasks)
-    breakeven = math.ceil(research_cost / savings) if research_cost is not None and savings > 0 else None
+    savings = ((stats["default_lib"]["cost_mean"] - stats["tuned_lib"]["cost_mean"]) / len(tasks)
+               if not rejected else None)
+    breakeven = math.ceil(research_cost / savings) if research_cost is not None and savings is not None and savings > 0 else None
     return {"schema": "study/1", "phase": phase, "currency": currency, "test_only": test_only,
             "tasks": list(tasks), "configurations": stats, "comparisons": comparisons,
             "admission": admission,
             "task_rows": rows, "breakeven": {"research_cost": research_cost,
             "research_run_ids": research_ids, "savings_per_task": savings, "tasks": breakeven,
-            "eligible": all(delta >= 0 for delta in comparisons["self_research"]["paired_differences"]) and savings > 0}}
+            "eligible": (not rejected and all(delta >= 0 for delta in
+            comparisons["self_research"]["paired_differences"]) and savings > 0)}}
 
 
 def _auto_research_cost(study_dir: Path, project_root: Path, currency: str, test_only: bool,
@@ -205,9 +213,10 @@ def build_study_from_batch(batch_dir: Path, *, research_reports=None,
         raise ValueError("Expected batch_plan/1 and batch_report/1")
     if plan.get("label") != batch.get("label") or not plan.get("run_exam"):
         raise ValueError("Batch lacks a completed exam plan")
-    if (batch.get("tuned_exam_skipped") or not isinstance(batch.get("admission"), dict)
-            or batch["admission"].get("claim") != "admitted"):
-        raise ValueError("Tuned configuration was not admitted to this exam")
+    admission = batch.get("admission")
+    if (not isinstance(admission, dict) or admission.get("claim") not in {"admitted", "rejected"}
+            or bool(batch.get("tuned_exam_skipped")) != (admission["claim"] == "rejected")):
+        raise ValueError("Batch has an inconsistent tuning admission or exam exclusion")
     for filename, digest in plan.get("sealed_inputs", {}).items():
         path = Path(filename).resolve()
         if not path.is_relative_to(project_root) or hashlib.sha256(path.read_bytes()).hexdigest() != digest:
@@ -219,6 +228,7 @@ def build_study_from_batch(batch_dir: Path, *, research_reports=None,
             != {(config, rep) for config in ("default_lib", "tuned_lib") for rep in (1, 2, 3)}):
         raise ValueError("Completed exam needs six distinct paired validation runs")
     validation_reports = []
+    tuned_configs = []
     for row in validation_entries:
         run_dir = (project_root / "runs" / row["run_id"]).resolve()
         if run_dir.parent != project_root / "runs" or Path(row["report_path"]).resolve() != run_dir / "report.json":
@@ -226,14 +236,17 @@ def build_study_from_batch(batch_dir: Path, *, research_reports=None,
         report = run_report(run_dir)
         if report["run_id"] != row["run_id"] or report["config"] != row["config"] or report["rep"] != row["rep"]:
             raise ValueError("Validation run identity differs from audited report")
+        if auto_study_dir is not None and row["config"] == "tuned_lib":
+            manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+            tuned_configs.append(manifest.get("agent_config"))
         validation_reports.append(report)
-    if admit_configuration(validation_reports, baseline="default_lib", candidate="tuned_lib") != batch["admission"]:
+    if admit_configuration(validation_reports, baseline="default_lib", candidate="tuned_lib") != admission:
         raise ValueError("Recorded tuning admission differs from audited validation runs")
     entries = [row for row in batch.get("runs", []) if row.get("logical_phase") == "exam"]
-    if len(entries) != 12 or len({row.get("run_id") for row in entries}) != 12:
-        raise ValueError("Completed exam must have exactly 12 distinct runs")
+    expected_runs = 12 if admission["claim"] == "admitted" else 9
+    if len(entries) != expected_runs or len({row.get("run_id") for row in entries}) != expected_runs:
+        raise ValueError("Completed exam has the wrong number of distinct runs")
     reports = []
-    tuned_configs = []
     for row in entries:
         run_dir = (project_root / "runs" / row["run_id"]).resolve()
         if run_dir.parent != project_root / "runs" or Path(row["report_path"]).resolve() != run_dir / "report.json":
@@ -249,15 +262,16 @@ def build_study_from_batch(batch_dir: Path, *, research_reports=None,
         raise ValueError("Use either an automatic study or explicit research runs")
     auto_cost, auto_runs = (None, [])
     if auto_study_dir is not None:
-        if len(tuned_configs) != 3 or any(config != tuned_configs[0] for config in tuned_configs):
-            raise ValueError("Exam tuned runs used inconsistent configuration files")
+        expected_tuned = 6 if admission["claim"] == "admitted" else 3
+        if len(tuned_configs) != expected_tuned or any(config != tuned_configs[0] for config in tuned_configs):
+            raise ValueError("Validation and exam tuned runs used inconsistent configuration files")
         currency = reports[0]["currency"]
         auto_cost, auto_runs = _auto_research_cost(
             Path(auto_study_dir), project_root, currency, batch["label"] == "TEST ONLY",
             expected_tuned_config=tuned_configs[0])
     study = build_study(reports, research_reports=research_reports,
                         research_total_cost=auto_cost, research_run_ids=auto_runs,
-                        admission=batch["admission"])
+                        admission=admission)
     if (study["test_only"] != (batch["label"] == "TEST ONLY")
             or {row["run_id"] for row in entries} !=
             {run_id for value in study["configurations"].values() for run_id in value["run_ids"]}):
@@ -269,23 +283,31 @@ def build_study_from_batch(batch_dir: Path, *, research_reports=None,
 def render_html(study):
     """Return portable HTML with an SVG range plot and ledger citations."""
     stats = study["configurations"]
-    values = [v for c in CONFIGS for v in stats[c]["scores"]]
+    active = [config for config in CONFIGS if config in stats]
+    values = [v for c in active for v in stats[c]["scores"]]
     lo, hi = min(values), max(values)
     span = max(hi - lo, 0.1)
     lo, hi = lo - span * .15, hi + span * .15
     x = lambda v: 265 + (v - lo) / (hi - lo) * 650
     marks = []
-    for i, config in enumerate(CONFIGS):
+    for i, config in enumerate(active):
+        index = CONFIGS.index(config)
         y, s, color = 75 + i * 75, stats[config], COLORS[i]
-        marks.append(f'<text x="12" y="{y+5}">{escape(LABELS[i])}</text>')
+        marks.append(f'<text x="12" y="{y+5}">{escape(LABELS[index])}</text>')
         marks.append(f'<line x1="{x(s["score_min"]):.1f}" x2="{x(s["score_max"]):.1f}" y1="{y}" y2="{y}" stroke="{color}" stroke-width="4"/>')
         marks.extend(f'<circle cx="{x(v):.1f}" cy="{y}" r="5" fill="white" stroke="{color}" stroke-width="2"/>' for v in s["scores"])
         marks.append(f'<circle cx="{x(s["score_mean"]):.1f}" cy="{y}" r="8" fill="{color}"/>')
         marks.append(f'<text x="930" y="{y+5}">{s["score_mean"]:.3f} · {s["cost_mean"]:.4f} {escape(study["currency"])}</text>')
-    svg = '<svg viewBox="0 0 1160 330" role="img" aria-label="四配置三遍分数与范围">' + ''.join(marks) + '</svg>'
+    svg = f'<svg viewBox="0 0 1160 330" role="img" aria-label="{len(active)}配置三遍分数与范围">' + ''.join(marks) + '</svg>'
     notice = 'TEST 联调数据，不代表正式效果或真实花费。' if study["test_only"] else '正式考试数据；数字可追溯到运行账本。'
+    if study["admission"] and study["admission"]["claim"] == "rejected":
+        notice += ' 研究版未通过验证准入，考试只运行其余三条线。'
     roi = study["breakeven"]
-    if roi["research_cost"] is None:
+    if study["admission"] and study["admission"]["claim"] == "rejected":
+        spent = (f'已审计研究成本 {roi["research_cost"]:.4f} {escape(study["currency"])}；'
+                 if roi["research_cost"] is not None else '研究成本尚无审计报告；')
+        roi_text = spent + '研究版未通过验证准入，未进入考试；不计算研究版回本点。'
+    elif roi["research_cost"] is None:
         roi_text = '研究自己的成本尚无审计报告，回本点未知。'
     elif roi["tasks"] is None:
         roi_text = '当前未观察到每题节省，无法计算正的回本点。'
@@ -296,13 +318,14 @@ def render_html(study):
     score_min = min(0.0, min(row["score"] for row in study["task_rows"]))
     score_max = max(1.0, max(row["score"] for row in study["task_rows"]))
     progress = []
-    for i, config in enumerate(CONFIGS):
+    for config in active:
+        index = CONFIGS.index(config)
         points = []
         for j, task_id in enumerate(study["tasks"]):
             scores = [row["score"] for row in study["task_rows"]
                       if row["config"] == config and row["task_id"] == task_id]
             points.append(f'{70 + j * 100},{210 - (mean(scores) - score_min) / (score_max - score_min) * 170:.1f}')
-        progress.append(f'<polyline points="{" ".join(points)}" fill="none" stroke="{COLORS[i]}" stroke-width="3"/>')
+        progress.append(f'<polyline points="{" ".join(points)}" fill="none" stroke="{COLORS[index]}" stroke-width="3"/>')
     chart_width = max(1160, 120 + len(study["tasks"]) * 100)
     timeline = f'<svg viewBox="0 0 {chart_width} 240" role="img" aria-label="逐题平均分数走势">' + ''.join(progress) + '</svg>'
     quote_points = []
@@ -327,11 +350,11 @@ def render_html(study):
                  f'{row["score"]:.4f}', f'{row["cost"]:.4f}',
                  f'{s["llm"]:.1f}/{s["run"]:.1f}/{s["queue"]:.1f}/{s["wall"]:.1f}', citation)
         body.append('<tr>' + ''.join(f'<td>{escape(str(value))}</td>' for value in cells) + '</tr>')
-    return ('<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>Research Agent 四线报告</title>'
+    return ('<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>Research Agent 配置对照报告</title>'
             '<style>body{font:15px system-ui;margin:40px auto;max-width:1200px;color:#263247}svg{width:100%}'
             'table{border-collapse:collapse;width:100%;font-size:12px}th,td{padding:7px;border-bottom:1px solid #dce3ef;text-align:left}'
             '.notice{background:#fff4d7;padding:12px;border-radius:6px}section{margin-top:28px}</style>'
-            f'<h1>四配置对照 · {escape(study["phase"])}</h1><p class="notice">{notice}</p>'
+            f'<h1>{len(active)} 配置对照 · {escape(study["phase"])}</h1><p class="notice">{notice}</p>'
             f'<section><h2>分数与花费</h2>{svg}<p>每行三个空心点对应三遍；线段为范围；实心点为均值。金额为每遍全部任务的均值。</p></section>'
             f'<section><h2>逐题分数走势</h2>{timeline}<p>按任务顺序绘制四种配置的三遍平均分数；纵轴范围 {score_min:.3f}–{score_max:.3f}。</p></section>'
             f'<section><h2>报价误差</h2>{quote_svg or "<p>没有可核对的报价误差。</p>"}<p>按任务顺序绘制平均绝对金额误差；金额以本报告币种计。</p></section>'
@@ -342,7 +365,7 @@ def render_html(study):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Build an audited four-line study report")
+    parser = argparse.ArgumentParser(description="Build an audited exam study report")
     parser.add_argument("--batch-dir", type=Path, required=True)
     parser.add_argument("--research-run-dir", type=Path, action="append", default=[])
     parser.add_argument("--auto-study-dir", type=Path,

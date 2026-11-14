@@ -10,7 +10,7 @@ from tempfile import TemporaryDirectory
 import unittest
 
 from evaluation.batch import _bank_tasks, _verify_code_freeze, execute_batch
-from evaluation.figures import build_study
+from evaluation.figures import build_study, build_study_from_batch, render_html
 from ledger import Ledger, Usage
 from library import Library
 
@@ -140,6 +140,12 @@ class BatchTests(unittest.TestCase):
             self.assertTrue(result["tuned_exam_skipped"])
             self.assertEqual(len(result["reports"]["exam"]), 9)
             self.assertNotIn("tuned_lib", {r["config"] for r in result["reports"]["exam"]})
+            study = build_study_from_batch(root / "batches/first")
+            self.assertEqual(set(study["configurations"]), {"naive", "default", "default_lib"})
+            self.assertNotIn("self_research", study["comparisons"])
+            self.assertFalse(study["breakeven"]["eligible"])
+            self.assertIsNone(study["breakeven"]["tasks"])
+            self.assertIn("未通过验证准入", render_html(study))
 
     def test_practice_only_does_not_touch_validation_or_exam(self):
         with TemporaryDirectory() as temp:

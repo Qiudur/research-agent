@@ -18,7 +18,7 @@
 
 evaluation.self_research.evaluate_candidates 接受具名 agent/1 配置，配置可引用各自的提示词文件；多候选比较必须包含 default 对照。每个候选在题库练习层按固定顺序独立跑三遍，返回全部审计过的 run_report/1 和每遍成本、平均分、平均花费、分数/花费比以及选中候选。候选配置与提示词逐文件记录 SHA256，verify_selected 在交给验证集准入前复核哈希。此入口只打开练习题包，不运行验证或考试题；关键价格、题库和硬上限文件在每遍前后核对。
 
-evaluation.self_research.auto_evaluate_candidates 从 default 配置开始，自动提出最多 8 轮候选；每轮模型输出只允许有界 agent/1 设置和四角色短策略附录，原提示词作为不变前缀保留。生成调用走 ModelClient，四桶 token、价目 SHA、源提示词 SHA、响应状态和失败调用可得 token 记入独立 proposal_ledger/1；候选排名将其生成费计入本候选成本，整体研究成本还包括被拒候选和失败调用。输出 auto_self_research/1，可用 verify_auto_selected 核验选中版本。每次调用的 max_output_tokens 只允许 128–4096。
+evaluation.self_research.auto_evaluate_candidates 从 default 配置开始，自动提出最多 8 轮候选；每轮模型输出只允许有界 agent/1 设置和四角色短策略附录，原提示词作为不变前缀保留。生成调用走 ModelClient，四桶 token、价目 SHA、源提示词 SHA、响应状态和失败调用可得 token 记入独立 proposal_ledger/1；候选排名将其生成费计入本候选成本，整体研究成本还包括被拒候选和失败调用。输出 auto_self_research/1，selection 是最佳**生成**候选，overall_best_on_practice 同时记录含默认版的总胜者；即使默认版练习表现更好，生成候选仍须过验证准入才可考试。若无有效生成候选，selection 为 null，停止于练习阶段。可用 verify_auto_selected 核验选中版本。每次调用的 max_output_tokens 只允许 128–4096。
 
 自动研究没有整体货币上限，但每次内层任务仍保留正预算和 90% 硬闸；不能把它表述为“内层任务无预算”。正式自研究须有真实价目、API 凭据和冻结题库；TEST-only 使用 dev manifest 和 TEST 价目，只说明机制可运行。选中配置必须再通过 batch 的一次验证准入才能进正式考试。
 
@@ -30,7 +30,7 @@ evaluation.batch.execute_batch 接受 project_root、独占的 batch_dir、B 的
 
 TEST-only 模式允许脚本角色与临时预算，但底层 manifest 的 phase 必为 dev；batch_report 的 logical_phase 仅表示流程位置，不能作为正式验证或考试成绩。正式模式拒绝 TEST 价目、脚本角色、未冻结或未完成的题库、缺预算和缺 API 凭据；正式考试还要求四条配置及各自可区分的设置。正式运行每遍检查 Git HEAD 与 code_commit 一致且工作区洁净；运行输出应放在已忽略的 batches/ 或 runs/。自研究的无预算正式价格探索不由此入口完成。
 
-四线出图从同一批次的 batch_report 读取四配置×三遍；另重审六份验证运行并重新计算准入，防止仅凭报告字段放行。命令入口是 python3 -m evaluation.figures --batch-dir batches/某批次 --auto-study-dir batches/某自研究 --output batches/某批次/study.html。auto-study-dir 会重审全部练习 run_report 和 proposal_ledger，校验自研究选中配置与三遍考试研究版 manifest 的路径和哈希一致，再把失败提案成本计入回本点。TEST dev 结果带显著水印，不能伪装为正式考试。
+出图从同一批次的 batch_report 读取考试报告，并重审六份验证运行、重新计算准入。准入通过时是四配置×三遍；准入拒绝时是其余三配置×三遍，明确研究版未进考试且不计算其回本点。命令入口是 python3 -m evaluation.figures --batch-dir batches/某批次 --auto-study-dir batches/某自研究 --output batches/某批次/study.html。auto-study-dir 会重审全部练习 run_report 和 proposal_ledger，校验自研究选中配置与验证/考试研究版 manifest 的路径和哈希一致，再把失败提案成本计入回本点。TEST dev 结果带显著水印，不能伪装为正式考试。
 
 `ledger.py` 实现 `ledger/1`：每个任务或运行一个只追加账本，模型 token 分为互斥的 `input`、`cached_input`、`output`、`reasoning` 四桶，价格表缺失或哈希不匹配会直接报错。
 

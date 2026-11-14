@@ -65,6 +65,20 @@ class StudyFiguresTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             build_study(reports)
 
+    def test_rejected_candidate_has_honest_three_line_report(self):
+        reports = [report for report in sample_reports() if report["config"] != "tuned_lib"]
+        admission = {"claim": "rejected", "baseline": "default_lib",
+                     "candidate": "tuned_lib"}
+        study = build_study(reports, research_total_cost=4.0, admission=admission)
+        self.assertEqual(len(study["configurations"]), 3)
+        self.assertIsNone(study["breakeven"]["savings_per_task"])
+        self.assertIsNone(study["breakeven"]["tasks"])
+        self.assertFalse(study["breakeven"]["eligible"])
+        html = render_html(study)
+        self.assertIn("未进入考试", html)
+        self.assertIn("已审计研究成本 4.0000 TEST", html)
+        self.assertNotIn("研究版／练过的库</text>", html)
+
     def test_batch_membership_and_sealed_source_are_checked(self):
         with TemporaryDirectory() as temp:
             project = Path(temp)

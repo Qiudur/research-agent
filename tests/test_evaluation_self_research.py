@@ -99,7 +99,8 @@ class SelfResearchTests(unittest.TestCase):
         tuned.write_text(json.dumps(tuned_config), encoding="utf-8")
         return baselines, {"default": root / "config/agent.json", "tuned-1": tuned}, planner
 
-    def fake_executor(self, calls, *, tamper: Path | None = None):
+    def fake_executor(self, calls, *, tamper: Path | None = None,
+                      tuned_score: float = .60, tuned_tokens: int = 100):
         def execute(*, run_dir, task_id, harness, baseline_solution,
                     test_only_budget, **kwargs):
             self.assertEqual(test_only_budget, 1.0)
@@ -125,9 +126,9 @@ class SelfResearchTests(unittest.TestCase):
             ledger.emit("task_start", budget=1, wall_seconds=60)
             tuned = manifest["config"] == "tuned_lib"
             ledger.llm_call(node_id=None, role="planner", purpose="plan", effort="high",
-                            model="test-scripted", usage=Usage(input=100 if tuned else 300),
+                            model="test-scripted", usage=Usage(input=tuned_tokens if tuned else 300),
                             seconds=.1, prompt_hash="a" * 64)
-            score = .60 if tuned else .55
+            score = tuned_score if tuned else .55
             tree = {"schema": "node/1", "node_id": "n0000", "parent": None,
                     "hypothesis": "Baseline", "status": "accepted", "score": {"dev": score},
                     "cost": 0, "failure": None, "cites": []}
@@ -288,6 +289,52 @@ class SelfResearchTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "max_output_tokens"):
                 auto_evaluate_candidates(**kwargs, rounds=1, max_output_tokens=5000)
             self.assertFalse((root / "batches/auto-study").exists())
+
+    def test_best_generated_candidate_is_still_sent_to_validation_when_default_wins_practice(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            baselines, candidates, _ = self.setup_project(root)
+            result = auto_evaluate_candidates(
+                project_root=root, study_dir=root / "batches/auto-study", harness=object(),
+                default_config=candidates["default"], baseline_solutions=baselines,
+                prices_path=root / "config/prices_test_only.json", model="test-scripted",
+                code_commit="a" * 40, rounds=1, max_output_tokens=1024,
+                test_only_budget=1.0,
+                proposal_client=SimpleNamespace(responses=FakeProposalResponses()),
+                task_executor=self.fake_executor([], tuned_score=.50, tuned_tokens=300),
+            )
+            self.assertEqual(result["overall_best_on_practice"], "default")
+            self.assertEqual(result["selection"]["candidate"], "auto-01")
+            self.assertFalse(result["selection"]["beats_default_on_practice"])
+            self.assertTrue(verify_auto_selected(result).is_file())
+
+    def test_all_rejected_proposals_stop_before_validation_with_cost_recorded(self):
+        class BadResponses:
+            def create(self, **kwargs):
+                return SimpleNamespace(id="bad-proposal", status="completed", output=[],
+                                       output_text="{bad json",
+                                       usage={"input_tokens": 40, "output_tokens": 20,
+                                              "input_tokens_details": {"cached_tokens": 0},
+                                              "output_tokens_details": {"reasoning_tokens": 5}})
+
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            baselines, candidates, _ = self.setup_project(root)
+            result = auto_evaluate_candidates(
+                project_root=root, study_dir=root / "batches/auto-study", harness=object(),
+                default_config=candidates["default"], baseline_solutions=baselines,
+                prices_path=root / "config/prices_test_only.json", model="test-scripted",
+                code_commit="a" * 40, rounds=1, max_output_tokens=1024,
+                test_only_budget=1.0,
+                proposal_client=SimpleNamespace(responses=BadResponses()),
+                task_executor=self.fake_executor([]),
+            )
+            self.assertIsNone(result["selection"])
+            self.assertEqual(result["overall_best_on_practice"], "default")
+            self.assertEqual(result["proposal_attempts"][0]["status"], "rejected")
+            self.assertGreater(result["total_proposal_cost"], 0)
+            with self.assertRaisesRegex(ValueError, "no valid tuned candidate"):
+                verify_auto_selected(result)
 
     def test_auto_fake_responses_to_real_timing_task_end_to_end(self):
         with TemporaryDirectory() as temp:
