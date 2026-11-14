@@ -124,6 +124,60 @@ class RoadshowReportTest(unittest.TestCase):
         self.assertNotIn("题库已冻结 · 正式四线待运行", report)
         self.assertNotIn("1,573,026 token", report)
 
+    def test_internal_token_v2_status_survives_regeneration(self):
+        self.write_calibration_sources(
+            "合计 36 次尝试：35 次正常收尾、1 次提前错误；"
+            "消耗 **1,041,097 token**；holdout 尝试 0；"
+            "72/72 次尝试；ready=true。\n"
+        )
+        (self.repo / "README.md").write_text(
+            "# Demo\n\n这是按《分工文档》实现的可审计研究系统。"
+            "首次内部练习批次没有有效候选；修复后的 v2 正在独立工作区运行，"
+            "验证与考试尚未启动。TOKENS 不是现金价格或官方成绩。\n\n"
+            "## 验证\n\n主回归 203 项通过；技能层 6 项、看板 7 项也已通过。\n\n"
+            "## 当前限制\n\nbank-v1 已冻结并完成 dev 校准。\n\n"
+            "## 冻结后下一步\n\n1. 等待 v2 十题 practice 自研究。\n",
+            encoding="utf-8",
+        )
+        (self.repo / "config").mkdir()
+        (self.repo / "config/prices.json").write_text(
+            json.dumps({"schema": "prices/1", "currency": "TOKENS",
+                        "test_only": False}), encoding="utf-8",
+        )
+        self.run_git("add", "README.md", "config/prices.json")
+        self.run_git("commit", "-qm", "Record internal token v2 study")
+        self.assertTrue(generate(self.repo, self.output))
+        report = self.output.read_text(encoding="utf-8")
+        for expected in (
+            "内部 token v2 练习研究进行中 · 验证／考试待真实账本",
+            "首次内部练习批次没有有效候选；修复后的 v2 正在独立工作区运行，验证与考试尚未启动",
+            "216", "TOKENS、test_only=false",
+            "脚本角色 TEST 联调不是实际模型成本",
+            "v2 自研究、验证与考试数字均待对应真实账本审计后填入",
+        ):
+            self.assertIn(expected, report)
+        self.assertNotIn("TEST 单位对应报告的 token 用量", report)
+        self.assertNotIn("阶段状态请以 README 为准", report)
+
+    def test_no_internal_price_table_does_not_claim_token_tariff(self):
+        self.assertTrue(generate(self.repo, self.output))
+        report = self.output.read_text(encoding="utf-8")
+        self.assertIn("TEST 联调不能代表真实模型成本、现金价格或官方成绩", report)
+        self.assertNotIn("TOKENS、test_only=false", report)
+
+    def test_completed_validation_is_not_mislabeled_pending(self):
+        (self.repo / "README.md").write_text(
+            "# Demo\n\n## 当前限制\n\n正式验证已完成，考试账本待审。\n",
+            encoding="utf-8",
+        )
+        self.run_git("add", "README.md")
+        self.run_git("commit", "-qm", "Record validation status")
+        self.assertTrue(generate(self.repo, self.output))
+        report = self.output.read_text(encoding="utf-8")
+        self.assertIn("阶段状态请以 README 为准", report)
+        self.assertNotIn("正式四线比较未执行", report)
+        self.assertNotIn("验证与考试数字待对应真实账本审计后填入", report)
+
 
 if __name__ == "__main__":
     unittest.main()

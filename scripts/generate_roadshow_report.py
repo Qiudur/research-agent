@@ -160,7 +160,9 @@ def evidence(repo: Path) -> dict[str, str]:
     decisions = committed_text(repo, "docs/项目交付与决策.md")
     calibration = calibration_evidence(repo)
 
-    test_match = re.search(r"主测试\s*(\d+)\s*项、技能层\s*(\d+)\s*项、看板\s*(\d+)\s*项", readme)
+    test_match = (re.search(r"主测试\s*(\d+)\s*项、技能层\s*(\d+)\s*项、看板\s*(\d+)\s*项", readme)
+                  or re.search(r"主回归\s*(\d+)\s*项.*?技能层\s*(\d+)\s*项.*?看板\s*(\d+)\s*项",
+                               readme, re.S))
     tests = sum(map(int, test_match.groups())) if test_match else None
     task_match = re.search(r"(\d+)\s*道入库题", readme)
     task_count = task_match.group(1) if task_match else "待核对"
@@ -194,22 +196,53 @@ def evidence(repo: Path) -> dict[str, str]:
         difference = (current / baseline - 1) * 100 if percent else current - baseline
         return (f"{difference:+.1f}%" if percent else f"{difference:+.4f}")
 
+    project_intro = next(
+        (plain(block) for block in readme.split("\n\n") if block.startswith("这是按《分工文档》")),
+        first_paragraph(readme),
+    )
     current_limits = first_paragraph(section(readme, "当前限制"))
     limit_sentences = [part.strip() for part in re.split(r"(?<=。)", current_limits) if part.strip()]
     priority = [part for part in limit_sentences
                 if "bank-v1" in part or "正式货币" in part or "正式自研究" in part]
     current_limits = "".join(priority[:2] or limit_sentences[:2])
+    phase_sentence = next((part.strip() for part in project_intro.split("。")
+                           if "v2" in part and "验证与考试尚未启动" in part), "")
+    if phase_sentence and phase_sentence not in current_limits:
+        current_limits = (current_limits + phase_sentence + "。").strip()
     next_source = (section(readme, "冻结后下一步") if calibration else
                    section(decisions, "尚待外部输入与正式验收"))
     next_steps = [excerpt(item, 120) for item in number_list(next_source, 3)]
-    project_intro = next(
-        (plain(block) for block in readme.split("\n\n") if block.startswith("这是按《分工文档》")),
-        first_paragraph(readme),
-    )
-    formal_pending = "正式四线比较尚未执行" in readme or "正式验证" in current_limits
+    v2_pending = bool(phase_sentence and "v2 正在" in phase_sentence)
+    formal_pending = v2_pending or any(phrase in readme for phrase in (
+        "正式四线比较尚未执行",
+        "正式自研究、一次性验证和考试仍待运行",
+        "验证与考试尚未启动",
+    ))
+    try:
+        prices = json.loads(committed_text(repo, "config/prices.json"))
+    except (ValueError, TypeError):
+        prices = {}
+    if not isinstance(prices, dict):
+        prices = {}
+    internal_tokens = (prices.get("schema") == "prices/1"
+                       and prices.get("currency") == "TOKENS"
+                       and prices.get("test_only") is False)
+    if internal_tokens:
+        accounting_notice = (
+            "真实模型 dev 试验的 TEST ONLY 账本按网关返回的 token 计量；"
+            "脚本角色 TEST 联调不是实际模型成本。冻结题库内部正式价格表为 "
+            "TOKENS、test_only=false，同样不是现金价格或官方成绩。"
+        )
+    else:
+        accounting_notice = "TEST 联调不能代表真实模型成本、现金价格或官方成绩。"
+    if v2_pending:
+        accounting_notice += "v2 自研究、验证与考试数字均待对应真实账本审计后填入。"
+    elif formal_pending:
+        accounting_notice += "验证与考试数字待对应真实账本审计后填入。"
     return {
         "intro": project_intro,
-        "status": ("题库已冻结 · 正式四线待运行" if calibration and formal_pending else
+        "status": ("内部 token v2 练习研究进行中 · 验证／考试待真实账本" if v2_pending else
+                   "题库已冻结 · 正式四线待运行" if calibration and formal_pending else
                    "DEV / TEST ONLY · 正式四线比较未执行" if formal_pending else
                    "阶段状态请以 README 为准"),
         "tasks": task_count,
@@ -222,6 +255,7 @@ def evidence(repo: Path) -> dict[str, str]:
         "transfer_score": delta(transfer_score),
         "transfer_tokens": delta(transfer_tokens, percent=True),
         "limits": current_limits or "请查看 README 的当前限制。",
+        "accounting_notice": accounting_notice,
         "calibration": calibration,
         "next_steps": next_steps,
     }
@@ -296,7 +330,7 @@ HTML = Template("""<!doctype html>
       <article class="card"><div class="eyebrow">B / Bench</div><h3>任务与隔离评分</h3><p>提速与表格二分类两类任务，沙箱隔离，并保留 dev 测量。</p></article>
       <article class="card"><div class="eyebrow">C / Control</div><h3>编排与报告</h3><p>价格账本、练习／验证／考试、自研究、报告和只读看板。</p></article>
     </div>
-    <div class="grid" style="margin-top:22px"><div class="card"><span class="metric">$tasks</span><span class="label">入库题 · README</span></div><div class="card"><span class="metric">$tests</span><span class="label">三组通过测试 · README</span></div><div class="card"><span class="metric">$total_commits</span><span class="label">累计源码相关提交</span></div></div>
+    <div class="grid" style="margin-top:22px"><div class="card"><span class="metric">$tasks</span><span class="label">入库题 · README</span></div><div class="card"><span class="metric">$tests</span><span class="label">已通过测试 · README</span></div><div class="card"><span class="metric">$total_commits</span><span class="label">累计源码相关提交</span></div></div>
   </div><div class="footer"><span>来源：<a href="../README.md">README</a> · <a href="项目交付与决策.md">决策记录</a></span><span>02 / 05</span></div></section>
   <section class="slide" id="evidence"><div class="inner">
     <div class="eyebrow">02 / Evidence</div><h2>真实模型 dev 证据</h2>
@@ -306,7 +340,7 @@ HTML = Template("""<!doctype html>
       <article class="card"><div class="label">跨题迁移复评</div><span class="metric amber">$transfer_score</span><p>归一化分数变化，但每遍 token 变化 $transfer_tokens；结果仍属于 dev，不能证明正式准入。</p><p class="small"><a href="真实模型迁移复评.md">查看迁移记录 ↗</a></p></article>
     </div>
     $calibration_notice
-    <p class="notice">TEST 单位对应报告的 token 用量，不代表现金成本。正式验证、考试及四线效果仍待完成。</p>
+    <p class="notice">$accounting_notice</p>
   </div><div class="footer"><span>数值从仓库已提交证据文档提取</span><span>03 / 05</span></div></section>
   <section class="slide" id="changes"><div class="inner">
     <div class="eyebrow">03 / Repository Delta</div><h2>本轮仓库更新</h2>
@@ -318,7 +352,7 @@ HTML = Template("""<!doctype html>
   </div><div class="footer"><span>提交记录：<a href="https://github.com/QZTnb/research-agent/commits/main/">Git 历史 ↗</a></span><span>04 / 05</span></div></section>
   <section class="slide" id="next"><div class="inner">
     <div class="eyebrow">04 / Decision</div><h2>下一步与边界</h2>
-    <div class="split"><div><div class="notice">$limits</div><p class="small">上方状态摘自 <a href="../README.md">README 当前限制</a>；请以原始证据和正式预检为准。</p></div><div class="card"><h3>正式验收路径</h3><ol>$next_items</ol><p class="small"><a href="项目交付与决策.md">查看完整决策记录 ↗</a></p></div></div>
+    <div class="split"><div><div class="notice">$limits</div><p class="small">上方状态摘自 <a href="../README.md">README</a>；请以原始证据和正式预检为准。</p></div><div class="card"><h3>内部研究后续路径</h3><ol>$next_items</ol><p class="small"><a href="项目交付与决策.md">查看完整决策记录 ↗</a></p></div></div>
     <p class="small">每小时检查仓库；仅当新的源码或文档提交出现时重生成。路演时可用方向键翻页，也可打印为 PDF。</p>
   </div><div class="footer"><span>生成器：scripts/generate_roadshow_report.py</span><span>05 / 05</span></div></section>
   <script>
@@ -361,6 +395,7 @@ def build(repo: Path, head: str, commits: list[tuple[str, str, str]], files: lis
         study_score=safe(facts["study_score"]), study_tokens=safe(facts["study_tokens"]),
         transfer_score=safe(facts["transfer_score"]), transfer_tokens=safe(facts["transfer_tokens"]),
         limits=safe(facts["limits"]), next_items=next_html,
+        accounting_notice=safe(facts["accounting_notice"]),
         calibration_notice=calibration_html,
         period_commits=len(commits), file_count=len(files), period_label=safe(label),
         categories=category_html, files=file_html, commit_items=commit_html,
