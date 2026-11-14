@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 from pathlib import Path
+import re
 from time import monotonic
 from typing import Any, Mapping
 
@@ -19,6 +20,19 @@ from .io import append_jsonl, atomic_json, field, fields, read_json
 from .model import BudgetReserveError, ModelCallError
 from .scheduler import Scheduler
 from .tree import ExperimentTree
+
+FAILURE_TAIL_CHARS = 600
+# A stderr line naming a task-private location is dropped before it can reach a model.
+_PRIVATE_LINE = re.compile(r"\bhidden\b|holdout|dev\.csv|bank\.json|reference\.py|RA_EVAL", re.IGNORECASE)
+_CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
+
+
+def failure_tail(text: Any, limit: int = FAILURE_TAIL_CHARS) -> str:
+    """Last `limit` characters of a run's stderr, without task-private lines."""
+    lines = []
+    for line in _CONTROL_CHARS.sub("", str(text or "")).splitlines():
+        lines.append("[line removed: names a task-private path]" if _PRIVATE_LINE.search(line) else line)
+    return "\n".join(lines).strip()[-limit:]
 
 
 @dataclass(frozen=True)
@@ -71,7 +85,7 @@ class TaskRunner:
         wall_seconds = field(budget, "wall_seconds")
         if money is None:
             raise ValueError("Task budget.money is unset; do not run with invented pricing")
-        self.scheduler = Scheduler(self.config, self.hard_caps, money, wall_seconds)
+        self.scheduler = Scheduler(self.config, self.hard_caps, money, wall_seconds, task_id=task_id)
         self.baseline_score = fields(baseline_score)
         if self.baseline_score.get("schema") != "score/1" or self.baseline_score.get("split") != "dev":
             raise ValueError("The injected baseline must be a dev score/1 result")
@@ -97,6 +111,8 @@ class TaskRunner:
         self.non_improving = 0
         self.reviewed_behind = False
         self.last_review_note = ""
+        # node_id -> latest failed attempt (only filled when failure_feedback is on).
+        self.last_failure: dict[str, dict[str, Any]] = {}
 
     def _task_context(self) -> dict[str, Any]:
         workspace = Path(field(self.task, "workspace")).resolve()
@@ -146,6 +162,42 @@ class TaskRunner:
     def _emit(self, kind: str, *, node_id: str | None = None, **values: Any) -> None:
         self.ledger.emit(kind, node_id=node_id, **values)
 
+    def _hard_stop(self, best: dict[str, Any] | None = None) -> str | None:
+        """The scheduler's hard stop (budget_cap, time or ceiling) for the current best node."""
+        best = best or self.tree.best_node()
+        return self.scheduler.stop_reason(
+            spent=self._spent(), elapsed_wall=self._elapsed(),
+            best_score=best["score"]["dev"], best_node_id=best["node_id"],
+        )
+
+    def _stop_loss(self) -> str | None:
+        """"stop_loss" once the completed non-root nodes meet this scenario's no-gain rule."""
+        statuses = [n["status"] for n in self.tree.all_nodes()
+                    if n["origin"] != "root" and n["status"] in {"accepted", "rejected", "failed"}]
+        return self.scheduler.stop_loss_reason(statuses)
+
+    def _note_failure(
+        self, node_id: str, phase: str, category: str, *,
+        run_data: Mapping[str, Any] | None = None, score_data: Mapping[str, Any] | None = None,
+    ) -> None:
+        """Keep why the latest attempt failed so a fix or diagnosis call can see it.
+
+        Only failure_feedback runs record it. It holds the failure category, the
+        scorer's cheat flags and correctness verdict, and the tail of the run's
+        stderr; never scorer error text, hidden files or evaluation data.
+        """
+        if not self.config.get("failure_feedback"):
+            return
+        score_data = score_data or {}
+        correct = score_data.get("correct")
+        self.last_failure[node_id] = {
+            "phase": phase,
+            "category": category,
+            "cheat_flags": [str(flag)[:60] for flag in (score_data.get("cheat_flags") or [])][:10],
+            "correct": correct if isinstance(correct, bool) else None,
+            "stderr_tail": failure_tail((run_data or {}).get("stderr_tail")),
+        }
+
     def _role(self, method: str, payload: dict[str, Any], *, node_id: str | None = None, **options: Any) -> dict[str, Any]:
         cost_before = self._spent()
         elapsed_before = self._ledger_elapsed()
@@ -187,7 +239,7 @@ class TaskRunner:
             for n in self.tree.all_nodes() if n["status"] in {"accepted", "rejected", "failed"}
         ]
         recent = history if self.config.get("history_mode") == "full" else history[-8:]
-        return {
+        payload = {
             "task": self.context,
             "ability_brief": self.library.brief(entries),
             "available_entry_ids": [entry["id"] for entry in entries],
@@ -197,6 +249,11 @@ class TaskRunner:
             "allocations": self.allocations,
             "last_review": self.last_review_note,
         }
+        if self.config.get("planner_mode") == "lean":
+            del payload["allocations"]  # the lean planner keeps no budget allocation
+        if self.config.get("hypotheses_per_plan") is not None:
+            payload["hypotheses_per_plan"] = int(self.config["hypotheses_per_plan"])
+        return payload
 
     def _prior_predictions(self) -> list[dict[str, float]]:
         observations = []
@@ -244,6 +301,7 @@ class TaskRunner:
                     estimate,
                     cited_effects=[allowed[entry_id]["effect"] for entry_id in cites],
                     past_predictions=self._prior_predictions(),
+                    cost_prior=self.scheduler.cost_prior,
                 )
                 self.proposal_counter += 1
                 self.proposals.append({
@@ -298,12 +356,15 @@ class TaskRunner:
                  "failure": item["failure"], "cost": item["cost"]}
                 for item in self.tree.all_nodes()
             ]
+        if attempt > 1 and node_id in self.last_failure:
+            payload["last_failure"] = self.last_failure[node_id]
         try:
             response = self._role("execute", payload, node_id=node_id, fix=attempt > 1)
             save_solution(node_dir, response.get("code", ""), parent_dir)
         except Exception as exc:
             if isinstance(exc, BudgetReserveError):
                 raise
+            self._note_failure(node_id, "executor", "exception")
             return None, f"Executor output failed: {exc}"
         try:
             run_result = self.harness.run_script(self.task_id, node_dir, ["solution.py"])
@@ -322,6 +383,8 @@ class TaskRunner:
         seconds["run"] += float(run_data.get("seconds", 0) or 0)
         self.tree.patch(node_id, seconds=seconds)
         if run_data.get("exit_code") != 0 or run_data.get("timed_out") or run_data.get("oom"):
+            category = "timeout" if run_data.get("timed_out") else "oom" if run_data.get("oom") else "exception"
+            self._note_failure(node_id, "run", category, run_data=run_data)
             return None, str(run_data.get("stderr_tail") or "Script failed")[-2000:]
         try:
             score_result = self.harness.score(self.task_id, node_dir, "dev")
@@ -330,6 +393,7 @@ class TaskRunner:
                 raise ValueError("Harness returned an unsupported score schema or split")
             save_score(node_dir, score_data)
         except Exception as exc:
+            self._note_failure(node_id, "score", "score", run_data=run_data)
             return None, f"Dev scoring failed: {exc}"
         timing = score_data.get("seconds") or {}
         self._emit(
@@ -345,9 +409,16 @@ class TaskRunner:
         self.tree.patch(node_id, seconds=seconds)
         if not score_data.get("ok") or score_data.get("score") is None:
             error = score_data.get("error") or {}
+            kind = error.get("kind") if isinstance(error, dict) else None
+            self._note_failure(
+                node_id, "score", kind if kind in {"exception", "timeout", "oom"} else "score",
+                run_data=run_data, score_data=score_data,
+            )
             return None, str(error.get("message", "Scoring failed"))[-2000:]
         if not score_data.get("correct", True):
+            self._note_failure(node_id, "score", "score", run_data=run_data, score_data=score_data)
             return None, "Correctness check failed"
+        self.last_failure.pop(node_id, None)
         return score_data, None
 
     def _record_citations(self, node: dict[str, Any]) -> None:
@@ -365,28 +436,32 @@ class TaskRunner:
             self._emit("library", node_id=node["node_id"], op="use", entry_ids=[entry_id], version_after=self.library.version)
 
     def _diagnose(self, node: dict[str, Any], trigger: str) -> None:
-        gate = self.scheduler.stop_reason(spent=self._spent(), elapsed_wall=self._elapsed(), best_score=self.tree.best_node()["score"]["dev"])
-        if gate in {"budget_cap", "time"}:
+        # A diagnosis that stop-loss is about to discard would only burn tokens.
+        if self._hard_stop() in {"budget_cap", "time"} or self._stop_loss():
             return
-        response = self._role(
-            "diagnose",
-            {"task": self.context, "trigger": trigger, "node": {
-                "hypothesis": node["hypothesis"], "failure": node["failure"],
-                "score": node["score"], "attempts": node["attempts"],
-            }, "best_score": self.tree.best_node()["score"]["dev"]},
-            node_id=node["node_id"],
-        )
+        payload = {"task": self.context, "trigger": trigger, "node": {
+            "hypothesis": node["hypothesis"], "failure": node["failure"],
+            "score": node["score"], "attempts": node["attempts"],
+        }, "best_score": self.tree.best_node()["score"]["dev"]}
+        if node["node_id"] in self.last_failure:
+            payload["last_failure"] = self.last_failure[node["node_id"]]
+        response = self._role("diagnose", payload, node_id=node["node_id"])
         title = str(response.get("hypothesis", "")).strip()
         if not title or title in self.seen_hypotheses:
             return
         estimate = node["estimate"]
+        rationale = str(response.get("rationale") or response.get("advice") or trigger)
+        advice = str(response.get("advice") or "").strip()
+        if self.config.get("failure_feedback") and advice and advice not in rationale:
+            rationale = f"{rationale}\nAdvice: {advice[:1500]}"
         self.proposal_counter += 1
         self.proposals.append({
             "node_id": f"n{self.proposal_counter:04d}",
             "hypothesis": title,
-            "rationale": str(response.get("rationale") or response.get("advice") or trigger),
+            "rationale": rationale,
             "origin": "diagnose", "cites": [], "estimate": estimate,
-            "priority": self.scheduler.priority_for(estimate), "status": "queued",
+            "priority": self.scheduler.priority_for(estimate, cost_prior=self.scheduler.cost_prior),
+            "status": "queued",
         })
         self.seen_hypotheses.add(title)
 
@@ -395,7 +470,7 @@ class TaskRunner:
         error: str | None = None
         result: dict[str, Any] | None = None
         for attempt in range(1, int(self.config["max_attempts"]) + 1):
-            if self.scheduler.stop_reason(spent=self._spent(), elapsed_wall=self._elapsed(), best_score=self.tree.best_node()["score"]["dev"]):
+            if self._hard_stop():
                 break
             self.tree.start_attempt(node_id, max_attempts=int(self.config["max_attempts"]))
             try:
@@ -420,7 +495,7 @@ class TaskRunner:
         return current
 
     def _review(self, trigger: str) -> str:
-        result = self._role("review", {
+        payload = {
             "trigger": trigger,
             "task": self.context,
             "best_score": self.tree.best_node()["score"]["dev"],
@@ -431,7 +506,10 @@ class TaskRunner:
                 for n in self.tree.all_nodes() if n["origin"] != "root"
             ][-8:],
             "allocations": self.allocations,
-        })
+        }
+        if self.config.get("planner_mode") == "lean":
+            del payload["allocations"]  # the lean planner keeps no budget allocation
+        result = self._role("review", payload)
         decision = result.get("decision")
         if decision not in {"continue", "switch", "reallocate", "stop"}:
             raise ValueError("Planner review returned an unknown decision")
@@ -577,7 +655,7 @@ class TaskRunner:
         try:
             while True:
                 best = self.tree.best_node()
-                hard_reason = self.scheduler.stop_reason(spent=self._spent(), elapsed_wall=self._elapsed(), best_score=best["score"]["dev"])
+                hard_reason = self._hard_stop(best)
                 if hard_reason:
                     reason = hard_reason
                     break
@@ -592,7 +670,7 @@ class TaskRunner:
                     spent=self._spent(), elapsed_wall=self._elapsed(),
                     estimated_cost=n["estimate"]["cost"], estimated_seconds=n["estimate"]["seconds"])]
                 if not affordable:
-                    reason = "budget_cap" if self.scheduler.budget_remaining(self._spent()) < min(n["estimate"]["cost"] for n in pending) else "time"
+                    reason = "budget_cap" if self.scheduler.budget_remaining(self._spent()) < min(self.scheduler.estimated_cost(n["estimate"]["cost"]) for n in pending) else "time"
                     break
                 accepted = [n for n in self.tree.all_nodes() if n["status"] == "accepted"]
                 chosen_parent = self.scheduler.choose_parent(accepted, expanded_count=self.completed)
@@ -614,20 +692,24 @@ class TaskRunner:
                 before_best = best["score"]["dev"]
                 finished = self._execute_node(node)
                 if finished["status"] == "queued":
-                    reason = self.scheduler.stop_reason(spent=self._spent(), elapsed_wall=self._elapsed(), best_score=self.tree.best_node()["score"]["dev"]) or "error"
+                    reason = self._hard_stop() or "error"
                     break
                 self.completed += 1
                 if self.tree.best_node()["score"]["dev"] > before_best:
                     self.non_improving = 0
                 else:
                     self.non_improving += 1
+                loss = self._stop_loss()
+                if loss and not self._hard_stop():
+                    reason = loss
+                    break
                 trigger = self.scheduler.review_trigger(
                     non_improving_nodes=self.non_improving,
                     spent=self._spent(), best_score=self.tree.best_node()["score"]["dev"],
                     baseline_score=float(self.baseline_score["score"]),
                     expected_score_at_spend=None if self.reviewed_behind else self._expected_score(),
                 )
-                if trigger and not self.scheduler.stop_reason(spent=self._spent(), elapsed_wall=self._elapsed(), best_score=self.tree.best_node()["score"]["dev"]):
+                if trigger and not self._hard_stop():
                     decision = self._review(trigger)
                     if decision == "stop":
                         reason = "planner"

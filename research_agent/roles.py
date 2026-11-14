@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from .model import ModelClient
+from .scheduler import validate_options
 
 
 def _object(properties: dict[str, Any]) -> dict[str, Any]:
@@ -32,6 +33,16 @@ PLAN_SCHEMA = _object(
         "expected_progress": {"type": "array", "items": _object({"spent_ratio": _NUMBER, "score": _NUMBER})},
     }
 )
+
+# planner_mode "lean": budget_allocation is no longer required. It stays an
+# allowed property, so a plan may omit it or return an empty array; a filled
+# one is still validated. The company gateway does not enforce schemas (the
+# client validates field by field); an OpenAI-style strict endpoint would
+# insist that every property be required.
+PLAN_SCHEMA_LEAN = {
+    **PLAN_SCHEMA,
+    "required": [key for key in PLAN_SCHEMA["required"] if key != "budget_allocation"],
+}
 
 EXECUTE_SCHEMA = _object({"code": _STRING, "notes": _STRING})
 
@@ -91,7 +102,9 @@ class RoleAgents:
     ) -> None:
         if config.get("schema") != "agent/1":
             raise ValueError("Unknown agent config schema")
+        validate_options(config)
         self.model = model
+        self.planner_mode = config.get("planner_mode") or "standard"
         self.effort = dict(config["effort"])
         self.prompts: dict[str, str] = {}
         resolved_root = project_root.resolve()
@@ -109,20 +122,27 @@ class RoleAgents:
                 raise ValueError(f"Empty prompt for {role}")
             self.prompts[role] = prompt
 
-    def _call(self, role: str, purpose: str, payload: Mapping[str, Any], node_id: str | None) -> dict[str, Any]:
+    def _call(
+        self, role: str, purpose: str, payload: Mapping[str, Any], node_id: str | None,
+        schema: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
         return self.model.call_json(
             role=role,
             purpose=purpose,
             effort=self.effort[role],
             system_prompt=self.prompts[role],
             payload=payload,
-            schema=SCHEMAS[purpose],
+            schema=SCHEMAS[purpose] if schema is None else schema,
             node_id=node_id,
         ).data
 
     def plan(self, payload: Mapping[str, Any], *, node_id: str | None = None) -> dict[str, Any]:
-        """Return hypotheses plus predicted cost, seconds and score."""
-        return self._call("planner", "plan", payload, node_id)
+        """Return hypotheses plus predicted cost, seconds and score.
+
+        planner_mode "lean" uses the plan schema without budget_allocation.
+        """
+        schema = PLAN_SCHEMA_LEAN if self.planner_mode == "lean" else None
+        return self._call("planner", "plan", payload, node_id, schema)
 
     def execute(self, payload: Mapping[str, Any], *, fix: bool = False, node_id: str | None = None) -> dict[str, Any]:
         """Return complete solution.py code; fix=True logs purpose=fix."""
