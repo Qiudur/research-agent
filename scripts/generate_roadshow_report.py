@@ -193,7 +193,7 @@ HTML = Template("""<!doctype html>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <title>Research Agent · 仓库路演汇报</title>
+  <title>自进化 Research Agent · 路演汇报</title>
   <style>
     :root { color-scheme: dark; --bg: #081421; --panel: #10283a; --ink: #ecf7fb; --muted: #a6c0cc; --cyan: #5ce0d4; --amber: #ffd179; --line: #2a5060; }
     * { box-sizing: border-box; }
@@ -242,11 +242,12 @@ HTML = Template("""<!doctype html>
   <nav class="nav" aria-label="汇报页面导航"><a href="#cover" aria-label="封面"></a><a href="#system" aria-label="系统"></a><a href="#evidence" aria-label="证据"></a><a href="#changes" aria-label="更新"></a><a href="#next" aria-label="下一步"></a></nav>
   <section class="slide" id="cover"><div class="inner">
     <div class="eyebrow">Research Agent / Repository Briefing</div>
-    <h1>研究系统<br>阶段汇报</h1>
-    <p class="lead">$intro</p>
+    <h1>自进化<br>Research Agent</h1>
+    <p class="lead">让 Research Agent 研究自己。</p>
+    <p class="small" style="max-width:1050px;font-size:18px">$intro</p>
     <p><span class="tag">$status</span></p>
     <p class="small">截至 $updated · 代码 $short_head · 按仓库已提交内容生成</p>
-  </div><div class="footer"><span>Research Agent · A / B / C</span><span>01 / 05</span></div></section>
+  </div><div class="footer"><span>自进化 Research Agent · A / B / C</span><span>01 / 05</span></div></section>
   <section class="slide" id="system"><div class="inner">
     <div class="eyebrow">01 / System</div><h2>从研究到审计，三层闭环</h2>
     <div class="grid">
