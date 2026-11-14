@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import os
+import copy
+import json
 from pathlib import Path
 import shutil
 from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import patch
 
 from evaluation.finalize import finish_run, start_run
 from evaluation.manifest import create_manifest
@@ -43,6 +46,51 @@ class OrchestrateTests(unittest.TestCase):
         prices["models"]["qwen3.5-27b"]["reasoning"] = 2
         with self.assertRaisesRegex(ValueError, "unit_tokens=1"):
             _internal_token_limits(prices, "qwen3.5-27b", task)
+
+    def test_formal_token_call_and_replay_use_calibrated_limits(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            config = root / "config"
+            (config / "prompts").mkdir(parents=True)
+            for name in ("agent.json", "hard_caps.json", "triggers.json"):
+                shutil.copyfile(PROJECT / "config" / name, config / name)
+            for source in (PROJECT / "config/prompts").iterdir():
+                shutil.copyfile(source, config / "prompts" / source.name)
+            (config / "prices.json").write_text(json.dumps({
+                "schema": "prices/1", "currency": "TOKENS", "unit_tokens": 1,
+                "models": {"test-scripted": {key: 1 for key in
+                           ("input", "cached_input", "output", "reasoning")}},
+            }), encoding="utf-8")
+            run = root / "runs/run-20261114-120000-abcd"
+            create_manifest(project_root=root, run_dir=run, phase="self_research",
+                            config="default_lib", rep=1, bank_version="bank-v1",
+                            tasks=[TASK_ID], library_root=run / "library",
+                            library_start_version="lib-0", library_frozen=False,
+                            model="test-scripted", agent_config_path=config / "agent.json",
+                            prices_path=config / "prices.json", code_commit="a" * 40)
+            start_run(run)
+
+            class TokenHarness(HoldoutPilot):
+                def load_task(self, task_id):
+                    task = copy.deepcopy(super().load_task(task_id))
+                    task["budget"]["money"] = 40_000
+                    return task
+
+            class BadPlanner:
+                def plan(self, payload, *, node_id=None):
+                    raise ModelCallError("malformed JSON")
+
+            harness = TokenHarness(size=180, repetitions=2,
+                                   measurements_path=run / "measurements.jsonl")
+            with patch("evaluation.orchestrate.ModelClient") as model_factory:
+                with patch("evaluation.orchestrate.RoleAgents", return_value=BadPlanner()):
+                    execute_task(run_dir=run, task_id=TASK_ID, harness=harness,
+                                 baseline_solution=WORKSPACE / "original.py")
+            self.assertEqual(model_factory.call_args.kwargs,
+                             {"max_output_tokens": 2048, "budget_limit": 40_000.0,
+                              "reserve_cost": 12_000.0})
+            replay = json.loads((run / "tasks" / TASK_ID / "replay_context.json").read_text())
+            self.assertEqual(replay["max_output_tokens"], 2048)
 
     def test_model_json_error_still_reaches_one_holdout_and_report(self):
         with TemporaryDirectory() as temp:
