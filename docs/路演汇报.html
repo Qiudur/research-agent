@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- source-head: 80cec6a79390e64c70d3482cd3582a5c1c0f26ea -->
+<!-- source-head: 57ec73e743c5d98d8686882986e5c03aa86158f9 -->
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
@@ -57,7 +57,7 @@
     <h1>研究系统<br>阶段汇报</h1>
     <p class="lead">这是按《分工文档》实现的可审计研究系统：A 负责规划、写解、实验树、预算和能力库；B 提供两类任务与隔离评分；C 负责价格账本、练习/验证/考试编排、自研究、报告和看板。真实模型的 dev token 试点已经运行，正式四线比较尚未执行。TEST 价目、脚本角色和已知参考候选只用于机制联调，不能当作自主提升或真实省钱结论。</p>
     <p><span class="tag">DEV / TEST ONLY · 正式四线比较未执行</span></p>
-    <p class="small">截至 2026-11-14 16:40 UTC+08:00 · 代码 80cec6a · 按仓库已提交内容生成</p>
+    <p class="small">截至 2026-11-14 16:42 UTC+08:00 · 代码 57ec73e · 按仓库已提交内容生成</p>
   </div><div class="footer"><span>Research Agent · A / B / C</span><span>01 / 05</span></div></section>
   <section class="slide" id="system"><div class="inner">
     <div class="eyebrow">01 / System</div><h2>从研究到审计，三层闭环</h2>
@@ -66,7 +66,7 @@
       <article class="card"><div class="eyebrow">B / Bench</div><h3>任务与隔离评分</h3><p>提速与表格二分类两类任务，沙箱隔离，并保留 dev 测量。</p></article>
       <article class="card"><div class="eyebrow">C / Control</div><h3>编排与报告</h3><p>价格账本、练习／验证／考试、自研究、报告和只读看板。</p></article>
     </div>
-    <div class="grid" style="margin-top:22px"><div class="card"><span class="metric">24</span><span class="label">入库题 · README</span></div><div class="card"><span class="metric">170</span><span class="label">三组通过测试 · README</span></div><div class="card"><span class="metric">25</span><span class="label">累计源码相关提交</span></div></div>
+    <div class="grid" style="margin-top:22px"><div class="card"><span class="metric">24</span><span class="label">入库题 · README</span></div><div class="card"><span class="metric">170</span><span class="label">三组通过测试 · README</span></div><div class="card"><span class="metric">26</span><span class="label">累计源码相关提交</span></div></div>
   </div><div class="footer"><span>来源：<a href="../README.md">README</a> · <a href="项目交付与决策.md">决策记录</a></span><span>02 / 05</span></div></section>
   <section class="slide" id="evidence"><div class="inner">
     <div class="eyebrow">02 / Evidence</div><h2>真实模型 dev 证据</h2>
@@ -80,10 +80,10 @@
   <section class="slide" id="changes"><div class="inner">
     <div class="eyebrow">03 / Repository Delta</div><h2>本轮仓库更新</h2>
     <div class="split"><div>
-      <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:24px"><div class="card"><span class="metric">2</span><span class="label">新增相关提交</span></div><div class="card"><span class="metric">5</span><span class="label">涉及文件</span></div></div>
-      <p class="small">对比上次生成时的源码提交 1cd35ed → 80cec6a</p><div class="chips"><span>运行与配置 · 3</span><span>文档与证据 · 1</span><span>验证与测试 · 1</span></div>
-      <details style="margin-top:24px"><summary>展开变更文件</summary><ul class="files"><li>&quot;docs/\351\230\237\345\217\213\345\271\266\350\241\214\345\274\200\345\267\245.md&quot;</li><li>.github/workflows/roadshow-report.yml</li><li>README.md</li><li>scripts/generate_roadshow_report.py</li><li>tests/test_roadshow_report.py</li></ul></details>
-    </div><ol class="timeline"><li><strong>Add parallel teammate handoff</strong><span>2026-11-14 · 80cec6a</span></li><li><strong>Add hourly HTML roadshow report automation</strong><span>2026-11-14 · dac0cb2</span></li></ol></div>
+      <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:24px"><div class="card"><span class="metric">1</span><span class="label">新增相关提交</span></div><div class="card"><span class="metric">2</span><span class="label">涉及文件</span></div></div>
+      <p class="small">对比上次生成时的源码提交 80cec6a → 57ec73e</p><div class="chips"><span>运行与配置 · 1</span><span>验证与测试 · 1</span></div>
+      <details style="margin-top:24px"><summary>展开变更文件</summary><ul class="files"><li>scripts/calibrate_naive_tokens.py</li><li>tests/test_naive_token_calibration.py</li></ul></details>
+    </div><ol class="timeline"><li><strong>Add dev-only naive token calibration runner</strong><span>2026-11-14 · 57ec73e</span></li></ol></div>
   </div><div class="footer"><span>提交记录：<a href="https://github.com/QZTnb/research-agent/commits/main/">Git 历史 ↗</a></span><span>04 / 05</span></div></section>
   <section class="slide" id="next"><div class="inner">
     <div class="eyebrow">04 / Decision</div><h2>下一步与边界</h2>
