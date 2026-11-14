@@ -2,7 +2,7 @@
 
 让 Research Agent 研究自己。
 
-这是按《分工文档》实现的可审计研究系统：A 负责规划、写解、实验树、预算和能力库；B 提供两类任务与隔离评分；C 负责价格账本、练习/验证/考试编排、自研究、报告和看板。真实模型的 dev token 试点已经运行，正式四线比较尚未执行。TEST 价目、脚本角色和已知参考候选只用于机制联调，不能当作自主提升或真实省钱结论。
+这是按《分工文档》实现的可审计研究系统：A 的规划、写解、实验树、预算和能力库，B 的两类任务与隔离评分，以及 C 的账本、阶段编排、自研究和报告，均已通过工程回归与真实沙箱联调。bank-v1 已根据真实 dev 成本校准冻结。首次正式内部 token 练习批次未产生有效候选；修复后的 v2 正在独立工作区运行，验证与考试尚未启动。正式账本的 TOKENS 是资源计量，不能视作现金价格或官方比赛成绩；已核验结果和待办见 [内部 token 正式研究报告](docs/内部Token正式研究报告.md)。
 
 路演使用自包含的 [仓库路演汇报 HTML](docs/路演汇报.html)。GitHub Actions 每小时第 17 分钟检查已提交的仓库更新；只有源码或文档变化时才重生成并提交报告。可手动运行 python3 scripts/generate_roadshow_report.py；页面支持方向键翻页和打印。报告中的实测数字从已提交的证据文档提取，正式结果以原始审计记录为准。
 
@@ -28,7 +28,7 @@
     .venv/bin/python -m unittest discover -s dashboard/tests -v
     .venv/bin/python scripts/preflight.py --model <正式模型名>
 
-2026-11-14 在 Python 3.11 虚拟环境中，主测试 157 项、技能层 6 项、看板 7 项均通过；24 道入库题的原始方案逐题通过真实沙箱 dev 评分，证据见 docs/B-全题dev烟测.json。wheel 已构建并从外部工作目录实测评分。真实 B 沙箱加 TEST 价目、脚本角色的三阶段四线端到端测试在 tests/test_real_batch_e2e.py；它跑 30 个 A 主循环任务和每任务一次 holdout，明确不构成真实模型效果。A 的真实计时和跨运行经验试验见 pilot/README.md。每个 TEST 运行的 manifest.phase 均为 dev，不会冒充正式考试。
+截至 2026-11-14，修复提交 bf9de62 的主回归 203 项通过；技能层 6 项、看板 7 项也已通过。24 道入库题的原始方案逐题通过真实沙箱 dev 评分，证据见 docs/B-全题dev烟测.json。wheel 已构建并从外部工作目录实测评分。真实 B 沙箱加 TEST 价目、脚本角色的三阶段四线端到端测试在 tests/test_real_batch_e2e.py；它跑 30 个 A 主循环任务和每任务一次 holdout，明确不构成真实模型效果。A 的真实计时和跨运行经验试验见 pilot/README.md。每个 TEST 运行的 manifest.phase 均为 dev，不会冒充正式考试。
 
 ## 真实模型 dev 试点
 
@@ -54,16 +54,9 @@ bank-v1 已按两组真实 dev 校准冻结：24 题共 72 次尝试，69 次正
 
 成员甲另一台机器交付的表格题独立复测已核验并单列为[队友甲表格成本独立复核](docs/队友甲表格成本独立复核.md)，附逐次[JSON 摘要](docs/队友甲表格成本独立复核.json)。因运行代码与网关不同，且一笔失败调用未返回用量，该组数字没有覆盖已冻结题库。
 
-    export MODEL='比赛提供的实际模型名'
-    # OPENAI_API_KEY 由安全渠道注入环境变量，不写入仓库或命令历史。
-    COMMIT=$(git rev-parse HEAD)
-    .venv/bin/python -m evaluation.cli auto-research --project-root . --study-dir batches/auto-v1 --model "$MODEL" --prices config/prices.json --code-commit "$COMMIT"
-    TUNED_CONFIG=$(.venv/bin/python -c 'import json; from pathlib import Path; from evaluation.self_research import verify_auto_selected; print(verify_auto_selected(json.loads(Path("batches/auto-v1/auto_self_research_report.json").read_text())))')
-    .venv/bin/python -m evaluation.cli preflight --project-root . --model "$MODEL" --prices config/prices.json --code-commit "$COMMIT" --tuned-config "$TUNED_CONFIG" --exam
-    .venv/bin/python -m evaluation.cli batch --project-root . --batch-dir batches/formal-v1 --model "$MODEL" --prices config/prices.json --code-commit "$COMMIT" --tuned-config "$TUNED_CONFIG" --exam
-    .venv/bin/python -m evaluation.cli figures --batch-dir batches/formal-v1 --auto-study-dir batches/auto-v1 --output batches/formal-v1/study.html
+正式操作在独立、干净的 worktree 中按 [内部 token 正式运行手册](docs/内部Token正式运行手册.md) 执行；该手册给出 qwen3.5-27b、授权网关、`runs/` 目录、`--workers 3/8`、哈希预检及一次性考试的完整命令。当前 v2 practice 已在独立工作区运行，勿从主工作区另起同一批次。
 
-上述命令读取并核验自研究生成的最佳调参配置；即使默认版在练习题上总体更好，也让最佳生成版接受一次验证准入，拒绝后只报告其余三条正式考试线。若所有提案均无效，selection 为空，必须先停下检查提案失败记录，不启动验证/考试。图表会交叉验证研究版与选中配置的哈希。正式验证/考试一旦开始就不会自动重跑，结果怎样就如实报告。详细参数见 evaluation/README.md。
+正式批次读取并核验自研究生成的最佳调参配置；即使默认版在练习题上总体更好，也让最佳生成版接受一次验证准入，拒绝后只报告其余三条正式考试线。若所有提案均无效，selection 为空，必须先停下检查提案失败记录，不启动验证/考试。图表会交叉验证研究版与选中配置的哈希。正式验证/考试一旦开始就不会自动重跑，结果怎样就如实报告。详细参数见 evaluation/README.md。
 
 正式成绩出来后，现场演示、录屏和答辩按 docs/现场演示与答辩.md 核对证据并填入数字；该提纲当前不含任何伪造的正式结果。
 
@@ -73,10 +66,10 @@ bank-v1 已按两组真实 dev 校准冻结：24 题共 72 次尝试，69 次正
 
 ## 当前限制
 
-bank-v1 已根据两组真实 dev 证据冻结：24 题、72 次尝试中 69 次正常完成、3 次提前停止，合计消耗 1,573,026 token，未打开校准 holdout；失败消耗已计入朴素成本。正式自研究、一次性验证和考试仍待运行，因此暂无正式四线效果或回本点结论。当前 TOKENS 账本仅用于自选预算的内部研究；网关现金价目未核实，不能宣称现金节省或官方比赛成绩。网关对 max_output_tokens 的行为不能保证推理 token 绝对上限；每次调用预留预算，最终仍按四桶账本核查实际消耗。正式录屏与答辩须引用考试后的审计证据。
+bank-v1 已根据两组真实 dev 证据冻结：24 题、72 次尝试中 69 次正常完成、3 次提前停止，合计消耗 1,573,026 token，未打开校准 holdout；失败消耗已计入朴素成本。首次正式 practice 批次只完成默认版三遍，两轮提案均被拒；修复后的 v2 practice 正在运行。一次性验证和考试尚未执行，因此暂无正式四线效果或回本点结论。当前 TOKENS 账本仅用于自选预算的内部研究；网关现金价目未核实，不能宣称现金节省或官方比赛成绩。网关对 max_output_tokens 的行为不能保证推理 token 绝对上限；每次调用预留预算，最终仍按四桶账本核查实际消耗。正式录屏与答辩须引用考试后的审计证据。
 
 ## 冻结后下一步
 
-1. 在全部 10 道 practice 题上运行两轮自动自研究，三遍配对审计候选分数、token 和配置哈希。
+1. 等待独立工作区正在进行的 v2 十题 practice 自研究，并审计三遍分数、token、候选配置与提示词哈希；操作顺序见[内部 token 正式运行手册](docs/内部Token正式运行手册.md)。
 2. 仅在练习阶段选定候选后做只读预检，启动同一 bank-v1 的唯一一次三遍验证准入。
 3. 按准入结果执行三线或四线考试，核对每题预算、回放和一次性标记，再生成图表与报告。
