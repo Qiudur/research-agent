@@ -1,0 +1,13 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "many_numeric"
+  ],
+  "summary": {
+    "dataset": "Predict the UCI phishing-website source label",
+    "predictors": 30,
+    "rows_train": 6635,
+    "target": "Source Result=1 is positive and Result=-1 is negative",
+    "split_strategy": "group_stratified"
+  }
+}

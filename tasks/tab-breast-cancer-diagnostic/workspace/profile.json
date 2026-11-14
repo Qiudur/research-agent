@@ -1,0 +1,18 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "small_sample",
+    "many_numeric"
+  ],
+  "summary": {
+    "dataset": "UCI Breast Cancer Wisconsin Diagnostic",
+    "rows_train": 343,
+    "predictors": 30,
+    "positive_rate_train": 0.37317784256559766,
+    "target": "Classify malignant versus benign tissue measurements",
+    "excluded_features": [
+      "sample_id"
+    ],
+    "input": "Public train.csv has y; hidden test rows are feature dictionaries"
+  }
+}

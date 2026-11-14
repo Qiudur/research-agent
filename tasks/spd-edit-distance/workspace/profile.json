@@ -1,0 +1,11 @@
+{
+  "schema": "profile/1",
+  "features": ["nested_python_loop"],
+  "summary": {
+    "hotspot": "Nested Python loops populate every cell of a full edit-distance matrix",
+    "input_type": "two strings",
+    "output_type": "non-negative integer",
+    "benchmark_size": 650,
+    "edge_cases": ["two empty strings", "one empty string", "identical strings", "substitution", "insertion"]
+  }
+}

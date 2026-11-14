@@ -1,0 +1,38 @@
+{
+  "source": "https://archive.ics.uci.edu/static/public/45/heart+disease.zip",
+  "url": "https://archive.ics.uci.edu/static/public/45/heart+disease.zip",
+  "archive_sha256": "b17cd273da9ce1caa4710fce80227ea454d4dbf9fcbc8e6a9121672751563adc",
+  "raw_file_sha256": {
+    "processed.cleveland.data": "a74b7efa387bc9d108d7d0115d831fe9b414b29ae7124f331b622b4efa0427c8"
+  },
+  "seed": 20261114,
+  "features": [
+    "age",
+    "sex",
+    "chest_pain",
+    "resting_blood_pressure",
+    "cholesterol",
+    "fasting_blood_sugar",
+    "resting_ecg",
+    "max_heart_rate",
+    "exercise_angina",
+    "st_depression",
+    "st_slope",
+    "major_vessels",
+    "thalassemia"
+  ],
+  "excluded": [],
+  "total_rows": 303,
+  "split_counts": {
+    "train": 183,
+    "dev": 61,
+    "holdout": 59
+  },
+  "positive_counts": {
+    "train": 84,
+    "dev": 28,
+    "holdout": 27
+  },
+  "feature_hash_overlap": 0,
+  "split_method": "class-stratified 60/20/20 grouped by exact feature vector"
+}

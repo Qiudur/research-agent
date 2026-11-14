@@ -1,0 +1,17 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "repeated_recompute_window"
+  ],
+  "summary": {
+    "hotspot": "Every prefix is copied and summed from the beginning",
+    "input_type": "list of positive finite floats",
+    "output_type": "list of float sums",
+    "benchmark_size": 3500,
+    "edge_cases": [
+      "empty",
+      "singleton",
+      "increasing prefixes"
+    ]
+  }
+}

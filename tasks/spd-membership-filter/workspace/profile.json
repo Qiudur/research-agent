@@ -1,0 +1,17 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "list_membership_in_loop"
+  ],
+  "summary": {
+    "hotspot": "Repeated list membership checks scan the allowed list for every value",
+    "input_type": "list of integers and allowed list",
+    "output_type": "list of integers",
+    "benchmark_size": 9000,
+    "edge_cases": [
+      "empty allowed list",
+      "duplicates",
+      "absent values"
+    ]
+  }
+}

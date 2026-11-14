@@ -1,0 +1,31 @@
+{
+  "schema": "task/1",
+  "task_id": "spd-group-counts",
+  "scenario": "speedup",
+  "title": "Speed up category counts",
+  "description": "Count occurrences of every string key. Optimize the function while preserving original.py behavior.",
+  "metric": {
+    "name": "speedup",
+    "higher_is_better": true
+  },
+  "deliverable": {
+    "file": "solution.py",
+    "function": "group_counts",
+    "signature": "group_counts(keys: list[str]) -> dict[str, int]",
+    "returns": "Count occurrences of every string key"
+  },
+  "benchmark": {
+    "kind": "group_counts",
+    "dev_size": 10000,
+    "holdout_size": 12000,
+    "profile_size": 1200
+  },
+  "budget": {
+    "money": null,
+    "wall_seconds": 1800
+  },
+  "limits": {
+    "run_seconds": 120,
+    "memory_mb": 1024
+  }
+}

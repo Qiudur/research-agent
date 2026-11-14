@@ -1,0 +1,32 @@
+{
+  "source_url": "https://archive.ics.uci.edu/static/public/159/magic+gamma+telescope.zip",
+  "archive_sha256": "252e0a78333c108d0ea54537b61154aa781e95a15675e65ddf9b76993617191d",
+  "data_file": "magic04.data",
+  "data_sha256": "e9314b7ebd4b4b59a3b3d65f7316663963777b16a46786877651dbbaa640b36a",
+  "seed": 20261114,
+  "strategy": "group_stratified",
+  "features": [
+    "fLength",
+    "fWidth",
+    "fSize",
+    "fConc",
+    "fConc1",
+    "fAsym",
+    "fM3Long",
+    "fM3Trans",
+    "fAlpha",
+    "fDist"
+  ],
+  "source_rows": 19020,
+  "split_counts": {
+    "train": 11413,
+    "dev": 3804,
+    "holdout": 3803
+  },
+  "positive_counts": {
+    "train": 7400,
+    "dev": 2466,
+    "holdout": 2466
+  },
+  "feature_hash_overlap": 0
+}

@@ -1,0 +1,31 @@
+{
+  "schema": "task/1",
+  "task_id": "spd-dedupe-order",
+  "scenario": "speedup",
+  "title": "Speed up order-preserving deduplication",
+  "description": "Distinct values in first-occurrence order. Optimize the function while preserving original.py behavior.",
+  "metric": {
+    "name": "speedup",
+    "higher_is_better": true
+  },
+  "deliverable": {
+    "file": "solution.py",
+    "function": "dedupe_order",
+    "signature": "dedupe_order(values: list[int]) -> list[int]",
+    "returns": "Distinct values in first-occurrence order"
+  },
+  "benchmark": {
+    "kind": "dedupe_order",
+    "dev_size": 9000,
+    "holdout_size": 11000,
+    "profile_size": 1200
+  },
+  "budget": {
+    "money": null,
+    "wall_seconds": 1800
+  },
+  "limits": {
+    "run_seconds": 120,
+    "memory_mb": 1024
+  }
+}

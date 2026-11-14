@@ -1,0 +1,11 @@
+{
+  "schema": "profile/1",
+  "features": ["nested_python_loop"],
+  "summary": {
+    "hotspot": "For every buy index, the code scans all later prices",
+    "input_type": "list of strictly positive finite float prices",
+    "output_type": "one float fraction",
+    "benchmark_size": 1800,
+    "edge_cases": ["empty", "one price", "increasing", "decreasing", "repeated peaks"]
+  }
+}

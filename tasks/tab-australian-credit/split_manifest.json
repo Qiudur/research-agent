@@ -1,0 +1,36 @@
+{
+  "source_url": "https://archive.ics.uci.edu/static/public/143/statlog+australian+credit+approval.zip",
+  "archive_sha256": "f0bd9cd9b1d133cb20456b8953e1f8139fd30ed2b3f66da540db75136f1e9e0b",
+  "data_file": "australian.dat",
+  "data_sha256": "3abe5af151afa50b999a9ba21cbc884e80d80a4050b716cf88b34a2e6ecb731c",
+  "seed": 20261114,
+  "strategy": "group_stratified",
+  "features": [
+    "attribute_01",
+    "attribute_02",
+    "attribute_03",
+    "attribute_04",
+    "attribute_05",
+    "attribute_06",
+    "attribute_07",
+    "attribute_08",
+    "attribute_09",
+    "attribute_10",
+    "attribute_11",
+    "attribute_12",
+    "attribute_13",
+    "attribute_14"
+  ],
+  "source_rows": 690,
+  "split_counts": {
+    "train": 415,
+    "dev": 138,
+    "holdout": 137
+  },
+  "positive_counts": {
+    "train": 185,
+    "dev": 61,
+    "holdout": 61
+  },
+  "feature_hash_overlap": 0
+}

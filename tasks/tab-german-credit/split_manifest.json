@@ -1,0 +1,42 @@
+{
+  "source_url": "https://archive.ics.uci.edu/static/public/144/statlog+german+credit+data.zip",
+  "archive_sha256": "e12d9d5def6845c0622634a1cd2ab87fa470668c4298f1ec52a4e403376a435b",
+  "data_file": "german.data",
+  "data_sha256": "b21f3d81db8071257d5ff1deaeba1fd4303b62712e6fcc9715c7a86202cb5871",
+  "seed": 20261114,
+  "strategy": "group_stratified",
+  "features": [
+    "checking_status",
+    "duration_months",
+    "credit_history",
+    "purpose",
+    "credit_amount",
+    "savings_status",
+    "employment_status",
+    "installment_rate",
+    "personal_status",
+    "other_debtors",
+    "residence_since",
+    "property",
+    "age",
+    "other_installment_plans",
+    "housing",
+    "existing_credits",
+    "job",
+    "people_liable",
+    "telephone",
+    "foreign_worker"
+  ],
+  "source_rows": 1000,
+  "split_counts": {
+    "train": 600,
+    "dev": 200,
+    "holdout": 200
+  },
+  "positive_counts": {
+    "train": 180,
+    "dev": 60,
+    "holdout": 60
+  },
+  "feature_hash_overlap": 0
+}

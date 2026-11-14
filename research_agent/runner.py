@@ -171,14 +171,15 @@ class TaskRunner:
     def _planner_payload(self) -> dict[str, Any]:
         entries = self.library.query(self.context["scenario"], self.context["features"], k=self.config["query_k"])
         self._emit("library", op="query", entry_ids=[entry["id"] for entry in entries], version_after=self.library.version)
-        recent = [
+        history = [
             {
                 "node_id": n["node_id"], "hypothesis": n["hypothesis"], "status": n["status"],
                 "score": n["score"]["dev"] if n["score"] else None,
                 "cost": n["cost"], "failure": n["failure"],
             }
             for n in self.tree.all_nodes() if n["status"] in {"accepted", "rejected", "failed"}
-        ][-8:]
+        ]
+        recent = history if self.config.get("history_mode") == "full" else history[-8:]
         return {
             "task": self.context,
             "ability_brief": self.library.brief(entries),
@@ -283,6 +284,13 @@ class TaskRunner:
             "attempt": attempt,
             "max_attempts": self.config["max_attempts"],
         }
+        if self.config.get("history_mode") == "full":
+            payload["experiment_history"] = [
+                {"node_id": item["node_id"], "hypothesis": item["hypothesis"],
+                 "status": item["status"], "score": item["score"],
+                 "failure": item["failure"], "cost": item["cost"]}
+                for item in self.tree.all_nodes()
+            ]
         try:
             response = self._role("execute", payload, node_id=node_id, fix=attempt > 1)
             save_solution(node_dir, response.get("code", ""), parent_dir)

@@ -1,0 +1,36 @@
+{
+  "source_url": "https://archive.ics.uci.edu/static/public/264/eeg+eye+state.zip",
+  "archive_sha256": "49e7cbd14d303d63e772c7fcffa6b063bc52b97a7fa01b1135a9907b7715f415",
+  "data_file": "EEG Eye State.arff",
+  "data_sha256": "e6eccba033d8ce56d38d2f0cca2087356705425a5a2ddbb1012ef3b892bd5a4b",
+  "seed": 20261114,
+  "strategy": "chronological",
+  "features": [
+    "AF3",
+    "F7",
+    "F3",
+    "FC5",
+    "T7",
+    "P7",
+    "O1",
+    "O2",
+    "P8",
+    "T8",
+    "FC6",
+    "F4",
+    "F8",
+    "AF4"
+  ],
+  "source_rows": 14980,
+  "split_counts": {
+    "train": 8988,
+    "dev": 2996,
+    "holdout": 2996
+  },
+  "positive_counts": {
+    "train": 5498,
+    "dev": 945,
+    "holdout": 280
+  },
+  "feature_hash_overlap": 0
+}

@@ -1,0 +1,30 @@
+{
+  "source_url": "https://archive.ics.uci.edu/static/public/372/htru2.zip",
+  "archive_sha256": "ba442c076dd22a8952700f26e38499fc1806037dcf7bea0e125e6bfba393f379",
+  "data_file": "HTRU_2.csv",
+  "data_sha256": "b13b4d8929e96ecd196e464c1c8a454c3ac2ffa631015f6388957531a9923f59",
+  "seed": 20261114,
+  "strategy": "group_stratified",
+  "features": [
+    "profile_mean",
+    "profile_std",
+    "profile_kurtosis",
+    "profile_skewness",
+    "dm_snr_mean",
+    "dm_snr_std",
+    "dm_snr_kurtosis",
+    "dm_snr_skewness"
+  ],
+  "source_rows": 17898,
+  "split_counts": {
+    "train": 10740,
+    "dev": 3580,
+    "holdout": 3578
+  },
+  "positive_counts": {
+    "train": 984,
+    "dev": 328,
+    "holdout": 327
+  },
+  "feature_hash_overlap": 0
+}

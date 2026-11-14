@@ -1,0 +1,31 @@
+{
+  "schema": "task/1",
+  "task_id": "spd-already-vectorized",
+  "scenario": "speedup",
+  "title": "Assess whether an existing sum needs optimization",
+  "description": "A high-accuracy sum equal to math.fsum on the same input. Optimize the function while preserving original.py behavior.",
+  "metric": {
+    "name": "speedup",
+    "higher_is_better": true
+  },
+  "deliverable": {
+    "file": "solution.py",
+    "function": "already_vectorized",
+    "signature": "already_vectorized(values: list[float]) -> float",
+    "returns": "A high-accuracy sum equal to math.fsum on the same input"
+  },
+  "benchmark": {
+    "kind": "already_vectorized",
+    "dev_size": 150000,
+    "holdout_size": 180000,
+    "profile_size": 20000
+  },
+  "budget": {
+    "money": null,
+    "wall_seconds": 1800
+  },
+  "limits": {
+    "run_seconds": 120,
+    "memory_mb": 1024
+  }
+}

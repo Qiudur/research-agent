@@ -140,8 +140,9 @@
       $('library').innerHTML=head+entries+changes;
     }
     renderLibrary();
-    $('task-select').addEventListener('change',event=>renderTask(data.tasks[Number(event.target.value)]));
-    if(data.tasks.length)renderTask(data.tasks[0]);else { $('task-select').style.display='none';$('kpis').innerHTML=empty('本运行尚无任务结果');$('tree').innerHTML=empty('尚无实验树');$('score-chart').innerHTML=empty('尚无评分事件');$('budget').innerHTML=empty('未知');$('time-bars').innerHTML='';$('quote').innerHTML=empty('未知');$('llm').innerHTML=empty('未知');$('events').innerHTML=empty('尚无账本事件'); }
+    const selectionKey='research-agent-task:'+data.run.id;
+    $('task-select').addEventListener('change',event=>{sessionStorage.setItem(selectionKey,event.target.value);renderTask(data.tasks[Number(event.target.value)]);});
+    if(data.tasks.length){const saved=Number(sessionStorage.getItem(selectionKey));const selected=Number.isInteger(saved)&&saved>=0&&saved<data.tasks.length?saved:0;$('task-select').value=String(selected);renderTask(data.tasks[selected]);}else { $('task-select').style.display='none';$('kpis').innerHTML=empty('本运行尚无任务结果');$('tree').innerHTML=empty('尚无实验树');$('score-chart').innerHTML=empty('尚无评分事件');$('budget').innerHTML=empty('未知');$('time-bars').innerHTML='';$('quote').innerHTML=empty('未知');$('llm').innerHTML=empty('未知');$('events').innerHTML=empty('尚无账本事件'); }
   })();
   </script>
 </body>

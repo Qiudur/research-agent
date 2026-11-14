@@ -1,0 +1,14 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "small_sample",
+    "many_numeric"
+  ],
+  "summary": {
+    "dataset": "Predict Australian credit approval",
+    "predictors": 14,
+    "rows_train": 415,
+    "target": "Source class 1 is positive; class 0 is negative",
+    "split_strategy": "group_stratified"
+  }
+}

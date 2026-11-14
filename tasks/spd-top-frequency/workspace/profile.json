@@ -1,0 +1,18 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "nested_python_loop"
+  ],
+  "summary": {
+    "hotspot": "Each distinct value triggers another scan of the entire input",
+    "input_type": "integer list and top-k limit",
+    "output_type": "list of integer pairs",
+    "benchmark_size": 10000,
+    "edge_cases": [
+      "empty",
+      "k zero",
+      "ties",
+      "repeated values"
+    ]
+  }
+}

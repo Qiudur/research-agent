@@ -1,0 +1,34 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "missing_heavy"
+  ],
+  "summary": {
+    "dataset": "UCI Mushroom",
+    "rows_train": 5254,
+    "predictors": 4,
+    "positive_rate_train": 0.4784925770841264,
+    "target": "Predict poisonous versus edible from a limited set of visible traits",
+    "excluded_features": [
+      "cap_surface",
+      "bruises",
+      "odor",
+      "gill_attachment",
+      "gill_spacing",
+      "gill_size",
+      "gill_color",
+      "stalk_shape",
+      "stalk_surface_above_ring",
+      "stalk_surface_below_ring",
+      "stalk_color_above_ring",
+      "stalk_color_below_ring",
+      "veil_type",
+      "veil_color",
+      "ring_number",
+      "ring_type",
+      "spore_print_color",
+      "population"
+    ],
+    "input": "Public train.csv has y; hidden test rows are feature dictionaries"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "schema": "profile/1",
+  "features": ["class_imbalance", "many_numeric", "possible_leakage"],
+  "summary": {
+    "dataset": "UCI Bank Marketing, bank-additional-full.csv",
+    "rows_train_approximately": 24700,
+    "predictors": 19,
+    "positive_rate_approximately": 0.113,
+    "target": "y: term deposit subscribed",
+    "forbidden_train_only_feature": "duration (visible in train.csv but unavailable before a call)",
+    "input": "train.csv contains target; hidden test rows are passed as feature dictionaries"
+  }
+}

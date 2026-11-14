@@ -1,0 +1,16 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "class_imbalance",
+    "many_numeric"
+  ],
+  "summary": {
+    "dataset": "UCI Wine Quality",
+    "rows_train": 3905,
+    "predictors": 12,
+    "positive_rate_train": 0.19795134443021767,
+    "target": "Predict whether a wine has quality score at least seven",
+    "excluded_features": [],
+    "input": "Public train.csv has y; hidden test rows are feature dictionaries"
+  }
+}

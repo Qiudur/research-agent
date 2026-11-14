@@ -1,0 +1,17 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "string_concat_in_loop"
+  ],
+  "summary": {
+    "hotspot": "Each iteration copies the entire accumulated string",
+    "input_type": "list of short strings",
+    "output_type": "one string",
+    "benchmark_size": 5000,
+    "edge_cases": [
+      "empty",
+      "empty parts",
+      "repeated substrings"
+    ]
+  }
+}

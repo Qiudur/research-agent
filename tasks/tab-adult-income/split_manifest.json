@@ -1,0 +1,40 @@
+{
+  "source": "https://archive.ics.uci.edu/static/public/2/adult.zip",
+  "url": "https://archive.ics.uci.edu/static/public/2/adult.zip",
+  "archive_sha256": "7537312dd56c2b98035880805ce99e68183a30ee468aa5329d6df0fbb3cc21bb",
+  "raw_file_sha256": {
+    "adult.data": "5b00264637dbfec36bdeaab5676b0b309ff9eb788d63554ca0a249491c86603d",
+    "adult.test": "a2a9044bc167a35b2361efbabec64e89d69ce82d9790d2980119aac5fd7e9c05"
+  },
+  "seed": 20261114,
+  "features": [
+    "age",
+    "workclass",
+    "fnlwgt",
+    "education",
+    "education_num",
+    "marital_status",
+    "occupation",
+    "relationship",
+    "race",
+    "sex",
+    "capital_gain",
+    "capital_loss",
+    "hours_per_week",
+    "native_country"
+  ],
+  "excluded": [],
+  "total_rows": 48842,
+  "split_counts": {
+    "train": 29306,
+    "dev": 9768,
+    "holdout": 9768
+  },
+  "positive_counts": {
+    "train": 7013,
+    "dev": 2337,
+    "holdout": 2337
+  },
+  "feature_hash_overlap": 0,
+  "split_method": "class-stratified 60/20/20 grouped by exact feature vector"
+}

@@ -1,0 +1,13 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "small_sample"
+  ],
+  "summary": {
+    "dataset": "Predict bad German credit risk",
+    "predictors": 20,
+    "rows_train": 600,
+    "target": "Source class 2 (bad credit risk) is positive; class 1 (good) is negative",
+    "split_strategy": "group_stratified"
+  }
+}

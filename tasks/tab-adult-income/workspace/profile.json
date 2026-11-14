@@ -1,0 +1,15 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "high_cardinality_categorical"
+  ],
+  "summary": {
+    "dataset": "UCI Adult",
+    "rows_train": 29306,
+    "predictors": 14,
+    "positive_rate_train": 0.23930253190472942,
+    "target": "Predict whether annual income exceeds $50K from census attributes",
+    "excluded_features": [],
+    "input": "Public train.csv has y; hidden test rows are feature dictionaries"
+  }
+}

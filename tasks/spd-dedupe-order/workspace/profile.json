@@ -1,0 +1,18 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "list_membership_in_loop"
+  ],
+  "summary": {
+    "hotspot": "Linear membership search in the growing result list",
+    "input_type": "list of integers",
+    "output_type": "list of distinct integers",
+    "benchmark_size": 9000,
+    "edge_cases": [
+      "empty",
+      "singleton",
+      "repeated values",
+      "order"
+    ]
+  }
+}

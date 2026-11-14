@@ -55,6 +55,27 @@ class Usage:
         return all(getattr(self, key) == getattr(other, key) for key in TOKEN_BUCKETS)
 
 
+def price_usage(prices: dict, model: str, usage: Usage) -> float:
+    """Price four disjoint token buckets without writing a ledger event."""
+    unit = prices.get("unit_tokens")
+    if isinstance(unit, bool) or not isinstance(unit, int) or unit <= 0:
+        raise ValueError("unit_tokens must be a positive integer")
+    tokens = {key: getattr(usage, key) for key in TOKEN_BUCKETS}
+    for key, value in tokens.items():
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            raise ValueError(f"Invalid {key} token count")
+    models = prices.get("models")
+    rates = models.get(model) if isinstance(models, dict) else None
+    if not isinstance(rates, dict):
+        raise ValueError(f"Price table has no rates for model {model!r}")
+    priced: dict[str, float] = {}
+    for key in TOKEN_BUCKETS:
+        if rates.get(key) is None:
+            raise ValueError(f"Missing {key} price for model {model!r}")
+        priced[key] = _nonnegative(rates[key], f"{model}.{key} price")
+    return sum(tokens[key] * priced[key] for key in TOKEN_BUCKETS) / unit
+
+
 class Ledger:
     """One task or run-level ledger. Sequence numbers are local to its file."""
 
@@ -166,18 +187,7 @@ class Ledger:
             raise ValueError("prompt_hash must be SHA256")
         duration = _nonnegative(seconds, "seconds")
         tokens = {key: getattr(usage, key) for key in TOKEN_BUCKETS}
-        for key, value in tokens.items():
-            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-                raise ValueError(f"Invalid {key} token count")
-        rates = self.prices["models"].get(model)
-        if not isinstance(rates, dict):
-            raise ValueError(f"Price table has no rates for model {model!r}")
-        priced: dict[str, float] = {}
-        for key in TOKEN_BUCKETS:
-            if rates.get(key) is None:
-                raise ValueError(f"Missing {key} price for model {model!r}")
-            priced[key] = _nonnegative(rates[key], f"{model}.{key} price")
-        cost = sum(tokens[key] * priced[key] for key in TOKEN_BUCKETS) / self.prices["unit_tokens"]
+        cost = price_usage(self.prices, model, usage)
         self.emit(
             "llm_call", node_id=node_id, role=role, purpose=purpose, effort=effort,
             model=model, tokens=tokens, cost=cost, seconds=duration,
@@ -201,4 +211,4 @@ class Ledger:
         return {"llm": llm, "run": run, "queue": queue, "wall": wall}
 
 
-__all__ = ["Ledger", "Usage"]
+__all__ = ["Ledger", "Usage", "price_usage"]

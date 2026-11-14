@@ -1,0 +1,17 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "nested_python_loop"
+  ],
+  "summary": {
+    "hotspot": "For each category the full key list is scanned again",
+    "input_type": "list of category strings",
+    "output_type": "dictionary of integer counts",
+    "benchmark_size": 10000,
+    "edge_cases": [
+      "empty",
+      "one group",
+      "repeated groups"
+    ]
+  }
+}

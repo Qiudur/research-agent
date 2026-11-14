@@ -1,0 +1,17 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "already_vectorized"
+  ],
+  "summary": {
+    "hotspot": "The original delegates to an already optimized built-in; changes may not help",
+    "input_type": "list of finite floats",
+    "output_type": "one float sum",
+    "benchmark_size": 150000,
+    "edge_cases": [
+      "empty",
+      "cancellation",
+      "singleton"
+    ]
+  }
+}

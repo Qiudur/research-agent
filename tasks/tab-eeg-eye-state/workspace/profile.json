@@ -1,0 +1,14 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "many_numeric",
+    "possible_leakage"
+  ],
+  "summary": {
+    "dataset": "Predict eye state from EEG signals",
+    "predictors": 14,
+    "rows_train": 8988,
+    "target": "Source eyeDetection=1 is positive; rows retain source temporal order",
+    "split_strategy": "chronological"
+  }
+}

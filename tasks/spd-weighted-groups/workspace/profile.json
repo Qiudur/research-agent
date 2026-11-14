@@ -1,0 +1,17 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "nested_python_loop"
+  ],
+  "summary": {
+    "hotspot": "Each distinct key triggers another pass through all rows",
+    "input_type": "parallel key and float-value lists",
+    "output_type": "dictionary of grouped float sums",
+    "benchmark_size": 10000,
+    "edge_cases": [
+      "empty",
+      "one group",
+      "repeated groups"
+    ]
+  }
+}

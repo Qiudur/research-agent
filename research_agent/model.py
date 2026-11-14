@@ -115,7 +115,7 @@ class ModelClient:
             try:
                 from openai import OpenAI
             except ImportError as exc:
-                raise RuntimeError("Install research-agent-a[llm] to make live model calls") from exc
+                raise RuntimeError("Install research-agent-abc[llm] to make live model calls") from exc
             client = OpenAI()
         self.model = model
         self.ledger = ledger

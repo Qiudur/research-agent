@@ -1,0 +1,57 @@
+{
+  "source": "https://archive.ics.uci.edu/static/public/17/breast+cancer+wisconsin+diagnostic.zip",
+  "url": "https://archive.ics.uci.edu/static/public/17/breast+cancer+wisconsin+diagnostic.zip",
+  "archive_sha256": "bc154869ef13f753f9e2b5a17e248cfe1ba4b6721db7c4da9f4880e40b05d3af",
+  "raw_file_sha256": {
+    "wdbc.data": "d606af411f3e5be8a317a5a8b652b425aaf0ff38ca683d5327ffff94c3695f4a"
+  },
+  "seed": 20261114,
+  "features": [
+    "measurement_01",
+    "measurement_02",
+    "measurement_03",
+    "measurement_04",
+    "measurement_05",
+    "measurement_06",
+    "measurement_07",
+    "measurement_08",
+    "measurement_09",
+    "measurement_10",
+    "measurement_11",
+    "measurement_12",
+    "measurement_13",
+    "measurement_14",
+    "measurement_15",
+    "measurement_16",
+    "measurement_17",
+    "measurement_18",
+    "measurement_19",
+    "measurement_20",
+    "measurement_21",
+    "measurement_22",
+    "measurement_23",
+    "measurement_24",
+    "measurement_25",
+    "measurement_26",
+    "measurement_27",
+    "measurement_28",
+    "measurement_29",
+    "measurement_30"
+  ],
+  "excluded": [
+    "sample_id"
+  ],
+  "total_rows": 569,
+  "split_counts": {
+    "train": 343,
+    "dev": 113,
+    "holdout": 113
+  },
+  "positive_counts": {
+    "train": 128,
+    "dev": 42,
+    "holdout": 42
+  },
+  "feature_hash_overlap": 0,
+  "split_method": "class-stratified 60/20/20 grouped by exact feature vector"
+}

@@ -1,0 +1,30 @@
+{
+  "schema": "task/1",
+  "task_id": "tab-bank-marketing",
+  "scenario": "tabular",
+  "title": "Predict term-deposit subscriptions before a bank call",
+  "description": "Train on the public training rows and return positive-class probabilities for unseen customers before a bank call. train.csv contains the post-call duration field as a leakage trap: duration is forbidden and is never present in dev/holdout test_rows. Exclude it from training and prediction.",
+  "forbidden_features": [
+    "duration"
+  ],
+  "metric": {
+    "name": "roc_auc",
+    "higher_is_better": true,
+    "baseline_raw": 0.7981536542897038,
+    "ceiling_raw": 0.8022190080472031
+  },
+  "deliverable": {
+    "file": "solution.py",
+    "function": "fit_predict",
+    "signature": "fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]",
+    "returns": "One finite probability in [0, 1] per test row, in the same order"
+  },
+  "budget": {
+    "money": null,
+    "wall_seconds": 1800
+  },
+  "limits": {
+    "run_seconds": 300,
+    "memory_mb": 4096
+  }
+}

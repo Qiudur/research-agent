@@ -1,0 +1,52 @@
+{
+  "source_url": "https://archive.ics.uci.edu/static/public/327/phishing+websites.zip",
+  "archive_sha256": "514f582cb44cba17251baf1d59f64cddff16efa2b644d091ce8d2a1e8d492940",
+  "data_file": "Training Dataset.arff",
+  "data_sha256": "3bcf93b1612306537ee2737751f1bac185b2a77886ab376644c3bf0c7f7cb3e6",
+  "seed": 20261114,
+  "strategy": "group_stratified",
+  "features": [
+    "having_IP_Address",
+    "URL_Length",
+    "Shortining_Service",
+    "having_At_Symbol",
+    "double_slash_redirecting",
+    "Prefix_Suffix",
+    "having_Sub_Domain",
+    "SSLfinal_State",
+    "Domain_registeration_length",
+    "Favicon",
+    "port",
+    "HTTPS_token",
+    "Request_URL",
+    "URL_of_Anchor",
+    "Links_in_tags",
+    "SFH",
+    "Submitting_to_email",
+    "Abnormal_URL",
+    "Redirect",
+    "on_mouseover",
+    "RightClick",
+    "popUpWidnow",
+    "Iframe",
+    "age_of_domain",
+    "DNSRecord",
+    "web_traffic",
+    "Page_Rank",
+    "Google_Index",
+    "Links_pointing_to_page",
+    "Statistical_report"
+  ],
+  "source_rows": 11055,
+  "split_counts": {
+    "train": 6635,
+    "dev": 2211,
+    "holdout": 2209
+  },
+  "positive_counts": {
+    "train": 3695,
+    "dev": 1242,
+    "holdout": 1220
+  },
+  "feature_hash_overlap": 0
+}

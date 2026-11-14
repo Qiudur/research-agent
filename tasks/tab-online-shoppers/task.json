@@ -1,0 +1,27 @@
+{
+  "schema": "task/1",
+  "task_id": "tab-online-shoppers",
+  "scenario": "tabular",
+  "title": "Online Shoppers Purchasing Intention",
+  "description": "Predict session purchase intent from browsing behavior. Fit only on workspace/train.csv.",
+  "metric": {
+    "name": "roc_auc",
+    "higher_is_better": true,
+    "baseline_raw": 0.9232245681381958,
+    "ceiling_raw": 0.9233577192471184
+  },
+  "deliverable": {
+    "file": "solution.py",
+    "function": "fit_predict",
+    "signature": "fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]",
+    "returns": "One finite probability in [0, 1] per test row, preserving row order"
+  },
+  "budget": {
+    "money": null,
+    "wall_seconds": 1800
+  },
+  "limits": {
+    "run_seconds": 300,
+    "memory_mb": 4096
+  }
+}

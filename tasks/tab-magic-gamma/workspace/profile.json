@@ -1,0 +1,13 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "many_numeric"
+  ],
+  "summary": {
+    "dataset": "Classify gamma-ray telescope events",
+    "predictors": 10,
+    "rows_train": 11413,
+    "target": "g (gamma event) is positive; h (hadron event) is negative",
+    "split_strategy": "group_stratified"
+  }
+}

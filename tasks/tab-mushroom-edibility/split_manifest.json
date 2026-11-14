@@ -1,0 +1,48 @@
+{
+  "source": "https://archive.ics.uci.edu/static/public/73/mushroom.zip",
+  "url": "https://archive.ics.uci.edu/static/public/73/mushroom.zip",
+  "archive_sha256": "face32f32647e0d939f6233f36dd30dd5d619ae9f3f9b8e10bea4ac7e1f60b1a",
+  "raw_file_sha256": {
+    "agaricus-lepiota.data": "e65d082030501a3ebcbcd7c9f7c71aa9d28fdfff463bf4cf4716a3fe13ac360e"
+  },
+  "seed": 20261114,
+  "features": [
+    "cap_shape",
+    "cap_color",
+    "stalk_root",
+    "habitat"
+  ],
+  "excluded": [
+    "cap_surface",
+    "bruises",
+    "odor",
+    "gill_attachment",
+    "gill_spacing",
+    "gill_size",
+    "gill_color",
+    "stalk_shape",
+    "stalk_surface_above_ring",
+    "stalk_surface_below_ring",
+    "stalk_color_above_ring",
+    "stalk_color_below_ring",
+    "veil_type",
+    "veil_color",
+    "ring_number",
+    "ring_type",
+    "spore_print_color",
+    "population"
+  ],
+  "total_rows": 8124,
+  "split_counts": {
+    "train": 5254,
+    "dev": 1384,
+    "holdout": 1486
+  },
+  "positive_counts": {
+    "train": 2514,
+    "dev": 700,
+    "holdout": 702
+  },
+  "feature_hash_overlap": 0,
+  "split_method": "class-stratified 60/20/20 grouped by exact feature vector"
+}

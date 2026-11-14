@@ -1,0 +1,46 @@
+{
+  "schema": "tabular_reference/1",
+  "task_id": "tab-bank-marketing",
+  "split": "dev",
+  "seed": 20261114,
+  "time_limit_seconds": 180,
+  "presets": "medium_quality",
+  "eval_metric": "roc_auc",
+  "train_rows": 24714,
+  "dev_rows": 8238,
+  "baseline": {
+    "model": "workspace/original.py LGBMClassifier",
+    "auc": 0.7981536542897038,
+    "sandbox_seconds": 1.1486075830180198
+  },
+  "reference": {
+    "model": "AutoGluon TabularPredictor",
+    "auc": 0.8022190080472031,
+    "best_model_by_internal_validation": "WeightedEnsemble_L2",
+    "trained_models": [
+      "LightGBM",
+      "CatBoost",
+      "WeightedEnsemble_L2",
+      "LightGBMLarge",
+      "LightGBMXT",
+      "XGBoost",
+      "ExtraTreesGini",
+      "ExtraTreesEntr",
+      "RandomForestEntr",
+      "RandomForestGini"
+    ],
+    "fit_seconds": 17.28467308403924
+  },
+  "environment": {
+    "python": "3.11.12",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "pandas": "2.3.3",
+    "scikit_learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "autogluon_tabular": "1.6.3",
+    "catboost": "1.2.10",
+    "xgboost": "3.2.0"
+  },
+  "scope": "dev only; holdout unopened; no model API tokens or monetary cost measured",
+  "gap_valid": true
+}

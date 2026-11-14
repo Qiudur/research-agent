@@ -24,4 +24,12 @@ python3 -m dashboard.export \
 python3 -m unittest discover -s dashboard/tests -v
 ```
 
-当前是**导出式看板**：重新运行命令即可刷新数据；不是 Web 服务，也不包含原计划的并排实时演示或录屏。
+运行中的只读看板可在本机每秒刷新一次；所有请求重新读取账本与实验树，运行目录不会被写入：
+
+    python3 -m dashboard.serve --run-dir runs/<run_id> --port 8765
+
+用两个已存在的运行分屏展示（左侧空库、右侧练过的库）：
+
+    python3 -m dashboard.serve --run-dir runs/<empty_library_run> --other-run-dir runs/<trained_library_run> --port 8765
+
+浏览器打开本机显示的地址。服务只监听 localhost；分屏是现场演示，不会写入正式研究报告。录屏仍需在实际演示运行后制作。

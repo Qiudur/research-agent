@@ -1,0 +1,38 @@
+{
+  "source": "https://archive.ics.uci.edu/static/public/186/wine+quality.zip",
+  "url": "https://archive.ics.uci.edu/static/public/186/wine+quality.zip",
+  "archive_sha256": "3ed56667f4b828242bd732d7d1dd7f2861e54432239d7fa63877014cbb0304d4",
+  "raw_file_sha256": {
+    "winequality-red.csv": "4a402cf041b025d4566d954c3b9ba8635a3a8a01e039005d97d6a710278cf05e",
+    "winequality-white.csv": "76c3f809815c17c07212622f776311faeb31e87610d52c26d87d6e361b169836"
+  },
+  "seed": 20261114,
+  "features": [
+    "fixed acidity",
+    "volatile acidity",
+    "citric acid",
+    "residual sugar",
+    "chlorides",
+    "free sulfur dioxide",
+    "total sulfur dioxide",
+    "density",
+    "pH",
+    "sulphates",
+    "alcohol",
+    "wine_type"
+  ],
+  "excluded": [],
+  "total_rows": 6497,
+  "split_counts": {
+    "train": 3905,
+    "dev": 1294,
+    "holdout": 1298
+  },
+  "positive_counts": {
+    "train": 773,
+    "dev": 249,
+    "holdout": 255
+  },
+  "feature_hash_overlap": 0,
+  "split_method": "class-stratified 60/20/20 grouped by exact feature vector"
+}

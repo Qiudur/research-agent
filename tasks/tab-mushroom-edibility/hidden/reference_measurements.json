@@ -1,0 +1,46 @@
+{
+  "schema": "tabular_reference/1",
+  "task_id": "tab-mushroom-edibility",
+  "split": "dev",
+  "seed": 20261114,
+  "time_limit_seconds": 180,
+  "presets": "medium_quality",
+  "eval_metric": "roc_auc",
+  "train_rows": 5254,
+  "dev_rows": 1384,
+  "baseline": {
+    "model": "workspace/original.py LGBMClassifier",
+    "auc": 0.8501503759398497,
+    "sandbox_seconds": 0.9746125000528991
+  },
+  "reference": {
+    "model": "AutoGluon TabularPredictor",
+    "auc": 0.9679197994987468,
+    "best_model_by_internal_validation": "WeightedEnsemble_L2",
+    "trained_models": [
+      "CatBoost",
+      "WeightedEnsemble_L2",
+      "RandomForestEntr",
+      "RandomForestGini",
+      "LightGBMXT",
+      "LightGBM",
+      "LightGBMLarge",
+      "ExtraTreesEntr",
+      "XGBoost",
+      "ExtraTreesGini"
+    ],
+    "fit_seconds": 46.26380020903889
+  },
+  "environment": {
+    "python": "3.11.12",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "pandas": "2.3.3",
+    "scikit_learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "autogluon_tabular": "1.6.3",
+    "catboost": "1.2.10",
+    "xgboost": "3.2.0"
+  },
+  "scope": "dev only; holdout unopened; no model API tokens or monetary cost measured",
+  "gap_valid": true
+}

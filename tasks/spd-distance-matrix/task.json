@@ -14,6 +14,7 @@
     "signature": "distance_matrix(points: list[tuple[float, float]]) -> list[list[float]]",
     "returns": "A square list of Euclidean distances, matching original.py within floating-point tolerance"
   },
+  "benchmark": {"kind": "distance_matrix", "dev_size": 1800, "holdout_size": 1800, "profile_size": 300},
   "budget": {
     "money": null,
     "wall_seconds": 1800

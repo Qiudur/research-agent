@@ -1,0 +1,15 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "class_imbalance",
+    "many_numeric",
+    "id_like_column"
+  ],
+  "summary": {
+    "dataset": "Predict next-month credit-card default",
+    "predictors": 23,
+    "rows_train": 18001,
+    "target": "1 means default next month; source ID column is removed",
+    "split_strategy": "group_stratified"
+  }
+}

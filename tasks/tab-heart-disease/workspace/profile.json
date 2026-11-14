@@ -1,0 +1,15 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "small_sample"
+  ],
+  "summary": {
+    "dataset": "UCI Heart Disease",
+    "rows_train": 183,
+    "predictors": 13,
+    "positive_rate_train": 0.45901639344262296,
+    "target": "Classify presence of heart disease from Cleveland clinical attributes",
+    "excluded_features": [],
+    "input": "Public train.csv has y; hidden test rows are feature dictionaries"
+  }
+}

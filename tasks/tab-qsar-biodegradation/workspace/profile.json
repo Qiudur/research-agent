@@ -1,0 +1,14 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "small_sample",
+    "many_numeric"
+  ],
+  "summary": {
+    "dataset": "Predict ready biodegradability from molecular descriptors",
+    "predictors": 41,
+    "rows_train": 634,
+    "target": "RB (readily biodegradable) is positive; NRB is negative",
+    "split_strategy": "group_stratified"
+  }
+}

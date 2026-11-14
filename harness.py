@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
 from dataclasses import dataclass
 import fcntl
 import importlib.util
@@ -10,7 +9,6 @@ import json
 import math
 import os
 from pathlib import Path
-import random
 import resource
 import secrets
 import shutil
@@ -18,7 +16,9 @@ import statistics
 import subprocess
 import sys
 import time
-import traceback
+
+from harness_worker import _case as _speed_case, _edge_cases as _speed_edge_cases
+from harness_worker import _equal as _speed_equal
 
 
 ROOT = Path(__file__).resolve().parent
@@ -35,7 +35,23 @@ class Limits:
 def _tasks_root() -> Path:
     # A temporary, explicitly named fixture root may override only task packages.
     # This is for end-to-end TEST ONLY budgets; production task.json stays immutable.
-    return Path(os.environ.get("RA_TASKS_ROOT", str(ROOT / "tasks"))).expanduser().resolve()
+    override = os.environ.get("RA_TASKS_ROOT")
+    return (Path(override).expanduser().resolve() if override
+            else _project_root() / "tasks")
+
+
+def _project_root() -> Path:
+    override = os.environ.get("RA_PROJECT_ROOT")
+    if not override:
+        return ROOT
+    supplied = Path(override).expanduser()
+    if not supplied.is_absolute():
+        raise ValueError("RA_PROJECT_ROOT must be an absolute path")
+    project = supplied.resolve()
+    if not project.is_dir() or not (project / "tasks/bank.json").is_file() or not (
+            project / "config/triggers.json").is_file():
+        raise ValueError("RA_PROJECT_ROOT needs tasks/bank.json and config/triggers.json")
+    return project
 
 
 def _read_json(path: Path, schema: str) -> dict:
@@ -63,7 +79,7 @@ def load_task(task_id: str) -> dict:
     if task.get("scenario") not in {"speedup", "tabular"}:
         raise ValueError("Unsupported scenario")
     profile = _read_json(path / "workspace" / "profile.json", "profile/1")
-    triggers = _read_json(ROOT / "config" / "triggers.json", "triggers/1")
+    triggers = _read_json(_project_root() / "config" / "triggers.json", "triggers/1")
     if not set(profile.get("features", [])).issubset(triggers[task["scenario"]]):
         raise ValueError("Profile uses unknown trigger features")
     return {**task, "workspace": path / "workspace", "features": profile["features"]}
@@ -92,7 +108,7 @@ def _node(task_id: str, node_dir: Path) -> Path:
     node = Path(node_dir).expanduser().resolve()
     if not node.is_dir() or node.is_relative_to(_tasks_root()):
         raise ValueError("Node directory must exist outside task packages")
-    if node == ROOT or not (node / "solution.py").is_file():
+    if node in {ROOT, _project_root()} or not (node / "solution.py").is_file():
         raise ValueError("Node must contain solution.py")
     return node
 
@@ -101,16 +117,31 @@ def _sandbox_profile(task_root: Path, node: Path) -> str:
     # Rule precedence is verified in tests on macOS: these narrow allows take
     # precedence over the project-root read denial.
     quote = lambda path: json.dumps(str(path.resolve()))
-    project = ROOT
+    project = _project_root()
+    home = Path.home().resolve()
+    venv = Path(sys.prefix).resolve()
+    python = Path(sys.executable).expanduser().absolute()  # Preserve the venv symlink path.
     lines = ["(version 1)", "(allow default)", "(deny network*)",
+             f"(deny file-read* (subpath {quote(home)}))",
              f"(deny file-read* (subpath {quote(project)}))",
-             f"(deny file-read* (subpath {quote(_tasks_root())}))",
-             f"(allow file-read* (subpath {quote(task_root / 'workspace')}))",
-             f"(allow file-read* (subpath {quote(node)}))",
-             f"(allow file-read* (literal {quote(WORKER)}))",
-             "(deny file-write*)",
-             f"(allow file-write* (subpath {quote(node)}))",
-             "(allow file-write* (literal \"/dev/null\"))"]
+             f"(deny file-read* (subpath {quote(_tasks_root())}))"]
+    if (venv.is_dir() and sys.prefix != sys.base_prefix
+            and python.is_relative_to(venv)
+            and not venv.is_relative_to(_tasks_root())
+            and (not venv.is_relative_to(project) or venv == project / ".venv")):
+        # pyvenv.cfg and site-packages are needed at interpreter startup.
+        # The task hidden tree remains denied by the narrower allow rules.
+        ancestors = {ancestor for ancestor in venv.parents
+                     if ancestor == home or ancestor.is_relative_to(home)}
+        lines.extend(f"(allow file-read* (literal {quote(path)}))"
+                     for path in sorted(ancestors, key=lambda path: len(path.parts)))
+        lines.append(f"(allow file-read* (subpath {quote(venv)}))")
+    lines.extend([f"(allow file-read* (subpath {quote(task_root / 'workspace')}))",
+                  f"(allow file-read* (subpath {quote(node)}))",
+                  f"(allow file-read* (literal {quote(WORKER)}))",
+                  "(deny file-write*)",
+                  f"(allow file-write* (subpath {quote(node)}))",
+                  "(allow file-write* (literal \"/dev/null\"))"])
     return "\n".join(lines)
 
 
@@ -142,6 +173,7 @@ def _execute(task_id: str, node: Path, mode: str, *, seed: int = 0,
     command = [sandbox, "-p", _sandbox_profile(task_root, node), sys.executable,
                str(WORKER), "--mode", mode, "--candidate", str(candidate_path),
                "--workspace", str(task["workspace"]), "--function", task["deliverable"]["function"],
+               "--task-kind", task.get("benchmark", {}).get("kind", "distance_matrix"),
                "--seed", str(seed), "--size", str(size), "--repeats", str(repeats),
                "--script-args", json.dumps(script_args or []),
                "--memory-mb", str(limits.memory_mb)]
@@ -206,16 +238,33 @@ def _reference_timings(task_id: str, seed: int, size: int, repeats: int) -> list
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     function = getattr(module, load_task(task_id)["deliverable"]["function"])
-    function([(0.0, 0.0)])
+    kind = load_task(task_id).get("benchmark", {}).get("kind", "distance_matrix")
+    original_path = _task_root(task_id) / "workspace" / "original.py"
+    original_spec = importlib.util.spec_from_file_location("trusted_original", original_path)
+    if original_spec is None or original_spec.loader is None:
+        raise ValueError("Missing original implementation")
+    original_module = importlib.util.module_from_spec(original_spec)
+    original_spec.loader.exec_module(original_module)
+    original = getattr(original_module, load_task(task_id)["deliverable"]["function"])
+    for case in _speed_edge_cases(kind, seed):
+        if not _speed_equal(kind, function(*case), original(*case)):
+            raise ValueError("Reference implementation disagrees with original")
     timings = []
     for rep in range(repeats):
-        rng = random.Random(seed + 100000 + rep)
-        points = [(rng.uniform(-100, 100), rng.uniform(-100, 100)) for _ in range(size)]
+        case = _speed_case(kind, seed + 100000 + rep, size)
         start = time.perf_counter()
-        value = function(points)
+        value = function(*case)
         timings.append(time.perf_counter() - start)
-        if len(value) != size or len(value[0]) != size:
+        if kind == "distance_matrix":
+            if not isinstance(value, list) or len(value) != size or any(
+                    not isinstance(row, list) or len(row) != size for row in value):
+                raise ValueError("Reference output shape changed")
+        elif kind == "rolling_mean" and (not isinstance(value, list) or len(value) != size):
             raise ValueError("Reference output shape changed")
+        elif kind == "edit_distance" and type(value) is not int:
+            raise ValueError("Reference output type changed")
+        elif kind == "max_drawdown" and (type(value) not in (int, float) or not math.isfinite(value)):
+            raise ValueError("Reference output type changed")
     return timings
 
 
@@ -234,11 +283,13 @@ def score(task_id: str, node_dir: Path, split: str, seed: int | None = None) -> 
     node = _node(task_id, node_dir)
     task = load_task(task_id)
     used_seed = int(seed if seed is not None else secrets.randbits(63))
-    if task["scenario"] != "speedup":
-        raise NotImplementedError("Tabular scorer is not installed yet")
+    if task["scenario"] == "tabular":
+        from tabular_harness import score as score_tabular
+        return score_tabular(task_id, node, split, seed=used_seed)
+    benchmark = task.get("benchmark", {})
     repeats = 7 if split == "dev" else 15
-    size = 1800
-    lock_path = ROOT / "runs" / ".timing.lock"
+    size = int(benchmark.get("dev_size" if split == "dev" else "holdout_size", 1800))
+    lock_path = _project_root() / "runs" / ".timing.lock"
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     queued = time.perf_counter()
     with lock_path.open("a+b") as lock:
@@ -285,7 +336,8 @@ def profile_code(task_id: str, node_dir: Path) -> dict:
     if load_task(task_id)["scenario"] != "speedup":
         raise ValueError("Code profile is for speedup tasks")
     node = _node(task_id, node_dir)
-    payload, meta = _execute(task_id, node, "speed", seed=91731, size=300, repeats=1)
+    size = int(load_task(task_id).get("benchmark", {}).get("profile_size", 300))
+    payload, meta = _execute(task_id, node, "speed", seed=91731, size=size, repeats=1)
     if not payload.get("ok") or not payload.get("correct") or payload.get("cheat_flags"):
         return {"schema": "code_profile/1", "ok": False,
                 "error": payload.get("error") or payload.get("reason") or payload.get("cheat_flags")}

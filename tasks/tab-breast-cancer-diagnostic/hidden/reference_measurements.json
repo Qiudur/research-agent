@@ -1,0 +1,46 @@
+{
+  "schema": "tabular_reference/1",
+  "task_id": "tab-breast-cancer-diagnostic",
+  "split": "dev",
+  "seed": 20261114,
+  "time_limit_seconds": 180,
+  "presets": "medium_quality",
+  "eval_metric": "roc_auc",
+  "train_rows": 343,
+  "dev_rows": 113,
+  "baseline": {
+    "model": "workspace/original.py LGBMClassifier",
+    "auc": 0.9909456740442656,
+    "sandbox_seconds": 0.8945149590144865
+  },
+  "reference": {
+    "model": "AutoGluon TabularPredictor",
+    "auc": 0.9926224010731053,
+    "best_model_by_internal_validation": "WeightedEnsemble_L2",
+    "trained_models": [
+      "CatBoost",
+      "XGBoost",
+      "WeightedEnsemble_L2",
+      "ExtraTreesEntr",
+      "LightGBMXT",
+      "RandomForestEntr",
+      "ExtraTreesGini",
+      "RandomForestGini",
+      "LightGBM",
+      "LightGBMLarge"
+    ],
+    "fit_seconds": 8.536801041977014
+  },
+  "environment": {
+    "python": "3.11.12",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "pandas": "2.3.3",
+    "scikit_learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "autogluon_tabular": "1.6.3",
+    "catboost": "1.2.10",
+    "xgboost": "3.2.0"
+  },
+  "scope": "dev only; holdout unopened; no model API tokens or monetary cost measured",
+  "gap_valid": true
+}

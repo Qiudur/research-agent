@@ -1,0 +1,14 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "class_imbalance",
+    "many_numeric"
+  ],
+  "summary": {
+    "dataset": "Identify pulsar candidates",
+    "predictors": 8,
+    "rows_train": 10740,
+    "target": "1 means pulsar candidate; 0 means non-pulsar",
+    "split_strategy": "group_stratified"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "schema": "profile/1",
+  "features": ["repeated_recompute_window"],
+  "summary": {
+    "hotspot": "Every position slices and sums most of the same trailing window again",
+    "input_type": "list of finite float values and a positive integer window",
+    "output_type": "list of float means",
+    "benchmark_size": 16000,
+    "edge_cases": ["empty", "window one", "partial prefix window", "window longer than input", "mixed signs"]
+  }
+}

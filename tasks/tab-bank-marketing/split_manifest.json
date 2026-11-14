@@ -1,0 +1,45 @@
+{
+  "source": "https://archive.ics.uci.edu/static/public/222/bank+marketing.zip",
+  "archive_sha256": "e0bf5f5de5b846e2f18e9d90606637267d46dfa260e0f17bb12e605db5efbeb4",
+  "csv_sha256": "74adfc578bf77a7ff4bb1ba4a9f8709d9e3c6907342959c2c8416847e0afb4d8",
+  "seed": 20261114,
+  "features": [
+    "age",
+    "job",
+    "marital",
+    "education",
+    "default",
+    "housing",
+    "loan",
+    "contact",
+    "month",
+    "day_of_week",
+    "campaign",
+    "pdays",
+    "previous",
+    "poutcome",
+    "emp.var.rate",
+    "cons.price.idx",
+    "cons.conf.idx",
+    "euribor3m",
+    "nr.employed"
+  ],
+  "excluded": [
+    "duration"
+  ],
+  "train_only_forbidden_features": [
+    "duration"
+  ],
+  "train_only_duration_auc": 0.8198293442260758,
+  "split_counts": {
+    "train": 24714,
+    "dev": 8238,
+    "holdout": 8236
+  },
+  "positive_counts": {
+    "train": 2793,
+    "dev": 929,
+    "holdout": 918
+  },
+  "feature_hash_overlap": 0
+}

@@ -1,0 +1,16 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "class_imbalance",
+    "many_numeric"
+  ],
+  "summary": {
+    "dataset": "UCI Online Shoppers Purchasing Intention",
+    "rows_train": 7399,
+    "predictors": 17,
+    "positive_rate_train": 0.15475064197864577,
+    "target": "Predict session purchase intent from browsing behavior",
+    "excluded_features": [],
+    "input": "Public train.csv has y; hidden test rows are feature dictionaries"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "schema": "task/1",
+  "task_id": "spd-top-frequency",
+  "scenario": "speedup",
+  "title": "Speed up top-k frequencies",
+  "description": "The k most frequent (value, count) pairs, breaking ties by smaller value. Optimize the function while preserving original.py behavior.",
+  "metric": {
+    "name": "speedup",
+    "higher_is_better": true
+  },
+  "deliverable": {
+    "file": "solution.py",
+    "function": "top_frequency",
+    "signature": "top_frequency(values: list[int], k: int) -> list[tuple[int, int]]",
+    "returns": "The k most frequent (value, count) pairs, breaking ties by smaller value"
+  },
+  "benchmark": {
+    "kind": "top_frequency",
+    "dev_size": 10000,
+    "holdout_size": 12000,
+    "profile_size": 1200
+  },
+  "budget": {
+    "money": null,
+    "wall_seconds": 1800
+  },
+  "limits": {
+    "run_seconds": 120,
+    "memory_mb": 1024
+  }
+}
