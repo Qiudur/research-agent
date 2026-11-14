@@ -10,8 +10,9 @@ import time
 from types import SimpleNamespace
 import unittest
 
-from evaluation.self_research import (auto_evaluate_candidates, evaluate_candidates,
-                                      verify_auto_selected, verify_selected)
+from evaluation.self_research import (_FORBIDDEN_NOTE, auto_evaluate_candidates,
+                                      evaluate_candidates, verify_auto_selected,
+                                      verify_selected)
 from evaluation.figures import _auto_research_cost
 from ledger import Ledger, Usage
 from library import Library
@@ -69,6 +70,13 @@ class HoldoutPilot(PilotHarness):
 
 
 class SelfResearchTests(unittest.TestCase):
+    def test_strategy_guard_distinguishes_validation_steps_from_private_tiers(self):
+        self.assertIsNone(_FORBIDDEN_NOTE.search(
+            "Preserve budget for critical validation steps and examine results."))
+        self.assertIsNotNone(_FORBIDDEN_NOTE.search("Inspect validation tasks first."))
+        self.assertIsNotNone(_FORBIDDEN_NOTE.search("Read the validation set."))
+        self.assertIsNotNone(_FORBIDDEN_NOTE.search("Use the exam tasks."))
+
     def setup_project(self, root: Path):
         (root / "config/prompts").mkdir(parents=True)
         for name in ("agent.json", "hard_caps.json", "triggers.json", "prices.json"):
@@ -322,6 +330,10 @@ class SelfResearchTests(unittest.TestCase):
             events = [json.loads(line) for line in
                       Path(result["proposal_ledger_path"]).read_text().splitlines()]
             self.assertEqual([event["seq"] for event in events], [1, 2, 3])
+            response_audits = list((root / "batches/auto-study/proposal_responses").glob("response-*.json"))
+            self.assertEqual(len(response_audits), 3)
+            self.assertTrue(all(json.loads(path.read_text())["schema"] == "model_response_audit/1"
+                                for path in response_audits))
             self.assertEqual([event["response_status"] for event in events],
                              ["completed", "failed", "completed"])
             self.assertTrue(all(set(event["tokens"]) ==

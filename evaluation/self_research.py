@@ -37,16 +37,21 @@ from .report import run_report
 _NAME = re.compile(r"^[a-z][a-z0-9_-]*$")
 _ROLES = ("planner", "executor", "diagnoser", "summarizer")
 _FORBIDDEN_NOTE = re.compile(
-    r"hidden|holdout|validation|exam|hard_caps|prices[.]json|bank[.]json|"
+    r"hidden|holdout|"
+    r"\bvalidation\b.{0,24}\b(?:sets?|data|tasks?|splits?|phases?|tiers?|files?)\b|"
+    r"\b(?:access|read|load|peek|inspect|query)\b.{0,28}\bvalidation\b|"
+    r"\bexam\b|hard_caps|prices[.]json|bank[.]json|"
     r"RA_EVAL|sandbox|ignore previous|bypass|override safety|"
     r"隐藏|验证集|考试|题库|价格表|硬上限|忽略.{0,12}规则|绕过", re.IGNORECASE)
 _PROPOSAL_PROMPT = (
-    "You tune a research agent using practice results only. Propose bounded "
-    "settings and short strategy appendices. Preserve all existing role prompt "
-    "text. Never request hidden data, validation or exam tasks, price changes, "
-    "bank changes, hard-cap changes, or removal of safety rules. Use the "
-    "per-practice-task score, spend, stop reasons and variability to target "
-    "the actual budget losses rather than only the overall average."
+    "Tune a research agent using the supplied practice results only. Change "
+    "bounded settings and add brief, positive task-facing instructions to "
+    "the four existing role prompts. Keep each prompt_append value under "
+    "160 characters, and give a one-sentence rationale under 200 characters. "
+    "Do not discuss evaluation setup, access to other data, protected files, "
+    "or rule changes in any generated text. Use per-task scores, costs, stop "
+    "reasons and variability to target observed losses. Preserve the original "
+    "prompts and safety rules."
 )
 
 
@@ -65,8 +70,11 @@ _PROPOSAL_SCHEMA = _object({
         "effort": _object({role: {"type": "string", "enum": ["low", "medium", "high"]}
                            for role in _ROLES}),
     }),
-    "prompt_append": _object({role: {"type": "string"} for role in _ROLES}),
-    "rationale": {"type": "string"},
+    "prompt_append": _object({role: {"type": "string",
+                                    "description": "Positive task strategy, under 160 characters; no evaluation or access discussion"}
+                              for role in _ROLES}),
+    "rationale": {"type": "string",
+                  "description": "One sentence under 200 characters about observed practice results"},
 })
 
 
@@ -548,7 +556,8 @@ def auto_evaluate_candidates(
 
     evaluate_one("default", default_config, 0.0)
     proposal_model = ModelClient(model, proposal_ledger, client=proposal_client,
-                                 max_output_tokens=max_output_tokens)
+                                 max_output_tokens=max_output_tokens,
+                                 audit_dir=study_dir / "proposal_responses")
     for round_number in range(1, rounds + 1):
         if formal:
             _verify_code_freeze(root, code_commit)
