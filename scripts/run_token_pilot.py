@@ -36,7 +36,9 @@ BUDGET_TOKENS = 40_000
 RESERVE_TOKENS = 12_000
 WALL_SECONDS = 900
 MAX_OUTPUT_TOKENS = 2048
-BASE_URL = "https://ai-gateway.ailab.jiuan.com/v1"
+# A teammate machine may reach the same model through another gateway; the
+# effective URL is written to each protocol so evidence stays auditable.
+BASE_URL = os.environ.get("OPENAI_BASE_URL") or "https://ai-gateway.ailab.jiuan.com/v1"
 
 
 def _write(path: Path, data: dict) -> None:

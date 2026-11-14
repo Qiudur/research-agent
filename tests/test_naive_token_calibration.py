@@ -55,6 +55,19 @@ class NaiveTokenCalibrationTests(unittest.TestCase):
         (source / "tasks/bank.json").write_text(json.dumps(bank))
         return source
 
+    def test_gateway_override_comes_from_environment(self):
+        import importlib
+        from scripts import run_token_pilot
+        try:
+            with patch.dict(os.environ, {"OPENAI_BASE_URL": "https://gateway.example/v1"}):
+                self.assertEqual(importlib.reload(run_token_pilot).BASE_URL, "https://gateway.example/v1")
+            with patch.dict(os.environ, {}, clear=False):
+                os.environ.pop("OPENAI_BASE_URL", None)
+                self.assertEqual(importlib.reload(run_token_pilot).BASE_URL,
+                                 "https://ai-gateway.ailab.jiuan.com/v1")
+        finally:
+            importlib.reload(run_token_pilot)
+
     def test_bank_selection_covers_all_24_tasks(self):
         entries, chosen = _bank_ids(PROJECT, None)
         self.assertEqual(len(chosen), 24)
@@ -96,6 +109,7 @@ class NaiveTokenCalibrationTests(unittest.TestCase):
             self.assertEqual(protocol["tasks"], list(selected))
             self.assertEqual(protocol["repetitions"], 1)
             self.assertEqual(protocol["budget_tokens_per_task"], BUDGET_TOKENS)
+            self.assertEqual(protocol["base_url"], calibration.BASE_URL)
             self.assertEqual(len(protocol["copied_sha256"]), len(set(protocol["copied_sha256"])))
             for tabular in ("tab-breast-cancer-diagnostic", "tab-bank-marketing"):
                 self.assertTrue((project / "tasks" / tabular / "hidden/dev.csv").is_file())
