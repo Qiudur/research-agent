@@ -12,7 +12,8 @@ from unittest.mock import patch
 import harness
 from scripts import run_token_self_research as pilot
 from scripts.run_token_self_research import (PRICE_NAME, PROJECT, TASKS,
-                                             _project_override, prepare_project)
+                                             _project_override, all_practice_task_ids,
+                                             prepare_project)
 
 
 class TokenSelfResearchPilotTests(unittest.TestCase):
@@ -104,6 +105,80 @@ class TokenSelfResearchPilotTests(unittest.TestCase):
                 copied = json.loads((project / "tasks" / task_id / "task.json").read_text())
                 self.assertEqual(copied["budget"], original["budget"])
                 self.assertEqual(protocol["wall_seconds_per_task"][task_id], 1800)
+
+    def test_prepare_all_ten_practice_tasks_without_changing_official_bank(self):
+        task_ids = all_practice_task_ids(PROJECT)
+        self.assertEqual(len(task_ids), 10)
+        original_bank = (PROJECT / "tasks/bank.json").read_bytes()
+        with TemporaryDirectory() as temp:
+            campaign = Path(temp) / "campaign"
+            project = prepare_project(PROJECT, campaign, task_ids=task_ids,
+                                      proposal_rounds=0, max_workers=1)
+            copied_bank = json.loads((project / "tasks/bank.json").read_text())
+            protocol = json.loads((campaign / "protocol.json").read_text())
+            self.assertEqual([entry["task_id"] for entry in copied_bank["tasks"]], list(task_ids))
+            self.assertEqual(protocol["tasks"], list(task_ids))
+            self.assertEqual(protocol["max_workers"], 1)
+            self.assertTrue(all(entry["tier"] == "practice" for entry in copied_bank["tasks"]))
+            self.assertEqual((PROJECT / "tasks/bank.json").read_bytes(), original_bank)
+
+    def test_all_practice_requires_explicit_gateway_and_default_mode(self):
+        url = "https://ai-gateway.theunifiedcare.com/v1"
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-secret-never-record"}):
+            with self.assertRaisesRegex(SystemExit, "explicit --base-url"):
+                pilot.main(["--all-practice", "--default-only"])
+            with self.assertRaisesRegex(SystemExit, "requires --default-only"):
+                pilot.main(["--all-practice", "--base-url", url])
+            with self.assertRaisesRegex(SystemExit, "without credentials or query"):
+                pilot.main(["--all-practice", "--default-only", "--base-url",
+                            url + "?key=secret"])
+
+    def test_all_practice_wires_ten_tasks_workers_and_gateway_to_client(self):
+        url = "https://ai-gateway.theunifiedcare.com/v1"
+        task_ids = all_practice_task_ids(PROJECT)
+        captured: dict = {"urls": []}
+
+        def prepare(_source, campaign, **kwargs):
+            captured["prepare"] = kwargs
+            project = campaign / "project"
+            (project / "config").mkdir(parents=True)
+            (project / "config/agent_token_pilot_v2.json").write_text("{}")
+            pilot._write(campaign / "protocol.json", {"label": "TEST ONLY"})
+            return project
+
+        def evaluate(**kwargs):
+            captured["evaluate"] = kwargs
+            run_dir = kwargs["project_root"] / "runs" / "fake-run"
+            run_dir.mkdir(parents=True)
+            pilot._write(run_dir / "manifest.json", {
+                "agent_config": {"path": "config/agent_token_pilot_v2.json"}})
+            kwargs["roles_factory"]("default", 1, task_ids[0], run_dir)
+            return {"ranking": [{"candidate": "default"}],
+                    "reports": [{"total_cost": 12.0}]}
+
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            with (patch.object(pilot, "PROJECT", root),
+                  patch.object(pilot, "all_practice_task_ids", return_value=task_ids),
+                  patch.object(pilot, "prepare_project", side_effect=prepare),
+                  patch.object(pilot.subprocess, "check_output", side_effect=["", "a" * 40]),
+                  patch.object(pilot, "evaluate_candidates", side_effect=evaluate),
+                  patch.object(pilot.Ledger, "open", return_value=object()),
+                  patch.object(pilot, "ModelClient", return_value=object()),
+                  patch.object(pilot, "RoleAgents", return_value=object()),
+                  patch.dict(os.environ, {"OPENAI_API_KEY": "test-secret-never-record"}),
+                  patch.dict(sys.modules, {"openai": SimpleNamespace(
+                      OpenAI=lambda **kwargs: captured["urls"].append(kwargs["base_url"]) or object())})):
+                self.assertEqual(pilot.main(["--all-practice", "--default-only",
+                                             "--base-url", url, "--workers", "1"]), 0)
+            self.assertEqual(captured["prepare"]["task_ids"], task_ids)
+            self.assertEqual(captured["prepare"]["max_workers"], 1)
+            self.assertEqual(captured["evaluate"]["max_workers"], 1)
+            self.assertEqual(set(captured["evaluate"]["baseline_solutions"]), set(task_ids))
+            self.assertEqual(captured["urls"], [url])
+            campaign = next((root / "runs").iterdir())
+            protocol = json.loads((campaign / "protocol.json").read_text())
+            self.assertEqual(protocol["base_url"], url)
 
 
 if __name__ == "__main__":
