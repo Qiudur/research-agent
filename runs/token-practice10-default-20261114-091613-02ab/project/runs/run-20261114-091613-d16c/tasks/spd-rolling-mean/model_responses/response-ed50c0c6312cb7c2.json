@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "summarizer",
+  "purpose": "summarize",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "a43804352ef789506b07b3ffe9b5f7dd0137c2b1bcac46b8b353ca29b6d0127e",
+  "response_id": "resp_2d572353-52a1-9bd8-bad6-2aff7d6ebb1a",
+  "status": "completed",
+  "output_text": "```json\n{\n  \"drafts\": [\n    {\n      \"scope\": \"method\",\n      \"scenario\": \"speedup\",\n      \"triggers\": [\"repeated_recompute_window\"],\n      \"conditions\": \"当处理重复的窗口重新计算问题时\",\n      \"action\": \"采用O(1)更新每位置的滑动窗口求和方法替代切片重计算\",\n      \"negative\": false,\n      \"node_ids\": [\"n0001\"]\n    },\n    {\n      \"scope\": \"method\",\n      \"scenario\": \"speedup\",\n      \"triggers\": [\"repeated_recompute_window\"],\n      \"conditions\": \"当环境支持NumPy库时\",\n      \"action\": \"使用NumPy数组操作进行向量化计算\",\n      \"negative\": false,\n      \"node_ids\": [\"n0002\"]\n    }\n  ],\n  \"narrowings\": []\n}\n```",
+  "tokens": {
+    "input": 719,
+    "cached_input": 0,
+    "output": 210,
+    "reasoning": 669
+  },
+  "cost": 1598.0,
+  "error": null
+}

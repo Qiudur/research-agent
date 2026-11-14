@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0010",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "403a96103b5898c23e201da8bf1e8c762c2bc0984db879b506b39cdb217b7124",
+  "response_id": "resp_974949fe-9601-96c2-90a8-8b7f2054d246",
+  "status": "completed",
+  "output_text": "```json\n{\n  \"code\": \"from __future__ import annotations\\n\\ndef membership_filter(values: list[int], allowed: list[int]) -> list[int]:\\n    \\\"\\\"\\\"Keep values that appear in allowed, preserving order and duplicates from values.\\\"\\\"\\\"\\n    allowed_set = set(allowed)\\n    return [value for value in values if value in allowed_set]\",\n  \"notes\": \"Set-based lookup is correct for membership testing. Duplicates and order in 'allowed' don't affect membership semantics—only existence matters. This gives O(1) avg lookup vs O(n) linear scan, maintaining identical output for all inputs including edge cases (empty allowed, duplicates, absent values).\"\n}\n```",
+  "tokens": {
+    "input": 744,
+    "cached_input": 0,
+    "output": 154,
+    "reasoning": 626
+  },
+  "cost": 1524.0,
+  "error": null
+}

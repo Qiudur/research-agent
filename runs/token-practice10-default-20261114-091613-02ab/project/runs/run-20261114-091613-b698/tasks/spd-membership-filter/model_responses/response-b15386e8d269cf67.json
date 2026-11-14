@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "3092611b98cf22c87c11fef0d97f43468ebb17b15808e997c7bfe999176b4eaf",
+  "response_id": "resp_abea1cc1-ff8c-9bb3-9c33-616b7f5a6466",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Convert allowed list to set for O(1) membership lookups\",\n      \"rationale\": \"The profile_summary hotspot states 'Repeated list membership checks scan the allowed list for every value', giving O(n*m) complexity. Using a set changes this to O(1) average lookup time, reducing overall to O(n+m). This is a classic Python optimization for membership testing.\",\n      \"estimate\": {\n        \"gain\": 0.85,\n        \"cost\": 5000,\n        \"seconds\": 45\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Early return for empty allowed list edge case\",\n      \"rationale\": \"Edge cases include 'empty allowed list'. If allowed is empty, we can immediately return an empty list without any iteration, saving all computation for that common degenerate case.\",\n      \"estimate\": {\n        \"gain\": 0.05,\n        \"cost\": 3000,\n        \"seconds\": 30\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 5000,\n    \"score\": 0.85,\n    \"seconds\": 45\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"hypothesis_1_set_conversion\",\n      \"amount\": 5000\n    },\n    {\n      \"direction\": \"reserve_for_next_call\",\n      \"amount\": 12000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.125,\n      \"score\": 0.85\n    },\n    {\n      \"spent_ratio\": 0.25,\n      \"score\": 0.9\n    },\n    {\n      \"spent_ratio\": 0.5,\n      \"score\": 0.95\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1275,
+    "cached_input": 0,
+    "output": 465,
+    "reasoning": 765
+  },
+  "cost": 2505.0,
+  "error": null
+}

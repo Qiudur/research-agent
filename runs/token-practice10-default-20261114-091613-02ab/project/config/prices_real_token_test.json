@@ -1,0 +1,14 @@
+{
+  "schema": "prices/1",
+  "currency": "TEST",
+  "unit_tokens": 1,
+  "test_only": true,
+  "models": {
+    "qwen3.5-27b": {
+      "input": 1,
+      "cached_input": 1,
+      "output": 1,
+      "reasoning": 1
+    }
+  }
+}

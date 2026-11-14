@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "e762ba633303f335e775f50c3f6909bd610e78a1e165ea74949434f1c3f1fc1c",
+  "response_id": "resp_67c43e49-bb88-9e19-96fa-39a531d3c6a6",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Replace nested for-loops with nested list comprehension to leverage Python's internal optimization\",\n      \"rationale\": \"List comprehensions in Python are often faster than explicit for-loops due to reduced bytecode overhead and optimized C-level iteration. This preserves exact output format while potentially improving speed.\",\n      \"estimate\": {\n        \"gain\": 0.12,\n        \"cost\": 400,\n        \"seconds\": 15\n      },\n      \"cites\": [\"nested_python_loop\"]\n    },\n    {\n      \"hypothesis\": \"Pre-unpack and cache point coordinates in outer loop to reduce tuple unpacking in inner loop\",\n      \"rationale\": \"The visible sample unpacks (x1, y1) and (x2, y2) on each iteration. Moving x1,y1 extraction outside inner loop eliminates 750 redundant tuple unpackings, reducing interpreter overhead.\",\n      \"estimate\": {\n        \"gain\": 0.15,\n        \"cost\": 400,\n        \"seconds\": 15\n      },\n      \"cites\": [\"nested_python_loop\"]\n    },\n    {\n      \"hypothesis\": \"Use math.hypot(dx, dy) instead of sqrt(dx*dx + dy*dy) for potential micro-optimization\",\n      \"rationale\": \"math.hypot may have better internal implementation than manual sqrt computation. Though numerically equivalent, it could avoid intermediate overflow/underflow and be slightly faster.\",\n      \"estimate\": {\n        \"gain\": 0.05,\n        \"cost\": 300,\n        \"seconds\": 12\n      },\n      \"cites\": [\"visible_sample\"]\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 1200,\n    \"score\": 0.426,\n    \"seconds\": 42\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"list_comprehension\",\n      \"amount\": 400\n    },\n    {\n      \"direction\": \"coordinate_caching\",\n      \"amount\": 400\n    },\n    {\n      \"direction\": \"hypot_optimization\",\n      \"amount\": 300\n    },\n    {\n      \"direction\": \"reserve_next_call\",\n      \"amount\": 12000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.03,\n      \"score\": 0.426\n    },\n    {\n      \"spent_ratio\": 0.1,\n      \"score\": 0.55\n    },\n    {\n      \"spent_ratio\": 0.3,\n      \"score\": 0.7\n    },\n    {\n      \"spent_ratio\": 0.9,\n      \"score\": 0.85\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1382,
+    "cached_input": 0,
+    "output": 674,
+    "reasoning": 475
+  },
+  "cost": 2531.0,
+  "error": null
+}

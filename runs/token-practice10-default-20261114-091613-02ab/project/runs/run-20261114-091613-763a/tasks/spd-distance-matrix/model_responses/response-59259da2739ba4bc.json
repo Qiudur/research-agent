@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0006",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "372385185f06a35082d7d68ff343cb5f2912252a693a0b732db679c0e0cd93a8",
+  "response_id": "resp_f3417d33-ceb4-943e-9f5c-01efecbffdf8",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"import numpy as np\\n\\n\\ndef distance_matrix(points: list[tuple[float, float]]) -> list[list[float]]:\\n    \\\"\\\"\\\"Compute pairwise Euclidean distances using NumPy broadcasting.\\\"\\\"\\\"\\n    n = len(points)\\n    if n == 0:\\n        return []\\n    \\n    # Convert to numpy array with shape (n, 2)\\n    arr = np.array(points)\\n    \\n    # Use broadcasting to compute all pairwise differences at once\\n    # diff shape: (n, n, 2) - each element is [dx, dy] for a pair\\n    diff = arr[:, np.newaxis, :] - arr[np.newaxis, :, :]\\n    \\n    # Compute Euclidean distances from the differences\\n    # sum over last axis gives squared distance per pair\\n    dist = np.sqrt(np.sum(diff ** 2, axis=-1))\\n    \\n    # Convert back to list of lists as required\\n    return dist.tolist()\\n\",\n  \"notes\": \"Implemented hypothesis: compute all squared distances via broadcasting, then apply single np.sqrt on the entire array rather than per-element. This leverages NumPy's optimized C-level routines for vectorized operations.\"\n}",
+  "tokens": {
+    "input": 998,
+    "cached_input": 0,
+    "output": 270,
+    "reasoning": 340
+  },
+  "cost": 1608.0,
+  "error": null
+}

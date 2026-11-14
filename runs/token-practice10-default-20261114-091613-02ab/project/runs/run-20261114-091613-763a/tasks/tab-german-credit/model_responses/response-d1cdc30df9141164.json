@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "af6af90e2e799c7671f9ae99fe9fcc085a54b62761e7eb7a0074b9902907af9f",
+  "response_id": "resp_692cdbd0-27d0-947f-849f-32d8a121590f",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Implement LightGBM classifier with ordinal encoding for categorical features.\",\n      \"rationale\": \"The dataset contains mixed types with categorical codes (e.g., A14, A34). Tree-based models with proper encoding typically outperform simple baselines on tabular financial data, especially with 600 rows where regularization helps avoid overfitting.\",\n      \"estimate\": {\n        \"gain\": 0.15,\n        \"cost\": 2500,\n        \"seconds\": 120\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Create derived features such as installment_rate_credit_ratio (credit_amount/duration).\",\n      \"rationale\": \"Financial ratios capture burden levels better than raw amounts. Adding 1-2 interaction features adds signal without significant complexity cost.\",\n      \"estimate\": {\n        \"gain\": 0.05,\n        \"cost\": 1000,\n        \"seconds\": 60\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 2500,\n    \"score\": 0.15,\n    \"seconds\": 120\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"base_model_implementation\",\n      \"amount\": 3000\n    },\n    {\n      \"direction\": \"feature_engineering_buffer\",\n      \"amount\": 5000\n    },\n    {\n      \"direction\": \"reserved_for_finalization\",\n      \"amount\": 28000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.075,\n      \"score\": 0.15\n    },\n    {\n      \"spent_ratio\": 0.2,\n      \"score\": 0.25\n    }\n  ]\n}",
+  "tokens": {
+    "input": 4061,
+    "cached_input": 0,
+    "output": 456,
+    "reasoning": 3170
+  },
+  "cost": 7687.0,
+  "error": null
+}

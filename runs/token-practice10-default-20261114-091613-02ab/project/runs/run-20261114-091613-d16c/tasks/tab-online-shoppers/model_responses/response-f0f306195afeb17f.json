@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0003",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "327373abbacbfda359772c7a99bbb19ee2bf5c64c2969a283da6e899edc6d9fd",
+  "response_id": "resp_941be69c-c135-93a6-b6b1-86213870d245",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Measured LightGBM baseline for this tabular task.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    test = pd.DataFrame(test_rows, columns=train.columns)\\n    for name in train.columns:\\n        if pd.api.types.is_numeric_dtype(train[name]):\\n            test[name] = pd.to_numeric(test[name])\\n        else:\\n            categories = pd.Categorical(pd.concat([train[name], test[name]], ignore_index=True)).categories\\n            train[name] = pd.Categorical(train[name], categories=categories)\\n            test[name] = pd.Categorical(test[name], categories=categories)\\n    \\n    model = LGBMClassifier(\\n        random_state=20261114,\\n        n_jobs=1,\\n        verbosity=-1,\\n        max_depth=8,\\n        num_leaves=32,\\n        min_child_samples=20,\\n        reg_alpha=0.05,\\n        reg_lambda=0.05\\n    )\\n    model.fit(train, y)\\n    return model.predict_proba(test)[:, 1].tolist()\\n\",\n  \"notes\": \"Removed scale_pos_weight which likely harmed ROC AUC ranking quality. Added light regularization (max_depth, num_leaves, reg_alpha, reg_lambda) to improve generalization without aggressive class weighting. For ROC AUC, balanced calibration matters more than recall-focused optimization.\"\n}",
+  "tokens": {
+    "input": 3862,
+    "cached_input": 0,
+    "output": 374,
+    "reasoning": 1348
+  },
+  "cost": 5584.0,
+  "error": null
+}

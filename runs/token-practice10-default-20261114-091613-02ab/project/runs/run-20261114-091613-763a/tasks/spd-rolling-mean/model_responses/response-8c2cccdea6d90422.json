@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "d1303feecec17c4793c824dd164f48ee2308df4dc8f9420cd74856fb65c3d568",
+  "response_id": "resp_c6724a0c-8540-9a7e-95bf-ec2dc2f22a18",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Optimized trailing-window rolling mean implementation.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\n\\ndef rolling_mean(values: list[float], window: int) -> list[float]:\\n    if window <= 0:\\n        raise ValueError(\\\"window must be positive\\\")\\n    \\n    n = len(values)\\n    result = []\\n    append_result = result.append\\n    current_sum = 0.0\\n    \\n    for i in range(n):\\n        # Add new value to running sum\\n        current_sum += values[i]\\n        \\n        # Remove oldest value if window is full\\n        if i >= window:\\n            current_sum -= values[i - window]\\n        \\n        # Actual window size at this position (smaller at start)\\n        actual_size = i + 1 if i < window else window\\n        append_result(current_sum / actual_size)\\n    \\n    return result\",\n  \"notes\": \"Cached len(values) to 'n' before loop and result.append() to 'append_result' local variable to reduce attribute lookup overhead in each iteration. Also simplified min() call to conditional expression for slight speed gain. Behavior matches original exactly.\"\n}",
+  "tokens": {
+    "input": 990,
+    "cached_input": 0,
+    "output": 266,
+    "reasoning": 584
+  },
+  "cost": 1840.0,
+  "error": null
+}

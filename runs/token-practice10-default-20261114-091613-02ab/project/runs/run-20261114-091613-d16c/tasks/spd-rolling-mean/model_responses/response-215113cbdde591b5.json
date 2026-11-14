@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "c08ea775b4c51d25fedce281eb45ff5b587972f67628f74854704b7637e962f6",
+  "response_id": "resp_e5e758bd-0281-934d-9557-0e66afec1dfb",
+  "status": "completed",
+  "output_text": "{\"code\":\"\\\"\\\"\\\"Optimized trailing-window implementation using NumPy vectorized operations.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\n\\ndef rolling_mean(values: list[float], window: int) -> list[float]:\\n    \\\"\\\"\\\"Compute rolling mean with NumPy vectorized operations.\\n    \\n    Each result averages the current value and up to window-1 preceding values.\\n    Early positions use only available values.\\n    \\\"\\\"\\\"\\n    if window <= 0:\\n        raise ValueError(\\\"window must be positive\\\")\\n    \\n    n = len(values)\\n    if n == 0:\\n        return []\\n    \\n    import numpy as np\\n    \\n    arr = np.asarray(values, dtype=np.float64)\\n    cumsum = np.cumsum(arr)\\n    \\n    # Starting indices for each window (where window begins)\\n    starts = np.maximum(np.arange(n) - window + 1, 0)\\n    \\n    # Window sums: cumsum[i+1] - cumsum[start_i]\\n    ends = cumsum[1:] if n > 1 else cumsum[:1]\\n    start_values = cumsum[starts]\\n    window_sums = ends - start_values\\n    \\n    # Effective window sizes\\n    effective_windows = np.minimum(np.arange(1, n + 1), window).astype(np.float64)\\n    \\n    return (window_sums / effective_windows).tolist()\\n\",\"notes\":\"Uses NumPy cumsum for vectorized O(n) computation. Handles all edge cases (empty, window=1, partial prefixes, window>len). Conversion overhead exists but NumPy kernels are C-optimized.\"}",
+  "tokens": {
+    "input": 1043,
+    "cached_input": 0,
+    "output": 373,
+    "reasoning": 646
+  },
+  "cost": 2062.0,
+  "error": null
+}

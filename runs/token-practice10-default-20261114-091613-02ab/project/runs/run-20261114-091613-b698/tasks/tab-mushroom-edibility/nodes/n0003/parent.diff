@@ -1,0 +1,45 @@
+--- parent/solution.py
++++ solution.py
+@@ -1,4 +1,4 @@
+-"""Measured LightGBM baseline for this tabular task."""
++"""LightGBM model with cap_color-habitat interaction terms."""
+ 
+ from __future__ import annotations
+ 
+@@ -17,16 +17,30 @@
+         else:
+             train[name] = train[name].fillna('MISSING')
+     
+-    test = pd.DataFrame(test_rows, columns=train.columns)
+-    for name in train.columns:
++    # Create interaction term between cap_color and habitat
++    train['cap_color_x_habitat'] = train['cap_color'].astype(str) + '_' + train['habitat'].astype(str)
++    
++    # Prepare test data - extract original columns (exclude target, exclude interaction we'll add)
++    original_cols = [c for c in train.columns if c != 'cap_color_x_habitat']
++    test = pd.DataFrame(test_rows, columns=original_cols)
++    
++    # Handle missing values in test data
++    for name in test.columns:
+         if pd.api.types.is_numeric_dtype(train[name]):
+             test[name] = pd.to_numeric(test[name], errors='coerce')
+         else:
+-            # Treat missing/empty values as explicit 'MISSING' category
+             test[name] = test[name].fillna('MISSING').replace('', 'MISSING')
+-            categories = pd.Categorical(pd.concat([train[name], test[name]], ignore_index=True)).categories
+-            train[name] = pd.Categorical(train[name], categories=categories)
+-            test[name] = pd.Categorical(test[name], categories=categories)
++    
++    # Create interaction term in test data too
++    test['cap_color_x_habitat'] = test['cap_color'].astype(str) + '_' + test['habitat'].astype(str)
++    
++    # For categorical columns, align categories between train and test
++    for name in train.columns:
++        if pd.api.types.is_numeric_dtype(train[name]):
++            continue
++        categories = sorted(set(train[name].unique()) | set(test[name].unique()))
++        train[name] = pd.Categorical(train[name], categories=categories)
++        test[name] = pd.Categorical(test[name], categories=categories)
+     
+     model = LGBMClassifier(random_state=20261114, n_jobs=1, verbosity=-1)
+     model.fit(train, y)

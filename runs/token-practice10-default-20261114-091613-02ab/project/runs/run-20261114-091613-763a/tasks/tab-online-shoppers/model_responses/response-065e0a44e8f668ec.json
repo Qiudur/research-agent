@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "050b786c17067ff199e1f5b9d44f1b9c8f9c7fad770f1b662bf17d51bb8b6c7b",
+  "response_id": "resp_2c335feb-6b8e-9151-b74a-09d16d96d0e1",
+  "status": "completed",
+  "output_text": "{\n\"code\": \"\\\"\\\"\\\"LightGBM with class weight correction for imbalanced positive rate (15.5%).\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    test = pd.DataFrame(test_rows, columns=train.columns)\\n    for name in train.columns:\\n        if pd.api.types.is_numeric_dtype(train[name]):\\n            test[name] = pd.to_numeric(test[name])\\n        else:\\n            categories = pd.Categorical(pd.concat([train[name], test[name]], ignore_index=True)).categories\\n            train[name] = pd.Categorical(train[name], categories=categories)\\n            test[name] = pd.Categorical(test[name], categories=categories)\\n    # Compute scale_pos_weight from actual positive ratio\\n    pos_count = y.sum()\\n    neg_count = len(y) - pos_count\\n    scale_pos_weight = neg_count / max(pos_count, 1)\\n    model = LGBMClassifier(\\n        random_state=20261114,\\n        n_jobs=1,\\n        verbosity=-1,\\n        scale_pos_weight=scale_pos_weight\\n    )\\n    model.fit(train, y)\\n    return model.predict_proba(test)[:, 1].tolist()\",\n\"notes\": \"Applied scale_pos_weight to handle 15.5% positive rate imbalance. Calculated as negative_count/positive_count (~5.46). All other code preserved from baseline.\"\n}",
+  "tokens": {
+    "input": 3741,
+    "cached_input": 0,
+    "output": 370,
+    "reasoning": 635
+  },
+  "cost": 4746.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "review",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "5a33f32187945cf57c876e4c432f66d577b9ae36af8dd1687518bb5dab7d0d6f",
+  "response_id": "resp_82ce83bc-38bc-9ce9-8170-f80e2e10a1d7",
+  "status": "completed",
+  "output_text": "{\n  \"decision\": \"switch\",\n  \"budget_moves\": [\n    {\"from\": \"class_weight_tuning\", \"to\": \"simple_baseline_refit\", \"amount\": 300},\n    {\"from\": \"duration_transform\", \"to\": \"simple_baseline_refit\", \"amount\": 350}\n  ],\n  \"note\": \"All three attempts returned 0.0 score indicating fundamental pipeline issue. With 16517 tokens remaining and 12000 required buffer, only ~4500 usable. Need to reset with verified simple LGBM baseline before any feature engineering. Stop complex transformations until basic prediction returns non-zero normalized score.\"\n}",
+  "tokens": {
+    "input": 3983,
+    "cached_input": 0,
+    "output": 152,
+    "reasoning": 627
+  },
+  "cost": 4762.0,
+  "error": null
+}

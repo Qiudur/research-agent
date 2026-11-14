@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "d0a9a7a0c2672b24771b48cb37488180567e952180cb47b85296152551fc4624",
+  "response_id": "resp_35f040a6-b884-9652-a430-38769130ef4f",
+  "status": "completed",
+  "output_text": "```json\n{\n  \"code\": \"\\\"\\\"\\\"Measured LightGBM baseline for this tabular task.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    test = pd.DataFrame(test_rows, columns=train.columns)\\n    for name in train.columns:\\n        if pd.api.types.is_numeric_dtype(train[name]):\\n            test[name] = pd.to_numeric(test[name])\\n        else:\\n            categories = pd.Categorical(pd.concat([train[name], test[name]], ignore_index=True)).categories\\n            train[name] = pd.Categorical(train[name], categories=categories)\\n            test[name] = pd.Categorical(test[name], categories=categories)\\n    model = LGBMClassifier(random_state=20261114, n_jobs=1, verbosity=-1)\\n    model.fit(train, y)\\n    return model.predict_proba(test)[:, 1].tolist()\",\n  \"notes\": \"Implements default LightGBM classifier on all 30 features. Handles numeric/categorical feature conversion consistently between train and test data. Uses fixed random_state for reproducibility while maintaining original function behavior.\"\n}\n```",
+  "tokens": {
+    "input": 3767,
+    "cached_input": 0,
+    "output": 306,
+    "reasoning": 437
+  },
+  "cost": 4510.0,
+  "error": null
+}

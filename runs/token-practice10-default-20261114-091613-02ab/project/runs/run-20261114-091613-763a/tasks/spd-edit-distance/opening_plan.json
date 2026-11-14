@@ -1,0 +1,50 @@
+{
+  "schema": "opening_plan/1",
+  "run_id": "run-20261114-091613-763a",
+  "task_id": "spd-edit-distance",
+  "predicted": {
+    "cost": 9500.0,
+    "seconds": 125.0,
+    "score": 0.012235
+  },
+  "expected_progress": [
+    {
+      "spent_ratio": 0.1,
+      "score": 0.0092
+    },
+    {
+      "spent_ratio": 0.25,
+      "score": 0.011
+    },
+    {
+      "spent_ratio": 0.5,
+      "score": 0.02
+    },
+    {
+      "spent_ratio": 0.75,
+      "score": 0.05
+    },
+    {
+      "spent_ratio": 0.9,
+      "score": 0.08
+    }
+  ],
+  "budget_allocation": [
+    {
+      "direction": "micro-optimize current implementation",
+      "amount": 6000
+    },
+    {
+      "direction": "reserve for vectorization attempt",
+      "amount": 10000
+    },
+    {
+      "direction": "reserve for library-based solutions",
+      "amount": 5000
+    },
+    {
+      "direction": "contingency buffer",
+      "amount": 15000
+    }
+  ]
+}

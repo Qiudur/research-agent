@@ -1,0 +1,40 @@
+{
+  "schema": "run/1",
+  "run_id": "run-20261114-091613-d16c",
+  "phase": "dev",
+  "config": "default_lib",
+  "rep": 3,
+  "bank_version": "bank-v1",
+  "tasks": [
+    "spd-distance-matrix",
+    "spd-rolling-mean",
+    "spd-max-drawdown",
+    "spd-edit-distance",
+    "spd-membership-filter",
+    "tab-adult-income",
+    "tab-mushroom-edibility",
+    "tab-online-shoppers",
+    "tab-phishing-websites",
+    "tab-german-credit"
+  ],
+  "library": {
+    "root": "runs/run-20261114-091613-d16c/library",
+    "start_version": "lib-0",
+    "frozen": false
+  },
+  "agent_config": {
+    "path": "config/agent_token_pilot_v2.json",
+    "sha256": "f0ba329f64b0592e4e90fe1fb0968611ccd0a34a40b27c1fce9e1e7a139c367b"
+  },
+  "prices": {
+    "path": "config/prices_real_token_test.json",
+    "sha256": "69ce9eb9157c86bd20e786b408b349ab0869bab9e67ee4243153f5764572e90d"
+  },
+  "hard_caps": {
+    "budget_ratio": 0.9
+  },
+  "code_commit": "482f3efd6e4d3134268a10bec0f75d2928d8e341",
+  "model": "qwen3.5-27b",
+  "started_ts": "2026-11-14T09:16:13.716Z",
+  "ended_ts": "2026-11-14T09:48:39.463Z"
+}

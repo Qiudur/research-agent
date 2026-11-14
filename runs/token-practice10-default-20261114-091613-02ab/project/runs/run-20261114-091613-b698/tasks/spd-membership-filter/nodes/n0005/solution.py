@@ -1,0 +1,11 @@
+from __future__ import annotations
+
+def membership_filter(values: list[int], allowed: list[int]) -> list[int]:
+    # Optimize based on allowed list size:
+    # - Small allowed: avoid set construction overhead
+    # - Large allowed: use set for O(1) membership checks
+    if len(allowed) <= 6:
+        return [value for value in values if value in allowed]
+    else:
+        allowed_set = set(allowed)
+        return [value for value in values if value in allowed_set]

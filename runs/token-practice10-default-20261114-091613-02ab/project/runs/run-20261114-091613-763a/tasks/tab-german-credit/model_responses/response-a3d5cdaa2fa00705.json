@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "6887c2b28dcae6f3aed888a535d3135c2f1ba2c7f3870337a48f00b716a1a4a1",
+  "response_id": "resp_63525a87-2969-92fb-b91d-7a64f4064588",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Tune LightGBM hyperparameters: reduce max_depth from default to 2-3, adjust learning_rate to 0.01-0.05, increase n_estimators with early stopping.\",\n      \"rationale\": \"Small dataset (600 rows) is prone to overfitting with deep trees; lighter models often generalize better. Previous ordinal encoding worked well so keep it.\",\n      \"cites\": [\"feature_engineering_buffer\"],\n      \"estimate\": {\n        \"gain\": 0.02,\n        \"cost\": 3500,\n        \"seconds\": 45\n      }\n    },\n    {\n      \"hypothesis\": \"Replace ordinal encoding with frequency/target encoding for high-cardinality categorical variables.\",\n      \"rationale\": \"Ordinal assumes strict ordering which may not exist in some features (e.g., checking_status, employment_status). Target encoding could capture actual risk signal better.\",\n      \"cites\": [\"feature_engineering_buffer\"],\n      \"estimate\": {\n        \"gain\": 0.015,\n        \"cost\": 4000,\n        \"seconds\": 50\n      }\n    },\n    {\n      \"hypothesis\": \"Add simple regularization: apply L2 penalty via lambda_l1/lambda_l2 in LightGBM to reduce overfitting on 600-row train set.\",\n      \"rationale\": \"The failed derived feature (n0002) suggests model may overfit complex patterns. Simple regularization is cheaper than new features.\",\n      \"cites\": [\"feature_engineering_buffer\"],\n      \"estimate\": {\n        \"gain\": 0.01,\n        \"cost\": 3000,\n        \"seconds\": 40\n      }\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 16216,\n    \"seconds\": 135,\n    \"score\": 0.855\n  },\n  \"budget_allocation\": [\n    {\"direction\": \"hyperparameter_tuning\", \"amount\": 4500},\n    {\"direction\": \"encoding_experiment\", \"amount\": 3500},\n    {\"direction\": \"regularization_tuning\", \"amount\": 2500},\n    {\"direction\": \"reserve_finalization\", \"amount\": 5716}\n  ],\n  \"expected_progress\": [\n    {\"spent_ratio\": 0.1, \"score\": 0.84},\n    {\"spent_ratio\": 0.2, \"score\": 0.845},\n    {\"spent_ratio\": 0.3, \"score\": 0.85},\n    {\"spent_ratio\": 0.4, \"score\": 0.855}\n  ]\n}",
+  "tokens": {
+    "input": 4246,
+    "cached_input": 0,
+    "output": 635,
+    "reasoning": 534
+  },
+  "cost": 5415.0,
+  "error": null
+}

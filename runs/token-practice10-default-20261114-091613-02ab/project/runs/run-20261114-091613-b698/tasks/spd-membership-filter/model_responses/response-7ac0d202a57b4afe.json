@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0010",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "00beab202b988b24b6aa74eccecede528de845b65115271229f8946ee7d46ee5",
+  "response_id": "resp_8c567a59-1c3c-95fb-a136-25f85ad2ea8e",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"from __future__ import annotations\\n\\ndef membership_filter(values: list[int], allowed: list[int]) -> list[int]:\\n    allowed_dict = dict.fromkeys(allowed)\\n    return [value for value in values if value in allowed_dict]\",\n  \"notes\": \"Replaced set(allowed) with dict.fromkeys(allowed) for O(1) membership lookup. Behavior unchanged - preserves order and duplicates. Dict lookups on keys have same O(1) complexity as set membership for integers.\"\n}",
+  "tokens": {
+    "input": 735,
+    "cached_input": 0,
+    "output": 118,
+    "reasoning": 402
+  },
+  "cost": 1255.0,
+  "error": null
+}

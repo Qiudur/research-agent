@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "c7fbf2ac6df15f4f44ec72ce8ed0ec1bce8e109d7cd2790c5d03f7ecfa7f0447",
+  "response_id": "resp_ad10fd71-3126-9b96-b2c5-8e040e02f607",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Add early return when allowed list is empty to avoid unnecessary iteration\",\n      \"rationale\": \"When allowed is empty, result is always empty list. Early check can skip building the loop entirely for this edge case.\",\n      \"estimate\": {\n        \"gain\": 0.005,\n        \"cost\": 800,\n        \"seconds\": 12\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Use frozenset instead of set for allowed if input might be modified during iteration\",\n      \"rationale\": \"frozenset has similar O(1) lookup but guarantees immutability; minimal overhead difference that could help in certain benchmark cases.\",\n      \"estimate\": {\n        \"gain\": 0.003,\n        \"cost\": 700,\n        \"seconds\": 10\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 3000,\n    \"score\": 0.988,\n    \"seconds\": 45\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"combined_optimization\",\n      \"amount\": 2000\n    },\n    {\n      \"direction\": \"edge_case_handling\",\n      \"amount\": 1000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.15,\n      \"score\": 0.982\n    },\n    {\n      \"spent_ratio\": 0.25,\n      \"score\": 0.985\n    },\n    {\n      \"spent_ratio\": 0.35,\n      \"score\": 0.988\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1488,
+    "cached_input": 0,
+    "output": 431,
+    "reasoning": 459
+  },
+  "cost": 2378.0,
+  "error": null
+}

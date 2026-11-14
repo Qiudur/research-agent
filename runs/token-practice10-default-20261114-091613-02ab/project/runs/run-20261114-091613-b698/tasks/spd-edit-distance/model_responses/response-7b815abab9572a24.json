@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0005",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "571bd19e4f86e016ad33235e923084f2e3bd78cc34beb40ca539682a53db1397",
+  "response_id": "resp_8063d2d2-c7e9-99bb-9cdd-6aeff33876a9",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Fast edit distance using rapidfuzz library.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\n\\ndef edit_distance(a: str, b: str) -> int:\\n    from rapidfuzz.distance import Levenshtein\\n    return Levenshtein.distance(a, b)\\n\",\n  \"notes\": \"Hypothesis: rapidfuzz provides optimized C-based Levenshtein distance. Using rapidfuzz.distance.Levenshtein.distance() for direct call. This should give significant speedup over pure Python DP. If rapidfuzz is not available in the environment, this will raise ImportError.\"\n}",
+  "tokens": {
+    "input": 975,
+    "cached_input": 0,
+    "output": 141,
+    "reasoning": 829
+  },
+  "cost": 1945.0,
+  "error": null
+}

@@ -1,0 +1,187 @@
+{
+  "entries": [
+    {
+      "action": "use scipy.spatial.distance.cdist with euclidean metric as replacement for manual nested loop calculation",
+      "conditions": "distance matrix computation requiring euclidean metric with input convertible to numpy arrays",
+      "created_version": "lib-1",
+      "credibility": 0.5,
+      "effect": {
+        "mean_cost": 0.0,
+        "mean_gain": 0.0,
+        "uses": 0,
+        "wins": 0
+      },
+      "id": "exp-0001",
+      "kind": "experience",
+      "negative": false,
+      "scenario": "speedup",
+      "schema": "entry/1",
+      "scope": "method",
+      "sources": [
+        {
+          "node_ids": [
+            "n0006"
+          ],
+          "run_id": "run-20261114-091613-b698",
+          "task_id": "spd-distance-matrix"
+        }
+      ],
+      "status": "active",
+      "triggers": [
+        "nested_python_loop"
+      ],
+      "updated_version": "lib-1"
+    },
+    {
+      "action": "avoid pure python micro-optimizations like coordinate pre-caching, list comprehension conversion, or local variable caching over vectorized library calls",
+      "conditions": "euclidean distance matrix computation where scipy library is available",
+      "created_version": "lib-2",
+      "credibility": 0.7,
+      "effect": {
+        "mean_cost": 1669.0,
+        "mean_gain": 1.1500321159377251,
+        "uses": 2,
+        "wins": 2
+      },
+      "id": "exp-0002",
+      "kind": "experience",
+      "negative": true,
+      "scenario": "speedup",
+      "schema": "entry/1",
+      "scope": "method",
+      "sources": [
+        {
+          "node_ids": [
+            "n0001",
+            "n0002",
+            "n0003",
+            "n0004",
+            "n0005"
+          ],
+          "run_id": "run-20261114-091613-b698",
+          "task_id": "spd-distance-matrix"
+        },
+        {
+          "node_ids": [
+            "n0001"
+          ],
+          "run_id": "run-20261114-091613-b698",
+          "task_id": "spd-max-drawdown"
+        },
+        {
+          "node_ids": [
+            "n0002"
+          ],
+          "run_id": "run-20261114-091613-b698",
+          "task_id": "spd-max-drawdown"
+        }
+      ],
+      "status": "active",
+      "triggers": [
+        "nested_python_loop"
+      ],
+      "updated_version": "lib-5"
+    },
+    {
+      "action": "maintain a running sum accumulator by subtracting the leaving element and adding the new element instead of full recalculation",
+      "conditions": "sliding window or rolling calculations where elements leave and enter the window sequentially",
+      "created_version": "lib-3",
+      "credibility": 0.5,
+      "effect": {
+        "mean_cost": 0.0,
+        "mean_gain": 0.0,
+        "uses": 0,
+        "wins": 0
+      },
+      "id": "exp-0003",
+      "kind": "experience",
+      "negative": false,
+      "scenario": "speedup",
+      "schema": "entry/1",
+      "scope": "method",
+      "sources": [
+        {
+          "node_ids": [
+            "n0001"
+          ],
+          "run_id": "run-20261114-091613-b698",
+          "task_id": "spd-rolling-mean"
+        }
+      ],
+      "status": "active",
+      "triggers": [
+        "repeated_recompute_window"
+      ],
+      "updated_version": "lib-3"
+    },
+    {
+      "action": "replace O(n²) nested loops with O(n) running peak tracking algorithm",
+      "conditions": "computing sequential maximum/peak values from a list or array",
+      "created_version": "lib-6",
+      "credibility": 0.5,
+      "effect": {
+        "mean_cost": 0.0,
+        "mean_gain": 0.0,
+        "uses": 0,
+        "wins": 0
+      },
+      "id": "exp-0004",
+      "kind": "experience",
+      "negative": false,
+      "scenario": "speedup",
+      "schema": "entry/1",
+      "scope": "method",
+      "sources": [
+        {
+          "node_ids": [
+            "n0001"
+          ],
+          "run_id": "run-20261114-091613-b698",
+          "task_id": "spd-max-drawdown"
+        }
+      ],
+      "status": "active",
+      "triggers": [
+        "nested_python_loop"
+      ],
+      "updated_version": "lib-6"
+    },
+    {
+      "action": "convert Python list to numpy array once at start, use numpy indexing instead of Python slicing",
+      "conditions": "performing array indexing and slicing operations on price or numeric sequence data",
+      "created_version": "lib-7",
+      "credibility": 0.5,
+      "effect": {
+        "mean_cost": 0.0,
+        "mean_gain": 0.0,
+        "uses": 0,
+        "wins": 0
+      },
+      "id": "exp-0005",
+      "kind": "experience",
+      "negative": false,
+      "scenario": "speedup",
+      "schema": "entry/1",
+      "scope": "method",
+      "sources": [
+        {
+          "node_ids": [
+            "n0002"
+          ],
+          "run_id": "run-20261114-091613-b698",
+          "task_id": "spd-max-drawdown"
+        }
+      ],
+      "status": "active",
+      "triggers": [
+        "nested_python_loop"
+      ],
+      "updated_version": "lib-7"
+    }
+  ],
+  "metadata": {
+    "demoted_losses": {}
+  },
+  "schema": "library/1",
+  "version": "lib-7"
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "804764b9c4ffea307b513f79f93e2841b256ddde1e4f1b93ee53e02a627130b4",
+  "response_id": "resp_fadbf266-668f-909c-ad92-42929fc1ffd9",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Remove list slicing by iterating with index or enumerate to avoid O(N) memory copy.\",\n      \"rationale\": \"Current linear implementation likely uses prices[1:] which creates a shallow copy. Direct indexing removes allocation overhead and improves cache locality.\",\n      \"estimate\": {\n        \"gain\": 0.010,\n        \"cost\": 2000,\n        \"seconds\": 10\n      },\n      \"cites\": [\n        \"algorithm_optimization\"\n      ]\n    },\n    {\n      \"hypothesis\": \"Replace max() builtin calls with explicit conditional checks inside the loop.\",\n      \"rationale\": \"Function calls in tight Python loops incur significant overhead compared to bytecode-level comparisons.\",\n      \"estimate\": {\n        \"gain\": 0.008,\n        \"cost\": 2000,\n        \"seconds\": 10\n      },\n      \"cites\": [\n        \"algorithm_optimization\"\n      ]\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 4000,\n    \"seconds\": 20,\n    \"score\": 0.960\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"algorithm_optimization\",\n      \"amount\": 4000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.17535,\n      \"score\": 0.945828\n    },\n    {\n      \"spent_ratio\": 0.27535,\n      \"score\": 0.96\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1430,
+    "cached_input": 0,
+    "output": 395,
+    "reasoning": 5676
+  },
+  "cost": 7501.0,
+  "error": null
+}

@@ -1,0 +1,38 @@
+{
+  "schema": "opening_plan/1",
+  "run_id": "run-20261114-091613-d16c",
+  "task_id": "tab-phishing-websites",
+  "predicted": {
+    "cost": 8500.0,
+    "seconds": 145.0,
+    "score": 0.47
+  },
+  "expected_progress": [
+    {
+      "spent_ratio": 0.1,
+      "score": 0.35
+    },
+    {
+      "spent_ratio": 0.2,
+      "score": 0.43
+    },
+    {
+      "spent_ratio": 0.25,
+      "score": 0.47
+    }
+  ],
+  "budget_allocation": [
+    {
+      "direction": "model_training_lightgbm",
+      "amount": 3000
+    },
+    {
+      "direction": "feature_engineering",
+      "amount": 3500
+    },
+    {
+      "direction": "calibration_validation",
+      "amount": 2000
+    }
+  ]
+}

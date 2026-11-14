@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "11754682c7c5ced7c4ff1e878ebf2bf3e4adc8ba4b553fa70501b35720d1e8eb",
+  "response_id": "resp_e642cff9-e790-9b16-bf53-4e181cb9cf27",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Train LightGBM with balanced_class_weight to handle 15.5% positive rate\",\n      \"rationale\": \"Class imbalance at 15.5% requires weight adjustment; standard models underperform on minority class detection critical for ROC AUC\",\n      \"estimate\": {\n        \"gain\": 0.45,\n        \"cost\": 2500,\n        \"seconds\": 45\n      },\n      \"cites\": [\"lgbm-class-weight\"]\n    },\n    {\n      \"hypothesis\": \"Engineer interaction features: duration ratios and page-value interactions\",\n      \"rationale\": \"ProductRelated_Duration/PageValues and BounceRates/Product combinations capture shopping intent patterns better than raw values\",\n      \"estimate\": {\n        \"gain\": 0.15,\n        \"cost\": 2000,\n        \"seconds\": 35\n      },\n      \"cites\": [\"feature-engineering-duration\"]\n    },\n    {\n      \"hypothesis\": \"Tune LightGBM depth and leaf_count for optimal bias-variance tradeoff\",\n      \"rationale\": \"Default hyperparameters often suboptimal; smaller trees reduce overfitting on imbalanced data while maintaining recall\",\n      \"estimate\": {\n        \"gain\": 0.12,\n        \"cost\": 3000,\n        \"seconds\": 60\n      },\n      \"cites\": [\"lgbm-hyperparam-tuning\"]\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 7500,\n    \"score\": 0.72,\n    \"seconds\": 140\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"baseline_lgbm_with_weights\",\n      \"amount\": 2500\n    },\n    {\n      \"direction\": \"feature_engineering\",\n      \"amount\": 2000\n    },\n    {\n      \"direction\": \"hyperparameter_tuning\",\n      \"amount\": 3000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.07,\n      \"score\": 0.45\n    },\n    {\n      \"spent_ratio\": 0.12,\n      \"score\": 0.58\n    },\n    {\n      \"spent_ratio\": 0.19,\n      \"score\": 0.72\n    }\n  ]\n}",
+  "tokens": {
+    "input": 4044,
+    "cached_input": 0,
+    "output": 583,
+    "reasoning": 769
+  },
+  "cost": 5396.0,
+  "error": null
+}

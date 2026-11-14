@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "785496142e97a94dab3446c46e56bc664f6e76742a21bf5ca8d25af85be6bbf8",
+  "response_id": "resp_54020ac9-43d6-9357-a103-553799d4362b",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Bind local variable for set lookup to reduce attribute access overhead\",\n      \"rationale\": \"In tight loops, local variable lookups are faster than global/attribute access. Cache the __contains__ method or use a local reference to minimize per-element overhead.\",\n      \"estimate\": {\n        \"gain\": 0.008,\n        \"cost\": 900,\n        \"seconds\": 15\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Try filter() with lambda instead of list comprehension for membership filtering\",\n      \"rationale\": \"C-level filter may have lower Python bytecode overhead compared to list comprehension, though both are optimized. Worth testing if it provides any measurable speedup.\",\n      \"estimate\": {\n        \"gain\": 0.005,\n        \"cost\": 850,\n        \"seconds\": 14\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Handle common case optimization when allowed is already small vs large\",\n      \"rationale\": \"Branching on allowed list length to choose optimal strategy could help in mixed workloads, but only if tested cases cover different sizes.\",\n      \"estimate\": {\n        \"gain\": 0.012,\n        \"cost\": 1100,\n        \"seconds\": 18\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 2850,\n    \"score\": 1.005,\n    \"seconds\": 47\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"hypothesis_testing\",\n      \"amount\": 20000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.3,\n      \"score\": 0.99\n    },\n    {\n      \"spent_ratio\": 0.5,\n      \"score\": 1.002\n    },\n    {\n      \"spent_ratio\": 0.7,\n      \"score\": 1.005\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1556,
+    "cached_input": 0,
+    "output": 516,
+    "reasoning": 462
+  },
+  "cost": 2534.0,
+  "error": null
+}

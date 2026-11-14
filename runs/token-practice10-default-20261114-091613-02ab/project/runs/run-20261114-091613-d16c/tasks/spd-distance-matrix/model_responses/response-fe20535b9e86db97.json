@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0004",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "83377cb731dd46021aed7305b17ca8b50720c51077503f0cbd50d81b57874e60",
+  "response_id": "resp_975dc185-7563-992f-b71c-abf109beb738",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Optimized implementation using scipy.spatial.distance.cdist.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport numpy as np\\nfrom scipy.spatial.distance import cdist\\n\\n\\ndef distance_matrix(points: list[tuple[float, float]]) -> list[list[float]]:\\n    if not points:\\n        return []\\n    \\n    # Convert list of tuples to numpy array\\n    arr = np.array(points)\\n    \\n    # Use cdist with euclidean metric - highly optimized C implementation\\n    result = cdist(arr, arr, metric='euclidean')\\n    \\n    # Convert back to list of lists for API compatibility\\n    return result.tolist()\\n\",\n  \"notes\": \"Uses scipy.spatial.distance.cdist with euclidean metric for O(n^2) computation in optimized C code instead of Python loops. Handles empty input by returning []. Converts numpy array output to list-of-lists via .tolist() to preserve required return type.\"\n}",
+  "tokens": {
+    "input": 937,
+    "cached_input": 0,
+    "output": 215,
+    "reasoning": 315
+  },
+  "cost": 1467.0,
+  "error": null
+}

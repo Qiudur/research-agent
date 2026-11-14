@@ -1,0 +1,26 @@
+--- parent/solution.py
++++ solution.py
+@@ -7,10 +7,12 @@
+     if window <= 0:
+         raise ValueError("window must be positive")
+     
++    n = len(values)
+     result = []
++    append_result = result.append
+     current_sum = 0.0
+     
+-    for i in range(len(values)):
++    for i in range(n):
+         # Add new value to running sum
+         current_sum += values[i]
+         
+@@ -19,7 +21,7 @@
+             current_sum -= values[i - window]
+         
+         # Actual window size at this position (smaller at start)
+-        actual_size = min(i + 1, window)
+-        result.append(current_sum / actual_size)
++        actual_size = i + 1 if i < window else window
++        append_result(current_sum / actual_size)
+     
+     return result

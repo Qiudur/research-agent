@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "c9a8adeb86e97142fe271db978bfcab899686657bfd9ca31b895e0df062588e3",
+  "response_id": "resp_9ccfde21-7e91-905a-9f6e-eba7acfcf110",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"from __future__ import annotations\\n\\ndef membership_filter(values: list[int], allowed: list[int]) -> list[int]:\\n    if not allowed:\\n        return []\\n    allowed_set = set(allowed)\\n    return [value for value in values if value in allowed_set]\",\n  \"notes\": \"Added early return for empty allowed list edge case. When allowed is empty, return [] immediately without creating set or iterating, saving computation for this degenerate case. Function behavior remains identical to parent_code.\"\n}",
+  "tokens": {
+    "input": 737,
+    "cached_input": 0,
+    "output": 120,
+    "reasoning": 319
+  },
+  "cost": 1176.0,
+  "error": null
+}

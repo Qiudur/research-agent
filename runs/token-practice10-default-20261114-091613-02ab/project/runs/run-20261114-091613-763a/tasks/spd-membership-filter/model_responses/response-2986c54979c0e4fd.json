@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "review",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "36ddcd9be34685ecb6ac7456df7bfc06bf7d99c88b1078c214b11a991941ce96",
+  "response_id": "resp_5d2914c3-e8d0-9441-9424-cab3f1dd69c1",
+  "status": "completed",
+  "output_text": "{\n  \"decision\": \"continue\",\n  \"budget_moves\": [\n    {\n      \"amount\": 400,\n      \"from\": \"set_conversion_baseline\",\n      \"to\": \"edge_case_handling\"\n    }\n  ],\n  \"note\": \"Plateau detected after set conversion baseline (n0001 accepted @ 0.98). Multiple higher-scoring attempts (n0002-n0006) rejected likely due to correctness failures despite speed gains. Shift focus to edge case validation to ensure correctness before aggressive optimizations. Still have ~24k tokens; prioritize verified improvements over untested speedups.\"\n}",
+  "tokens": {
+    "input": 1391,
+    "cached_input": 0,
+    "output": 145,
+    "reasoning": 486
+  },
+  "cost": 2022.0,
+  "error": null
+}

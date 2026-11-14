@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "1b15b5adaea71a3e3c0beca7c8d4f0ef4ef7b8ef2518eeead8a19d0b2b80ff5f",
+  "response_id": "resp_04b36883-711c-9be1-8f77-45c0cd9e38d6",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"LightGBM with target encoding for high-cardinality categoricals.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    test = pd.DataFrame(test_rows, columns=train.columns)\\n    \\n    # Align numeric columns\\n    for name in train.columns:\\n        if pd.api.types.is_numeric_dtype(train[name]):\\n            test[name] = pd.to_numeric(test[name]).astype(float)\\n        else:\\n            # Union categories between train and test\\n            all_cats = pd.Categorical(pd.concat([train[name], test[name]], ignore_index=True)).categories\\n            train[name] = pd.Categorical(train[name], categories=all_cats)\\n            test[name] = pd.Categorical(test[name], categories=all_cats)\\n    \\n    # High-cardinality categorical columns\\n    high_card_cols = [\\\"native_country\\\", \\\"occupation\\\", \\\"workclass\\\"]\\n    \\n    # Global mean for smoothing\\n    global_mean = y.mean()\\n    \\n    def compute_target_encoding(source_df, col):\\n        \\\"\\\"\\\"Compute smoothed target encoding for a categorical column.\\\"\\\"\\\"\\n        grouped = source_df.groupby(col)[\\\"y_mean\\\"][0].aggregate(lambda x: (x.sum(), x.count()))\\n        counts = {}\\n        sums = {}\\n        for cat, (s, c) in grouped.items():\\n            sums[cat] = s\\n            counts[cat] = c\\n        return sums, counts\\n    \\n    def encode_column(df, col, alpha=30.0):\\n        \\\"\\\"\\\"Add smoothed target encoding column.\\\"\\\"\\\"\\n        grouped = df.groupby(col).apply(lambda g: {'sum': g['y'].sum(), 'count': len(g)}).unstack(fill_value=0)\\n        result = {}\\n        for cat in df[col].unique():\\n            s = grouped.loc[cat, 'sum'] if cat in grouped.index else 0\\n            c = grouped.loc[cat, 'count'] if cat in grouped.index else 0\\n            result[cat] = (s + global_mean * alpha) / (c + alpha)\\n        return result\\n    \\n    # Compute encodings from training data only\\n    encoders = {}\\n    for col in high_card_cols:\\n        if col in train.columns and train[col].nunique() >= 5:\\n            encoders[col] = encode_column(train, col, alpha=30.0)\\n    \\n    # Add encoded columns to train\\n    X_train = train.copy()\\n    for col, encoder in encoders.items():\\n        X_train[f\\\"{col}_enc\\\"] = X_train[col].map(encoder).fillna(global_mean)\\n    \\n    # Add encoded columns to test\\n    X_test = test.copy()\\n    for col, encoder in encoders.items():\\n        X_test[f\\\"{col}_enc\\\"] = X_test[col].map(encoder).fillna(global_mean)\\n    \\n    # Fit model\\n    model = LGBMClassifier(random_state=20261114, n_jobs=1, verbosity=-1)\\n    model.fit(X_train, y)\\n    \\n    return model.predict_proba(X_test)[:, 1].tolist()\\n\",\n  \"notes\": \"Implemented target encoding for high-cardinality categoricals (native_country, occupation, workclass). Added smoothed encoding columns alongside original categorical features. Used alpha=30 smoothing parameter to prevent overfitting on rare categories. Training-only encoding computed and applied to test to avoid leakage.\"\n}",
+  "tokens": {
+    "input": 2530,
+    "cached_input": 0,
+    "output": 829,
+    "reasoning": 4463
+  },
+  "cost": 7822.0,
+  "error": null
+}

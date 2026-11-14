@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "2a80663a90f188a9d2e283f0e8c248c7b72dbf769b4d8cfe596c20a78d638f39",
+  "response_id": "resp_190de98c-98ae-92c5-a36b-a75ff6e90c28",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Convert allowed list to set for O(1) membership lookup\",\n      \"rationale\": \"Current O(n*m) hotspot scans allowed list repeatedly; set conversion reduces to O(n+m) overall time complexity, expected major speedup on 9000 benchmark samples\",\n      \"estimate\": {\n        \"gain\": 0.5,\n        \"cost\": 800,\n        \"seconds\": 45\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Add early return for empty allowed list case\",\n      \"rationale\": \"Benchmark includes edge case 'empty allowed list'; avoiding any iteration when allowed is empty saves work proportional to len(values)\",\n      \"estimate\": {\n        \"gain\": 0.05,\n        \"cost\": 600,\n        \"seconds\": 35\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Combine set conversion with explicit duplicate handling\",\n      \"rationale\": \"Benchmark notes duplicates as edge case; set automatically handles them correctly while maintaining original order of values output\",\n      \"estimate\": {\n        \"gain\": 0.52,\n        \"cost\": 900,\n        \"seconds\": 50\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 2300,\n    \"seconds\": 130,\n    \"score\": 0.52\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"set_conversion_baseline\",\n      \"amount\": 800\n    },\n    {\n      \"direction\": \"edge_case_handling\",\n      \"amount\": 600\n    },\n    {\n      \"direction\": \"combined_optimization\",\n      \"amount\": 900\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.058,\n      \"score\": 0.52\n    },\n    {\n      \"spent_ratio\": 0.1,\n      \"score\": 0.55\n    },\n    {\n      \"spent_ratio\": 0.2,\n      \"score\": 0.58\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1277,
+    "cached_input": 0,
+    "output": 541,
+    "reasoning": 521
+  },
+  "cost": 2339.0,
+  "error": null
+}

@@ -1,0 +1,8 @@
+--- parent/solution.py
++++ solution.py
+@@ -2,4 +2,4 @@
+ 
+ def membership_filter(values: list[int], allowed: list[int]) -> list[int]:
+     allowed_set = set(allowed)
+-    return [value for value in values if value in allowed_set]
++    return list(filter(lambda x: x in allowed_set, values))

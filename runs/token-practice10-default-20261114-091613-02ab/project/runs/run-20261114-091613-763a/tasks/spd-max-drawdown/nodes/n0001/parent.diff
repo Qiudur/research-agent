@@ -1,0 +1,32 @@
+--- parent/solution.py
++++ solution.py
+@@ -1,11 +1,25 @@
+-"""Quadratic, direct maximum-drawdown implementation."""
++"""Linear-time maximum-drawdown implementation using single-pass peak tracking."""
+ 
+ from __future__ import annotations
+ 
+ 
+ def max_drawdown(prices: list[float]) -> float:
++    """Calculate the maximum chronological peak-to-trough percentage.
++    
++    Uses O(n) single-pass algorithm tracking running peak.
++    Returns 0.0 for empty lists or non-decreasing sequences.
++    """
++    if len(prices) < 2:
++        return 0.0
++    
+     largest = 0.0
+-    for buy_index, peak in enumerate(prices):
+-        for trough in prices[buy_index + 1:]:
+-            largest = max(largest, (peak - trough) / peak)
++    peak = prices[0]
++    
++    for price in prices:
++        if price > peak:
++            peak = price
++        else:
++            drawdown = (peak - price) / peak
++            largest = max(largest, drawdown)
++    
+     return largest

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "summarizer",
+  "purpose": "summarize",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "355c6cbdc1959ff0783d9c38fe0b31da2c8621d5496cc307ef61b151f8874013",
+  "response_id": "resp_b9f849e4-0243-91d7-96af-4f3676d7f44d",
+  "status": "completed",
+  "output_text": "{\"drafts\":[{\"scope\":\"method\",\"scenario\":\"speedup\",\"triggers\":[\"list_membership_in_loop\"],\"conditions\":\"When membership check occurs inside a loop with repeated list lookups\",\"action\":\"Convert the allowed list to a set before processing to achieve O(1) lookup time\",\"negative\":false,\"node_ids\":[\"n0001\"]}],\"narrowings\":[]}",
+  "tokens": {
+    "input": 639,
+    "cached_input": 0,
+    "output": 79,
+    "reasoning": 404
+  },
+  "cost": 1122.0,
+  "error": null
+}

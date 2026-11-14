@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "52443dcf49988a3587e70384f8b8cbef4ca118cc6c520d323239a8608cff44ac",
+  "response_id": "resp_919558e8-26f9-95d2-805a-2c9dcfacb25b",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Linear-time maximum-drawdown implementation using single-pass peak tracking.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\n\\ndef max_drawdown(prices: list[float]) -> float:\\n    \\\"\\\"\\\"Calculate the maximum chronological peak-to-trough percentage.\\n    \\n    Uses O(n) single-pass algorithm tracking running peak.\\n    Returns 0.0 for empty lists or non-decreasing sequences.\\n    No list slicing - direct iteration avoids O(N) memory copy.\\n    \\\"\\\"\\\"\\n    if len(prices) < 2:\\n        return 0.0\\n    \\n    largest = 0.0\\n    peak = prices[0]\\n    \\n    # Direct iteration over list items avoids slicing overhead\\n    for price in prices:\\n        if price > peak:\\n            peak = price\\n        else:\\n            drawdown = (peak - price) / peak\\n            largest = max(largest, drawdown)\\n    \\n    return largest\",\n  \"notes\": \"Parent code already eliminates O(N) list slicing from original quadratic implementation. Original used prices[buy_index + 1:] creating copies; optimized version iterates directly via 'for price in prices:' with constant memory overhead. Peak-tracking achieves O(n) time vs O(n^2). Code preserved for boundary correctness with original behavior.\"\n}",
+  "tokens": {
+    "input": 954,
+    "cached_input": 0,
+    "output": 298,
+    "reasoning": 1080
+  },
+  "cost": 2332.0,
+  "error": null
+}

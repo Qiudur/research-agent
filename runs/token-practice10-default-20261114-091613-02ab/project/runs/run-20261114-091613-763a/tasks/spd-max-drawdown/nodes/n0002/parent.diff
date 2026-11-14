@@ -1,0 +1,18 @@
+--- parent/solution.py
++++ solution.py
+@@ -8,6 +8,7 @@
+     
+     Uses O(n) single-pass algorithm tracking running peak.
+     Returns 0.0 for empty lists or non-decreasing sequences.
++    No list slicing - direct iteration avoids O(N) memory copy.
+     """
+     if len(prices) < 2:
+         return 0.0
+@@ -15,6 +16,7 @@
+     largest = 0.0
+     peak = prices[0]
+     
++    # Direct iteration over list items avoids slicing overhead
+     for price in prices:
+         if price > peak:
+             peak = price

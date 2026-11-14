@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "962520ca607ac15189a93950db97397c24b03e95119627dcaab00ac6779d124e",
+  "response_id": "resp_1d1c1c81-1009-9bff-a9e1-0f3f6b196df2",
+  "status": "completed",
+  "output_text": "{\n\"code\":\"\\\"\\\"\\\"Optimized trailing-window implementation using sliding window sum.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\n\\ndef rolling_mean(values: list[float], window: int) -> list[float]:\\n    \\\"\\\"\\\"Compute rolling mean with O(1) update per position.\\n    \\n    Each result averages the current value and up to window-1 preceding values.\\n    Early positions use only available values.\\n    \\\"\\\"\\\"\\n    if window <= 0:\\n        raise ValueError(\\\"window must be positive\\\")\\n    \\n    result = []\\n    current_sum = 0.0\\n    \\n    for index, val in enumerate(values):\\n        # Add new value to running sum\\n        current_sum += val\\n        \\n        # Remove value that falls out of window (if any)\\n        if index >= window:\\n            current_sum -= values[index - window]\\n        \\n        # Effective window size for this position\\n        effective_window = min(index + 1, window)\\n        \\n        # Append mean\\n        result.append(current_sum / effective_window)\\n    \\n    return result\",\n\"notes\":\"Implemented O(n) sliding window approach: maintains running sum, adds incoming value and subtracts outgoing value when window slides. Replaces O(n*w) slice-and-sum. Preserves exact behavior for all edge cases (empty list, window>len, partial prefix, mixed signs).\"\n}",
+  "tokens": {
+    "input": 947,
+    "cached_input": 0,
+    "output": 315,
+    "reasoning": 801
+  },
+  "cost": 2063.0,
+  "error": null
+}

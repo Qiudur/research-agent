@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "diagnoser",
+  "purpose": "diagnose",
+  "node_id": "n0003",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "9a4cfb6091112c09f979857ccfda51dcd47ffd7f99dc8527fae2951a4fd9de93",
+  "response_id": "resp_46c5da9e-a69f-90da-97b9-df8523d3d448",
+  "status": "completed",
+  "output_text": "{\n  \"hypothesis\": \"Interaction terms between cap_color and habitat caused overfitting on limited features, leading to genuine model degradation below baseline\",\n  \"rationale\": \"Raw ROC AUC 0.8147 is valid (between 0-1), dev score -0.30 correctly reflects (raw-baseline)/(ceiling-baseline). With only 4 visible features available and heavy missingness, adding interaction terms likely created noise. The model output is correct format but performs worse than baseline (0.8147 < 0.8501).\",\n  \"advice\": \"Simplify model: use logistic regression or linear SVM with L2 regularization; handle missing values with simple imputation or indicator columns instead of interaction terms; avoid feature expansion given sparse features\"\n}",
+  "tokens": {
+    "input": 3296,
+    "cached_input": 0,
+    "output": 175,
+    "reasoning": 587
+  },
+  "cost": 4058.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0006",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "eafd376156065bb49740f35ce46fe1625e96aad4d65f7b21ef0235237a714f70",
+  "response_id": "resp_42d316f7-4557-9a4b-a419-4f210711ca5f",
+  "status": "completed",
+  "output_text": "{\n\"code\": \"\\\"\\\"\\\"Optimized implementation using scipy.spatial.distance.cdist.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport numpy as np\\nfrom scipy.spatial.distance import cdist\\n\\n\\ndef distance_matrix(points: list[tuple[float, float]]) -> list[list[float]]:\\n    if len(points) == 0:\\n        return []\\n    \\n    # Convert to numpy array for cdist\\n    arr = np.array(points, dtype=np.float64)\\n    \\n    # Compute pairwise Euclidean distances\\n    dist_matrix = cdist(arr, arr, metric='euclidean')\\n    \\n    # Convert back to list of lists\\n    return dist_matrix.tolist()\\n\",\n\"notes\": \"Implemented scipy.spatial.distance.cdrop-in replacement for distance matrix computation. Handles empty input by returning []. Converts tuple input to numpy array, computes pairwise Euclidean distances, then converts result back to list of lists using .tolist(). This leverages scipy's optimized C/Fortran backend for significant speedup over nested Python loops.\"\n}",
+  "tokens": {
+    "input": 949,
+    "cached_input": 0,
+    "output": 228,
+    "reasoning": 431
+  },
+  "cost": 1608.0,
+  "error": null
+}

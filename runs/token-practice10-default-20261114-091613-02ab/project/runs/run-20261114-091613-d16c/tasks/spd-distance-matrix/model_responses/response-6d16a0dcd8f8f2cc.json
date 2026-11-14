@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "e34db5cb7f6c92110c387876bc76769fe2935f9c9008f333dd507f1cbcc18477",
+  "response_id": "resp_c1521a0d-dfa2-9670-b51b-815b5c5125f1",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Replace explicit for loops with list comprehensions using math.hypot\",\n      \"rationale\": \"List comprehensions have less interpreter overhead than explicit loops; math.hypot is implemented in C and may be faster than manual sqrt(dx*dx + dy*dy). This preserves exact same computation order.\",\n      \"estimate\": {\n        \"gain\": 0.08,\n        \"cost\": 600,\n        \"seconds\": 15\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Exploit symmetry by computing only i <= j pairs and mirroring results\",\n      \"rationale\": \"Distance matrix is symmetric, so we only need to compute n*(n+1)/2 pairs instead of n^2. For benchmark_size=750, this halves iterations from ~562500 to ~281438.\",\n      \"estimate\": {\n        \"gain\": 0.35,\n        \"cost\": 800,\n        \"seconds\": 20\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Combine list comprehension + symmetry + preallocate result array\",\n      \"rationale\": \"Preallocating avoids append overhead; combining all three low-risk optimizations should give multiplicative speedup while maintaining numerical equivalence.\",\n      \"estimate\": {\n        \"gain\": 0.45,\n        \"cost\": 1000,\n        \"seconds\": 25\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 2400,\n    \"seconds\": 60,\n    \"score\": 0.72\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"low_risk_micro_optimizations\",\n      \"amount\": 2000\n    },\n    {\n      \"direction\": \"symmetry_algorithm_change\",\n      \"amount\": 1000\n    },\n    {\n      \"direction\": \"reserved_buffer\",\n      \"amount\": 33000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.05,\n      \"score\": 0.37\n    },\n    {\n      \"spent_ratio\": 0.1,\n      \"score\": 0.55\n    },\n    {\n      \"spent_ratio\": 0.15,\n      \"score\": 0.72\n    },\n    {\n      \"spent_ratio\": 0.3,\n      \"score\": 1.0\n    },\n    {\n      \"spent_ratio\": 0.5,\n      \"score\": 1.3\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1384,
+    "cached_input": 0,
+    "output": 650,
+    "reasoning": 522
+  },
+  "cost": 2556.0,
+  "error": null
+}

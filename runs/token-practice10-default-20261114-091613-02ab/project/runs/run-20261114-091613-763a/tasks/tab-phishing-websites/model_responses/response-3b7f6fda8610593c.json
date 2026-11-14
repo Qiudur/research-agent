@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "fix",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "0a3aed6f9b7cc204bec8a2976ef66795b8f24523b6b4523a25340d980595ec57",
+  "response_id": "resp_1293c961-8ab1-9afb-9ccf-45333cca3874",
+  "status": "completed",
+  "output_text": "{\"code\":\"\\\"\\\"\\\"XGBoost with CV-tuned hyperparameters for this tabular task.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom xgboost import XGBClassifier\\nfrom sklearn.model_selection import StratifiedKFold\\nfrom sklearn.metrics import roc_auc_score\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    test = pd.DataFrame(test_rows, columns=train.columns)\\n    \\n    # Align dtypes between train and test\\n    for name in train.columns:\\n        if pd.api.types.is_numeric_dtype(train[name]):\\n            test[name] = pd.to_numeric(test[name])\\n        else:\\n            categories = pd.Categorical(pd.concat([train[name], test[name]], ignore_index=True)).categories\\n            train[name] = pd.Categorical(train[name], categories=categories)\\n            test[name] = pd.Categorical(test[name], categories=categories)\\n    \\n    # Convert categoricals to numeric codes for XGBoost\\n    for name in train.columns:\\n        if train[name].dtype.name == 'category':\\n            train[name] = train[name].cat.codes.astype(float)\\n            test[name] = test[name].cat.codes.astype(float)\\n    \\n    # Hyperparameters to tune via cross-validation\\n    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=20261114)\\n    \\n    # Search grid for XGBoost parameters\\n    param_candidates = [\\n        {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 200, 'subsample': 0.8, 'colsample_bytree': 0.8},\\n        {'max_depth': 5, 'learning_rate': 0.1, 'n_estimators': 200, 'subsample': 0.8, 'colsample_bytree': 0.8},\\n        {'max_depth': 7, 'learning_rate': 0.1, 'n_estimators': 200, 'subsample': 0.8, 'colsample_bytree': 0.8},\\n        {'max_depth': 5, 'learning_rate': 0.05, 'n_estimators': 300, 'subsample': 0.8, 'colsample_bytree': 0.8},\\n        {'max_depth': 5, 'learning_rate': 0.2, 'n_estimators': 150, 'subsample': 0.8, 'colsample_bytree': 0.8},\\n    ]\\n    \\n    best_score = 0\\n    best_params = param_candidates[0]\\n    \\n    for params in param_candidates:\\n        model = XGBClassifier(\\n            random_state=20261114,\\n            n_jobs=1,\\n            verbosity=-1,\\n            **params\\n        )\\n        scores = []\\n        for train_idx, val_idx in cv.split(train, y):\\n            X_tr, X_val = train.iloc[train_idx], train.iloc[val_idx]\\n            y_tr, y_val = y.iloc[train_idx], y.iloc[val_idx]\\n            model.fit(X_tr, y_tr)\\n            probas = model.predict_proba(X_val)[:, 1]\\n            scores.append(roc_auc_score(y_val, probas))\\n        mean_score = float(sum(scores) / len(scores))\\n        if mean_score > best_score:\\n            best_score = mean_score\\n            best_params = params\\n    \\n    # Train final model with best hyperparameters\\n    model = XGBClassifier(\\n        random_state=20261114,\\n        n_jobs=1,\\n        verbosity=-1,\\n        **best_params\\n    )\\n    model.fit(train, y)\\n    return model.predict_proba(test)[:, 1].tolist()\\n\",\"notes\":\"Implemented XGBoost with CV-tuned hyperparameters. Fixed the validation_fraction error by removing it (XGBClassifier doesn't have this parameter). Added subsample and colsample_bytree regularization params. Uses stratified 5-fold CV to select best parameters based on ROC AUC score. Returns probabilities in [0,1] for each test row.\"}",
+  "tokens": {
+    "input": 4892,
+    "cached_input": 0,
+    "output": 965,
+    "reasoning": 833
+  },
+  "cost": 6690.0,
+  "error": null
+}

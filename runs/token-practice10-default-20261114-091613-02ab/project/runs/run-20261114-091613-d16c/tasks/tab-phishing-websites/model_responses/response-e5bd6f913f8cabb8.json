@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "diagnoser",
+  "purpose": "diagnose",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "4d0c4a10ec4989c2688708f839a56b121c8e6c35bb47b2a93d28c153b013212a",
+  "response_id": "resp_fffc2119-5fc4-9c76-9eb5-05ab3494b731",
+  "status": "completed",
+  "output_text": "{\n  \"hypothesis\": \"Model performs worse than baseline due to overfitting from polynomial feature expansion or implementation bug\",\n  \"rationale\": \"Raw ROC AUC (0.99297) is BELOW baseline (0.99356), causing extreme negative normalized dev score (-54.8) given tiny ceiling-baseline margin (0.00001). First attempt with polynomial interactions suggests either overfitting on 6635 rows with 30 features, or incorrect implementation. No runtime errors means outputs are structurally valid.\",\n  \"advice\": \"Simplify baseline: use LogisticRegression without polynomial features first to verify you can match/exceed baseline (>=0.99356). Only then add regularization (L1/L2 with tuned C parameter) if trying polynomial terms. Check for data leakage in feature engineering pipeline.\"\n}",
+  "tokens": {
+    "input": 3512,
+    "cached_input": 0,
+    "output": 192,
+    "reasoning": 608
+  },
+  "cost": 4312.0,
+  "error": null
+}

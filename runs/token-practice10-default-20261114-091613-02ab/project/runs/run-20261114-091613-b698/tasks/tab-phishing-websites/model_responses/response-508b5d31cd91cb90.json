@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "86071f498c1684f4ad8ca9910aa3ecce5cfd03a52eb2f1ae95a5710a085ccbff",
+  "response_id": "resp_e70e4813-bb2c-9bae-ac3a-fd87c1901859",
+  "status": "completed",
+  "output_text": "{\"code\":\"\\\"\\\"\\\"Measured LightGBM baseline for this tabular task.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    test = pd.DataFrame(test_rows, columns=train.columns)\\n    for name in train.columns:\\n        if pd.api.types.is_numeric_dtype(train[name]):\\n            test[name] = pd.to_numeric(test[name])\\n        else:\\n            categories = pd.Categorical(pd.concat([train[name], test[name]], ignore_index=True)).categories\\n            train[name] = pd.Categorical(train[name], categories=categories)\\n            test[name] = pd.Categorical(test[name], categories=categories)\\n    model = LGBMClassifier(random_state=20261114, n_jobs=1, verbosity=-1)\\n    model.fit(train, y)\\n    return model.predict_proba(test)[:, 1].tolist()\\n\",\"notes\":\"Established working LightGBM baseline. Handles 30 numeric/categorical features with consistent category encoding across train/test splits. Fixed random_state ensures reproducibility. Returns P(y=1) probabilities for ROC AUC metric.\"}",
+  "tokens": {
+    "input": 3793,
+    "cached_input": 0,
+    "output": 300,
+    "reasoning": 1327
+  },
+  "cost": 5420.0,
+  "error": null
+}

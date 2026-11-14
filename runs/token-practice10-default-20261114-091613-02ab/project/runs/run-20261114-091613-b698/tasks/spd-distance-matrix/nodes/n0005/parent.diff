@@ -1,0 +1,17 @@
+--- parent/solution.py
++++ solution.py
+@@ -6,12 +6,13 @@
+ 
+ 
+ def distance_matrix(points: list[tuple[float, float]]) -> list[list[float]]:
++    _sqrt = sqrt  # Cache as local variable to avoid repeated global lookup
+     result: list[list[float]] = []
+     for x1, y1 in points:
+         row: list[float] = []
+         for x2, y2 in points:
+             dx = x1 - x2
+             dy = y1 - y2
+-            row.append(sqrt(dx * dx + dy * dy))
++            row.append(_sqrt(dx * dx + dy * dy))
+         result.append(row)
+     return result

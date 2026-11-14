@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0003",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "beef5e3dbc5de4bd0fe71ce90bd794b891f66211719ad90c31c35f15b3739749",
+  "response_id": "resp_df388b7c-23ef-9eeb-9003-3948a441d324",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"from __future__ import annotations\\n\\ndef membership_filter(values: list[int], allowed: list[int]) -> list[int]:\\n    if not allowed:\\n        return []\\n    allowed_set = set(allowed)\\n    return [value for value in values if value in allowed_set]\",\n  \"notes\": \"Added early-return check for empty allowed list before set construction. This preserves O(1) lookup benefit while avoiding unnecessary set creation for the empty edge case. Behavior matches original for all inputs including duplicates and empty values.\"\n}",
+  "tokens": {
+    "input": 758,
+    "cached_input": 0,
+    "output": 123,
+    "reasoning": 274
+  },
+  "cost": 1155.0,
+  "error": null
+}

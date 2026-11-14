@@ -1,0 +1,46 @@
+{
+  "schema": "opening_plan/1",
+  "run_id": "run-20261114-091613-d16c",
+  "task_id": "spd-distance-matrix",
+  "predicted": {
+    "cost": 2400.0,
+    "seconds": 60.0,
+    "score": 0.72
+  },
+  "expected_progress": [
+    {
+      "spent_ratio": 0.05,
+      "score": 0.37
+    },
+    {
+      "spent_ratio": 0.1,
+      "score": 0.55
+    },
+    {
+      "spent_ratio": 0.15,
+      "score": 0.72
+    },
+    {
+      "spent_ratio": 0.3,
+      "score": 1.0
+    },
+    {
+      "spent_ratio": 0.5,
+      "score": 1.3
+    }
+  ],
+  "budget_allocation": [
+    {
+      "direction": "low_risk_micro_optimizations",
+      "amount": 2000
+    },
+    {
+      "direction": "symmetry_algorithm_change",
+      "amount": 1000
+    },
+    {
+      "direction": "reserved_buffer",
+      "amount": 33000
+    }
+  ]
+}

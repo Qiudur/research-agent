@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "ff272dfb4e0a5b01e5f86e94cade2ed355c5aba87e40db670f1022753af96b22",
+  "response_id": "resp_cdc325c6-a17b-9bad-8f2e-05d1f6a5e24e",
+  "status": "completed",
+  "output_text": "```json\n{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"LightGBM with default hyperparameters on all 30 numeric features\",\n      \"rationale\": \"Baseline score 0.0 suggests no model trained yet. LightGBM is standard for tabular classification and handles mixed feature types well.\",\n      \"estimate\": {\n        \"gain\": 0.35,\n        \"cost\": 2800,\n        \"seconds\": 45\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Add polynomial feature interactions for top correlated pairs\",\n      \"rationale\": \"URL-related features may have non-linear relationships. Pairwise products of highly correlated predictors could capture interaction effects.\",\n      \"estimate\": {\n        \"gain\": 0.08,\n        \"cost\": 3200,\n        \"seconds\": 60\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Calibrate LightGBM probabilities with Platt scaling\",\n      \"rationale\": \"Well-calibrated probabilities can improve ROC AUC when decision boundaries are near optimal but confidence scores need adjustment.\",\n      \"estimate\": {\n        \"gain\": 0.04,\n        \"cost\": 1800,\n        \"seconds\": 30\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 8500,\n    \"score\": 0.47,\n    \"seconds\": 145\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"model_training_lightgbm\",\n      \"amount\": 3000\n    },\n    {\n      \"direction\": \"feature_engineering\",\n      \"amount\": 3500\n    },\n    {\n      \"direction\": \"calibration_validation\",\n      \"amount\": 2000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.1,\n      \"score\": 0.35\n    },\n    {\n      \"spent_ratio\": 0.2,\n      \"score\": 0.43\n    },\n    {\n      \"spent_ratio\": 0.25,\n      \"score\": 0.47\n    }\n  ]\n}\n```",
+  "tokens": {
+    "input": 4081,
+    "cached_input": 0,
+    "output": 549,
+    "reasoning": 397
+  },
+  "cost": 5027.0,
+  "error": null
+}

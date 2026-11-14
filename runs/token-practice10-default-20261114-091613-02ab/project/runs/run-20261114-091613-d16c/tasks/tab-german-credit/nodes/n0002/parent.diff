@@ -1,0 +1,134 @@
+--- parent/solution.py
++++ solution.py
+@@ -1,22 +1,112 @@
+-"""LightGBM with optimized hyperparameters from 5-fold CV."""
++"""LightGBM with k-fold smoothed target encoding for categorical features."""
+ 
+ from __future__ import annotations
+ 
++import numpy as np
+ import pandas as pd
+ from lightgbm import LGBMClassifier
++from sklearn.model_selection import KFold
+ 
+ 
+ def fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:
+-    train = pd.read_csv(train_csv)
+-    y = train.pop("y").astype(int)
+-    test = pd.DataFrame(test_rows, columns=train.columns)
+-    for name in train.columns:
+-        if pd.api.types.is_numeric_dtype(train[name]):
+-            test[name] = pd.to_numeric(test[name])
++    """Fit model with k-fold target encoding and predict probabilities."""
++    # Load and prepare data
++    train_df = pd.read_csv(train_csv)
++    y = train_df.pop('y').astype(int)
++    
++    # Feature columns only (exclude y)
++    feature_cols = train_df.columns.tolist()
++    test_df = pd.DataFrame(test_rows, columns=feature_cols)
++    
++    # Separate numeric and categorical features
++    num_cols = []
++    cat_cols = []
++    for name in feature_cols:
++        if pd.api.types.is_numeric_dtype(train_df[name]):
++            num_cols.append(name)
++            test_df[name] = pd.to_numeric(test_df[name], errors='coerce')
+         else:
+-            categories = pd.Categorical(pd.concat([train[name], test[name]], ignore_index=True)).categories
+-            train[name] = pd.Categorical(train[name], categories=categories)
+-            test[name] = pd.Categorical(test[name], categories=categories)
++            cat_cols.append(name)
++            # Align categories between train and test
++            all_cats = pd.Categorical(
++                pd.concat([train_df[name], test_df[name]], ignore_index=True)
++            ).categories
++            train_df[name] = pd.Categorical(train_df[name], categories=all_cats)
++            test_df[name] = pd.Categorical(test_df[name], categories=all_cats)
++    
++    # Global statistics for target encoding
++    global_mean = float(y.mean())
++    
++    # Precompute per-column category statistics for test encoding
++    col_stats = {}
++    for col in cat_cols:
++        grp = y.groupby(train_df[col])
++        col_stats[col] = {
++            'sum': grp.sum().to_dict(),
++            'count': grp.count().to_dict()
++        }
++    
++    # Numeric features as arrays
++    X_num = train_df[num_cols].values.astype(np.float64)
++    X_test_num = test_df[num_cols].values.astype(np.float64)
++    
++    # K-fold target encoding parameters
++    alpha = 10.0
++    n_folds = 5
++    kf = KFold(n_splits=n_folds, shuffle=True, random_state=20261114)
++    
++    # Compute OOF target encodings
++    n_train = len(y)
++    n_cat = len(cat_cols)
++    X_oof = np.zeros((n_train, n_cat), dtype=np.float64)
++    
++    for _, (train_idx, val_idx) in enumerate(kf.split(range(n_train))):
++        # For each categorical column
++        for col_idx, col in enumerate(cat_cols):
++            # Get categories present in validation fold
++            val_series = train_df.iloc[val_idx][col]
++            unique_cats = val_series.unique()
++            
++            for cat in unique_cats:
++                # Find indices where this category appears in train and validation
++                train_mask = (train_df.iloc[train_idx][col] == cat)
++                val_mask = (val_series == cat)
++                
++                # Compute statistics from training fold
++                train_count = int(train_mask.sum())
++                if train_count > 0:
++                    train_sum = float(y.iloc[train_idx][train_mask].sum())
++                    local_mean = train_sum / train_count
++                    weight = alpha / (alpha + train_count)
++                    smoothed = weight * global_mean + (1 - weight) * local_mean
++                    
++                    # Assign to validation positions
++                    val_positions = val_idx[np.where(val_mask)[0]]
++                    X_oof[val_positions, col_idx] = smoothed
++    
++    # Assemble training features
++    X_train = np.hstack([X_oof, X_num])
++    
++    # Test set encoding using global statistics
++    n_test = len(test_df)
++    X_test_te = np.zeros((n_test, n_cat), dtype=np.float64)
++    
++    for col_idx, col in enumerate(cat_cols):
++        stats = col_stats[col]
++        for i in range(n_test):
++            cat = test_df.iloc[i][col]
++            train_count = int(stats['count'].get(cat, 0))
++            
++            if train_count > 0:
++                train_sum = float(stats['sum'].get(cat, 0))
++                local_mean = train_sum / train_count
++                weight = alpha / (alpha + train_count)
++                X_test_te[i, col_idx] = weight * global_mean + (1 - weight) * local_mean
++            # else stays global_mean (already initialized)
++    
++    X_test = np.hstack([X_test_te, X_test_num])
++    
++    # Train LightGBM model
+     model = LGBMClassifier(
+         random_state=20261114,
+         n_jobs=1,
+@@ -26,5 +116,6 @@
+         num_leaves=15,
+         min_child_samples=20
+     )
+-    model.fit(train, y)
+-    return model.predict_proba(test)[:, 1].tolist()
++    model.fit(X_train, y)
++    
++    return model.predict_proba(X_test)[:, 1].tolist()

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "11754682c7c5ced7c4ff1e878ebf2bf3e4adc8ba4b553fa70501b35720d1e8eb",
+  "response_id": "resp_ccbd5277-4b99-9f80-a6b6-ab60acfdd94b",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"LightGBM classifier with default hyperparameters on all available features\",\n      \"rationale\": \"Tabular data with 17 mixed numeric/categorical predictors is ideal for gradient boosting; standard implementation should significantly outperform 0.0 baseline while being fast and low-cost.\",\n      \"estimate\": {\n        \"gain\": 0.18,\n        \"cost\": 1200,\n        \"seconds\": 45\n      },\n      \"cites\": [\"lightgbm_classifier\"]\n    },\n    {\n      \"hypothesis\": \"Add scale_pos_weight parameter to handle 15.5% class imbalance in LightGBM\",\n      \"rationale\": \"The dataset has significant class imbalance (positive_rate_train=0.1547); tuning loss function to account for this can improve ROC AUC without major complexity.\",\n      \"estimate\": {\n        \"gain\": 0.05,\n        \"cost\": 1000,\n        \"seconds\": 40\n      },\n      \"cites\": [\"lightgbm_classifier\"]\n    },\n    {\n      \"hypothesis\": \"Create interaction features: total_duration_ratio (sum of durations / sum of page counts)\",\n      \"rationale\": \"Browsing behavior ratios may capture intent signals better than raw counts alone; simple derived features often help tree-based models.\",\n      \"estimate\": {\n        \"gain\": 0.03,\n        \"cost\": 900,\n        \"seconds\": 35\n      },\n      \"cites\": [\"feature_engineering\"]\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 3100,\n    \"score\": 0.18,\n    \"seconds\": 120\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"hypothesis_1_lightgbm_baseline\",\n      \"amount\": 1200\n    },\n    {\n      \"direction\": \"hypothesis_2_class_imbalance\",\n      \"amount\": 1000\n    },\n    {\n      \"direction\": \"hypothesis_3_feature_engineering\",\n      \"amount\": 900\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.03,\n      \"score\": 0.08\n    },\n    {\n      \"spent_ratio\": 0.06,\n      \"score\": 0.15\n    },\n    {\n      \"spent_ratio\": 0.08,\n      \"score\": 0.18\n    }\n  ]\n}",
+  "tokens": {
+    "input": 4044,
+    "cached_input": 0,
+    "output": 611,
+    "reasoning": 676
+  },
+  "cost": 5331.0,
+  "error": null
+}

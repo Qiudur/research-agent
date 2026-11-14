@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "summarizer",
+  "purpose": "summarize",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "bf7f13002d87fb2937504bd7b18059af695eb0285282d506be2f84633b3cabab",
+  "response_id": "resp_5c6398fc-d72d-9a8c-a503-8a42a530ee11",
+  "status": "completed",
+  "output_text": "{\n  \"drafts\": [\n    {\n      \"scope\": \"method\",\n      \"scenario\": \"speedup\",\n      \"triggers\": [\"nested_python_loop\"],\n      \"conditions\": \"computing sequential maximum/peak values from a list or array\",\n      \"action\": \"replace O(n²) nested loops with O(n) running peak tracking algorithm\",\n      \"negative\": false,\n      \"node_ids\": [\"n0001\"]\n    },\n    {\n      \"scope\": \"method\",\n      \"scenario\": \"speedup\",\n      \"triggers\": [\"nested_python_loop\"],\n      \"conditions\": \"performing array indexing and slicing operations on price or numeric sequence data\",\n      \"action\": \"convert Python list to numpy array once at start, use numpy indexing instead of Python slicing\",\n      \"negative\": false,\n      \"node_ids\": [\"n0002\"]\n    }\n  ],\n  \"narrowings\": []\n}",
+  "tokens": {
+    "input": 833,
+    "cached_input": 0,
+    "output": 217,
+    "reasoning": 545
+  },
+  "cost": 1595.0,
+  "error": null
+}

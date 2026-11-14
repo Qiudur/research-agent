@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "199fa0f9abcba721dc99aadb99c24e4864bd89c1a7cd73921cd66a1611ee7411",
+  "response_id": "resp_c0f0e98b-bdf8-95c4-9537-8ac74b10850f",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Maintain a running sum accumulator: subtract element leaving window, add new element\",\n      \"rationale\": \"Current baseline re-slices and re-sums overlapping window at each position giving O(n*w). A sliding window with accumulator achieves O(n) by updating sum incrementally rather than recomputing.\",\n      \"estimate\": {\n        \"gain\": 0.85,\n        \"cost\": 4000,\n        \"seconds\": 60\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Use prefix sum array: precompute cumulative sums then query any range in O(1)\",\n      \"rationale\": \"Alternative to accumulator that handles edge cases naturally via indexing. Precomputing cumsum once allows constant-time interval queries for rolling mean calculation.\",\n      \"estimate\": {\n        \"gain\": 0.80,\n        \"cost\": 4000,\n        \"seconds\": 60\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Combine early-exit optimizations with accumulator: handle empty/w=1/window>=len as special fast paths\",\n      \"rationale\": \"Edge cases mentioned in profile (empty, window one, partial prefix, window longer than input) can each use direct computation without loop overhead.\",\n      \"estimate\": {\n        \"gain\": 0.90,\n        \"cost\": 5000,\n        \"seconds\": 70\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 12000,\n    \"score\": 0.85,\n    \"seconds\": 190\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"accumulator_implementation\",\n      \"amount\": 4000\n    },\n    {\n      \"direction\": \"prefix_sum_fallback\",\n      \"amount\": 4000\n    },\n    {\n      \"direction\": \"edge_case_optimizations\",\n      \"amount\": 4000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.1,\n      \"score\": 0.5\n    },\n    {\n      \"spent_ratio\": 0.2,\n      \"score\": 0.75\n    },\n    {\n      \"spent_ratio\": 0.3,\n      \"score\": 0.85\n    },\n    {\n      \"spent_ratio\": 0.5,\n      \"score\": 0.92\n    },\n    {\n      \"spent_ratio\": 0.9,\n      \"score\": 0.98\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1384,
+    "cached_input": 0,
+    "output": 643,
+    "reasoning": 534
+  },
+  "cost": 2561.0,
+  "error": null
+}

@@ -1,0 +1,5 @@
+{
+  "schema": "triggers/1",
+  "tabular": ["high_cardinality_categorical", "missing_heavy", "class_imbalance", "small_sample", "many_numeric", "datetime_column", "id_like_column", "possible_leakage"],
+  "speedup": ["nested_python_loop", "rowwise_pandas_apply", "repeated_recompute_window", "list_membership_in_loop", "string_concat_in_loop", "recursion_no_memo", "already_vectorized"]
+}

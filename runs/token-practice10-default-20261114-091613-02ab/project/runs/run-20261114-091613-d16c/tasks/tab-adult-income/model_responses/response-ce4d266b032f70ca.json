@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "review",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "03a042b95977a14d82d70c879a70cd363403c4310a6bcd8c53926577ff426352",
+  "response_id": "resp_2b659005-7612-97df-912f-0ef409bc4c11",
+  "status": "completed",
+  "output_text": "```json\n{\n  \"decision\": \"reallocate\",\n  \"budget_moves\": [\n    {\"from\": \"baseline_gbm\", \"to\": \"feature_engineering\", \"amount\": 1500},\n    {\"from\": \"baseline_gbm\", \"to\": \"model_tuning\", \"amount\": 1500}\n  ],\n  \"note\": \"Prioritize feature cleaning (missing values, scaling) and conservative tuning over retraining base model after failed encoding attempt.\"\n}\n```",
+  "tokens": {
+    "input": 2708,
+    "cached_input": 0,
+    "output": 114,
+    "reasoning": 4491
+  },
+  "cost": 7313.0,
+  "error": null
+}

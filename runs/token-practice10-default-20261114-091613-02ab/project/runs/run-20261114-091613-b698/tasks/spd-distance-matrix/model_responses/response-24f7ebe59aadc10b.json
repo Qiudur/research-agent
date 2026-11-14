@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "d0f039f5f60deaa66280ca959bc89a8e163cf89e190f2c5d0fc51ad9be3f63de",
+  "response_id": "resp_fe85c97a-11b6-97a1-8079-2dbb0db834f2",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Optimized implementation using list comprehensions.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nfrom math import sqrt\\n\\n\\ndef distance_matrix(points: list[tuple[float, float]]) -> list[list[float]]:\\n    return [\\n        [sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2) for x2, y2 in points]\\n        for x1, y1 in points\\n    ]\",\n  \"notes\": \"Replaced nested for-loops with nested list comprehensions. This leverages Python's optimized C-level iteration for list comprehensions, reducing bytecode overhead. Behavior is identical for all edge cases (empty input returns [], single point returns [[0]], etc.).\"\n}",
+  "tokens": {
+    "input": 942,
+    "cached_input": 0,
+    "output": 169,
+    "reasoning": 235
+  },
+  "cost": 1346.0,
+  "error": null
+}

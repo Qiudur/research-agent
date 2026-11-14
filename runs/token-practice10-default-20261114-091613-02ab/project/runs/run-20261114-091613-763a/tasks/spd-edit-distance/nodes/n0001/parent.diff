@@ -1,0 +1,12 @@
+--- parent/solution.py
++++ solution.py
+@@ -4,6 +4,9 @@
+ 
+ 
+ def edit_distance(a: str, b: str) -> int:
++    if a == b:
++        return 0
++    
+     previous = list(range(len(b) + 1))
+     matrix = [previous]
+     for i, left in enumerate(a, 1):

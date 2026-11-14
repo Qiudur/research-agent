@@ -1,0 +1,20 @@
+--- parent/solution.py
++++ solution.py
+@@ -10,7 +10,16 @@
+     train = pd.read_csv(train_csv)
+     y = train.pop("y").astype(int)
+     
+-    test = pd.DataFrame(test_rows, columns=train.columns)
++    test = pd.DataFrame(test_rows)
++    
++    # Create derived feature: installment_rate_credit_ratio = credit_amount / duration
++    train['credit_amount'] = pd.to_numeric(train['credit_amount'], errors='coerce')
++    train['duration_months'] = pd.to_numeric(train['duration_months'], errors='coerce')
++    train['installment_rate_credit_ratio'] = train['credit_amount'] / train['duration_months'].replace(0, 1)
++    
++    test['credit_amount'] = pd.to_numeric(test['credit_amount'], errors='coerce')
++    test['duration_months'] = pd.to_numeric(test['duration_months'], errors='coerce')
++    test['installment_rate_credit_ratio'] = test['credit_amount'] / test['duration_months'].replace(0, 1)
+     
+     # Identify numeric vs categorical columns
+     cat_cols = []

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "e3048c841a3b18a61c9ab3563f85cc9dea97902925e636fa476b780da863cf1a",
+  "response_id": "resp_7b6d86fd-5996-9803-afc5-de0667dea53e",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Measured LightGBM baseline for this tabular task.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    test = pd.DataFrame(test_rows, columns=train.columns)\\n    \\n    # Convert all columns to numeric since they are all numeric features\\n    for name in train.columns:\\n        train[name] = pd.to_numeric(train[name], errors='coerce').fillna(0)\\n        test[name] = pd.to_numeric(test[name], errors='coerce').fillna(0)\\n    \\n    model = LGBMClassifier(random_state=20261114, n_jobs=1, verbosity=-1)\\n    model.fit(train, y)\\n    return model.predict_proba(test)[:, 1].tolist()\\n\",\n  \"notes\": \"Implemented LightGBM with default hyperparameters on all 30 numeric features. Simplified preprocessing to handle numeric-only data conversion, ensuring consistent dtypes between train and test sets. Model returns probabilities for positive class (y=1).\"\n}",
+  "tokens": {
+    "input": 3771,
+    "cached_input": 0,
+    "output": 289,
+    "reasoning": 448
+  },
+  "cost": 4508.0,
+  "error": null
+}

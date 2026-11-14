@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "5c08e50c1d1d5e8f5efc3ff75c7901c27048e5dd6e9f982583e89487e56c179e",
+  "response_id": "resp_40a8757d-bec7-9533-90d9-9bcfea318789",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Improved LightGBM baseline for tabular task with class imbalance handling.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    test = pd.DataFrame(test_rows, columns=train.columns)\\n    \\n    # Preprocess columns: numeric or categorical\\n    for name in train.columns:\\n        if pd.api.types.is_numeric_dtype(train[name]):\\n            test[name] = pd.to_numeric(test[name])\\n        else:\\n            categories = pd.Categorical(pd.concat([train[name], test[name]], ignore_index=True)).categories\\n            train[name] = pd.Categorical(train[name], categories=categories)\\n            test[name] = pd.Categorical(test[name], categories=categories)\\n    \\n    # Compute scale_pos_weight for class imbalance (~15% positive rate)\\n    pos_count = y.sum()\\n    neg_count = len(y) - pos_count\\n    scale_pos_weight = neg_count / pos_count if pos_count > 0 else 1.0\\n    \\n    model = LGBMClassifier(\\n        random_state=20261114,\\n        n_jobs=1,\\n        verbosity=-1,\\n        scale_pos_weight=scale_pos_weight,\\n        num_leaves=63,\\n        min_child_samples=20,\\n        learning_rate=0.08,\\n        feature_fraction=0.9\\n    )\\n    model.fit(train, y)\\n    return model.predict_proba(test)[:, 1].tolist()\",\n  \"notes\": \"Addressed hypothesis by handling class imbalance (scale_pos_weight computed from actual training data). Added slight hyperparameter tuning (more leaves, lower LR, feature_fraction) to potentially push AUC just above baseline. This should help overcome the tight ceiling-baseline gap of 0.00013.\"\n}",
+  "tokens": {
+    "input": 3870,
+    "cached_input": 0,
+    "output": 460,
+    "reasoning": 733
+  },
+  "cost": 5063.0,
+  "error": null
+}

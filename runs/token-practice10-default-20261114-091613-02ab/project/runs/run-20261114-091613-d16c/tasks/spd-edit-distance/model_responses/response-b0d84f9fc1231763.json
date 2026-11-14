@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "review",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "138bf2553a029f8e248e2cc2f1e36f306649972a1a531d4de8a99582297a97c3",
+  "response_id": "resp_80f0c20e-9c67-910b-9847-0f4c8fbe695e",
+  "status": "completed",
+  "output_text": "{\n  \"decision\": \"reallocate\",\n  \"budget_moves\": [\n    {\n      \"from\": \"bit_parallel_myers\",\n      \"to\": \"numpy_vectorization\",\n      \"amount\": 2000\n    },\n    {\n      \"from\": \"bit_parallel_myers\",\n      \"to\": \"python_micro_optimizations\",\n      \"amount\": 1500\n    }\n  ],\n  \"note\": \"Myers bit-parallel failed twice with n0001=failed, n0002=score 0.0089<baseline. Behind schedule with 18k remaining. Reallocating 3500 tokens from struggling approach to numpy vectorization (matrix ops) and micro-optimizations (faster validation cycles) to find working baseline before deeper optimization.\"\n}",
+  "tokens": {
+    "input": 1323,
+    "cached_input": 0,
+    "output": 189,
+    "reasoning": 824
+  },
+  "cost": 2336.0,
+  "error": null
+}

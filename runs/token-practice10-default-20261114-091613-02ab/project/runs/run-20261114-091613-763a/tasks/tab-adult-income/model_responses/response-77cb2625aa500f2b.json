@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "review",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "23bbda298db9523a781eebd730230a4f1e33540070fa5cdd0e9354583dc78f1f",
+  "response_id": "resp_8e2a9cbc-a24f-9760-b0f8-f24d392f071f",
+  "status": "completed",
+  "output_text": "{\n  \"decision\": \"switch\",\n  \"budget_moves\": [\n    {\n      \"from\": \"model_training\",\n      \"to\": \"debugging_verification\",\n      \"amount\": 3000.0\n    }\n  ],\n  \"note\": \"Spent 22k tokens with 0.0 best score; both LGBM baselines failed catastrophically (0.0, -137). Switching from aggressive model iteration to debugging/verification of implementation correctness before further investment.\"\n}",
+  "tokens": {
+    "input": 2716,
+    "cached_input": 0,
+    "output": 119,
+    "reasoning": 864
+  },
+  "cost": 3699.0,
+  "error": null
+}

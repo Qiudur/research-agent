@@ -1,0 +1,26 @@
+{
+  "schema": "opening_plan/1",
+  "run_id": "run-20261114-091613-763a",
+  "task_id": "tab-adult-income",
+  "predicted": {
+    "cost": 6000.0,
+    "seconds": 120.0,
+    "score": 0.65
+  },
+  "expected_progress": [
+    {
+      "spent_ratio": 0.075,
+      "score": 0.5
+    },
+    {
+      "spent_ratio": 0.15,
+      "score": 0.65
+    }
+  ],
+  "budget_allocation": [
+    {
+      "direction": "model_training",
+      "amount": 6000
+    }
+  ]
+}

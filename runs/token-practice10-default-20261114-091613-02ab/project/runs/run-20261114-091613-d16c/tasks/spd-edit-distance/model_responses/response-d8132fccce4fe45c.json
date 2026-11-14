@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0003",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "ad7dbade527c22580b5b2c1bb1d79bc6fdd2f3b02d8bc3205312ce69e3532367",
+  "response_id": "resp_713d854a-6624-9f32-97be-fb51bd5911ee",
+  "status": "completed",
+  "output_text": "{\"code\":\"\\\"\\\"\\\"Numpy-based edit distance implementation.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\nimport numpy as np\\n\\n\\ndef edit_distance(a: str, b: str) -> int:\\n    \\\"\\\"\\\"Compute Levenshtein distance using numpy arrays for efficiency.\\n    \\n    Reduces Python-level overhead by using numpy arrays for storage and\\n    vectorized operations where possible (cost computation, array slicing).\\n    \\\"\\\"\\\"\\n    n, m = len(a), len(b)\\n    \\n    if n == 0:\\n        return m\\n    if m == 0:\\n        return n\\n    \\n    # Use numpy int32 arrays for memory efficiency\\n    previous = np.arange(m + 1, dtype=np.int32)\\n    \\n    for i, char_a in enumerate(a, 1):\\n        current = np.empty(m + 1, dtype=np.int32)\\n        current[0] = i\\n        \\n        # Vectorized cost computation: 0 where chars match, 1 otherwise\\n        cost_row = (char_a != b).astype(np.int32)\\n        \\n        # Precompute up and diagonal values using numpy slicing\\n        diag = previous[:-1] + cost_row\\n        up = previous + 1\\n        \\n        # Fill current row with sequential dependency\\n        left_val = i\\n        for j in range(m):\\n            left_val += 1\\n            val = left_val\\n            if up[j + 1] < val:\\n                val = up[j + 1]\\n            if diag[j] < val:\\n                val = diag[j]\\n            current[j + 1] = val\\n        \\n        previous = current\\n    \\n    return int(previous[-1])\\n\",\"notes\":\"Replaced Python lists with numpy arrays (int32) for reduced allocation overhead. Used vectorized operations for cost computation (char_a != b comparison) and row operations (slicing, addition). Core DP recurrence remains in loop due to sequential data dependencies within each row, but numpy handles bulk array operations in optimized C code.\"}",
+  "tokens": {
+    "input": 983,
+    "cached_input": 0,
+    "output": 463,
+    "reasoning": 6302
+  },
+  "cost": 7748.0,
+  "error": null
+}

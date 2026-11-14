@@ -1,0 +1,21 @@
+--- parent/solution.py
++++ solution.py
+@@ -1,8 +1,8 @@
+-"""Intentionally slow reference implementation for the first local pilot."""
++"""Optimized distance matrix using math.hypot."""
+ 
+ from __future__ import annotations
+ 
+-from math import sqrt
++from math import hypot
+ 
+ 
+ def distance_matrix(points: list[tuple[float, float]]) -> list[list[float]]:
+@@ -12,6 +12,6 @@
+         for x2, y2 in points:
+             dx = x1 - x2
+             dy = y1 - y2
+-            row.append(sqrt(dx * dx + dy * dy))
++            row.append(hypot(dx, dy))
+         result.append(row)
+     return result

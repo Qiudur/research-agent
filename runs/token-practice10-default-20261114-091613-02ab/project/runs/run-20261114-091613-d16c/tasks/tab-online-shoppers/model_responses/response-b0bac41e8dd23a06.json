@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "bbd42f29aaab2c56ce82bc8d99a7750bef42f4e6e73b533e73faf7c68b200278",
+  "response_id": "resp_4a183f66-5834-9eb9-8eea-de70421ed71b",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"LightGBM classifier with default hyperparameters on all available features.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    test = pd.DataFrame(test_rows, columns=train.columns)\\n    \\n    # Handle type consistency between train and test\\n    for name in train.columns:\\n        if pd.api.types.is_numeric_dtype(train[name]):\\n            test[name] = pd.to_numeric(test[name])\\n        else:\\n            # Combine train and test for consistent category encoding\\n            categories = pd.Categorical(\\n                pd.concat([train[name], test[name]], ignore_index=True)\\n            ).categories\\n            train[name] = pd.Categorical(train[name], categories=categories)\\n            test[name] = pd.Categorical(test[name], categories=categories)\\n    \\n    # Use default LightGBM hyperparameters with fixed random state\\n    model = LGBMClassifier(random_state=20261114, n_jobs=1, verbosity=-1)\\n    model.fit(train, y)\\n    \\n    return model.predict_proba(test)[:, 1].tolist()\",\n  \"notes\": \"Implemented LightGBM classifier using all 17 available features. The model handles mixed numeric/categorical predictors by preserving numeric types and consistently encoding categorical values across train/test sets. Using fixed random_state for reproducibility, n_jobs=1 to avoid parallelism issues, and verbosity=-1 for clean logs. Returns positive class probabilities from predict_proba.\"\n}",
+  "tokens": {
+    "input": 3740,
+    "cached_input": 0,
+    "output": 382,
+    "reasoning": 453
+  },
+  "cost": 4575.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "fcb4cd3fba1f4e7849b19ae7789e77f4080af6065cda511f64244f575c1d553d",
+  "response_id": "resp_59bccbe8-0586-9fb8-90ed-06568d2f60a3",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Numpy-accelerated edit distance implementation.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\nimport numpy as np\\n\\n\\ndef edit_distance(a: str, b: str) -> int:\\n    m, n = len(a), len(b)\\n    \\n    # Handle edge cases\\n    if m == 0:\\n        return n\\n    if n == 0:\\n        return m\\n    \\n    # Use numpy array for the previous row instead of Python list\\n    previous = np.arange(n + 1, dtype=np.int32)\\n    \\n    # Pre-convert b to integer codes for fast vectorized comparison\\n    b_codes = np.array([ord(c) for c in b], dtype=np.int32)\\n    \\n    for i in range(1, m + 1):\\n        current = np.empty(n + 1, dtype=np.int32)\\n        current[0] = i\\n        \\n        char_code = ord(a[i - 1])\\n        \\n        # Compute substitution costs vectorized for all j\\n        subst_costs = previous[:-1] + ((char_code != b_codes).astype(np.int32))\\n        \\n        # Compute for all positions j >= 1\\n        # current[j] = min(current[j-1] + 1, previous[j] + 1, subst_costs[j-1])\\n        for j in range(n):\\n            current[j + 1] = min(current[j] + 1, previous[j + 1] + 1, subst_costs[j])\\n        \\n        previous = current\\n    \\n    return int(previous[n])\",\n  \"notes\": \"Replaced Python lists with numpy arrays for DP storage and used vectorized boolean comparison for character matching. Still uses inner Python loop since edit distance has sequential dependencies (each cell needs previous cell in same row). Uses numpy indexing (previous[:-1], b_codes) instead of list slicing for cleaner vectorized operations.\"\n}",
+  "tokens": {
+    "input": 994,
+    "cached_input": 0,
+    "output": 442,
+    "reasoning": 4016
+  },
+  "cost": 5452.0,
+  "error": null
+}

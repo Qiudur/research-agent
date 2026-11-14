@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "diagnoser",
+  "purpose": "diagnose",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "eb8155346efa98b96418718d0832004a4c60979cbde60c4535575d560edf50bd",
+  "response_id": "resp_5d785c33-370e-9898-8129-027cec3f3a0d",
+  "status": "completed",
+  "output_text": "{\n  \"hypothesis\": \"Model output format compliance issue causing effective score penalty despite near-baseline raw ROC AUC\",\n  \"rationale\": \"Raw ROC AUC (0.9199) is close to baseline (0.9232) and ceiling (0.9233), but normalized dev score is extremely negative (-24.59) due to tiny ceiling-baseline gap (~0.00013). With no cheat_flags or errors flagged, likely cause is subtle format violations: probabilities outside [0,1] range, non-finite values, or row order mismatch. Class imbalance hypothesis from previous attempt hasn't yet shown improvement since raw score remains below baseline.\",\n  \"advice\": \"Verify all prediction outputs are strictly in [0,1] with clamp/protection; ensure no NaN/inf values; double-check row count matches exactly test_rows length and order preserved. If format passes, try calibrating threshold or using stratified cross-validation for better minority class representation.\"\n}",
+  "tokens": {
+    "input": 3482,
+    "cached_input": 0,
+    "output": 220,
+    "reasoning": 686
+  },
+  "cost": 4388.0,
+  "error": null
+}

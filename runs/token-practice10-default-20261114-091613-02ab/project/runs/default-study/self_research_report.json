@@ -1,0 +1,1971 @@
+{
+  "schema": "self_research/1",
+  "label": "TEST ONLY",
+  "ranking_policy": "max(mean_score, 0) / mean_cost; tie by higher score then lower cost",
+  "currency": "TEST",
+  "bank_version": "bank-v1",
+  "practice_tasks": [
+    "spd-distance-matrix",
+    "spd-rolling-mean",
+    "spd-max-drawdown",
+    "spd-edit-distance",
+    "spd-membership-filter",
+    "tab-adult-income",
+    "tab-mushroom-edibility",
+    "tab-online-shoppers",
+    "tab-phishing-websites",
+    "tab-german-credit"
+  ],
+  "candidates": {
+    "default": {
+      "config": {
+        "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/agent_token_pilot_v2.json",
+        "sha256": "f0ba329f64b0592e4e90fe1fb0968611ccd0a34a40b27c1fce9e1e7a139c367b"
+      },
+      "prompts": {
+        "planner": {
+          "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prompts/planner_token_pilot_v2.md",
+          "sha256": "b15dd06037c1dcdfe7b20bb7df8463075130fb1a91e6868aa80a531a6b3172a0"
+        },
+        "executor": {
+          "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prompts/executor_token_pilot_v2.md",
+          "sha256": "4b431d5e24dfd24a9bf692b9b44be4fe748ba5f7f95efd78343b2f03f9465c17"
+        },
+        "diagnoser": {
+          "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prompts/diagnoser_token_pilot_v2.md",
+          "sha256": "706ee4a5d327853d5f0f037077b7fafa61fda0f3794fad9b5e44a148751756f1"
+        },
+        "summarizer": {
+          "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prompts/summarizer.md",
+          "sha256": "7a6ea00623497d61efc014c24fee1de19ce3131fa912883b4f0bc768854358de"
+        }
+      }
+    }
+  },
+  "attempts": [
+    {
+      "candidate": "default",
+      "round": 1,
+      "rep": 1,
+      "run_id": "run-20261114-091613-763a",
+      "report_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/report.json",
+      "config_sha256": "f0ba329f64b0592e4e90fe1fb0968611ccd0a34a40b27c1fce9e1e7a139c367b",
+      "prompt_sha256": {
+        "planner": "b15dd06037c1dcdfe7b20bb7df8463075130fb1a91e6868aa80a531a6b3172a0",
+        "executor": "4b431d5e24dfd24a9bf692b9b44be4fe748ba5f7f95efd78343b2f03f9465c17",
+        "diagnoser": "706ee4a5d327853d5f0f037077b7fafa61fda0f3794fad9b5e44a148751756f1",
+        "summarizer": "7a6ea00623497d61efc014c24fee1de19ce3131fa912883b4f0bc768854358de"
+      },
+      "mean_score": -19.99472173118426,
+      "total_cost": 280259.0,
+      "currency": "TEST",
+      "manifest_phase": "dev",
+      "logical_phase": "self_research",
+      "test_only": true
+    },
+    {
+      "candidate": "default",
+      "round": 1,
+      "rep": 2,
+      "run_id": "run-20261114-091613-b698",
+      "report_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/report.json",
+      "config_sha256": "f0ba329f64b0592e4e90fe1fb0968611ccd0a34a40b27c1fce9e1e7a139c367b",
+      "prompt_sha256": {
+        "planner": "b15dd06037c1dcdfe7b20bb7df8463075130fb1a91e6868aa80a531a6b3172a0",
+        "executor": "4b431d5e24dfd24a9bf692b9b44be4fe748ba5f7f95efd78343b2f03f9465c17",
+        "diagnoser": "706ee4a5d327853d5f0f037077b7fafa61fda0f3794fad9b5e44a148751756f1",
+        "summarizer": "7a6ea00623497d61efc014c24fee1de19ce3131fa912883b4f0bc768854358de"
+      },
+      "mean_score": -17.687747577785935,
+      "total_cost": 246680.0,
+      "currency": "TEST",
+      "manifest_phase": "dev",
+      "logical_phase": "self_research",
+      "test_only": true
+    },
+    {
+      "candidate": "default",
+      "round": 1,
+      "rep": 3,
+      "run_id": "run-20261114-091613-d16c",
+      "report_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/report.json",
+      "config_sha256": "f0ba329f64b0592e4e90fe1fb0968611ccd0a34a40b27c1fce9e1e7a139c367b",
+      "prompt_sha256": {
+        "planner": "b15dd06037c1dcdfe7b20bb7df8463075130fb1a91e6868aa80a531a6b3172a0",
+        "executor": "4b431d5e24dfd24a9bf692b9b44be4fe748ba5f7f95efd78343b2f03f9465c17",
+        "diagnoser": "706ee4a5d327853d5f0f037077b7fafa61fda0f3794fad9b5e44a148751756f1",
+        "summarizer": "7a6ea00623497d61efc014c24fee1de19ce3131fa912883b4f0bc768854358de"
+      },
+      "mean_score": -21.318582720697126,
+      "total_cost": 231116.0,
+      "currency": "TEST",
+      "manifest_phase": "dev",
+      "logical_phase": "self_research",
+      "test_only": true
+    }
+  ],
+  "reports": [
+    {
+      "schema": "run_report/1",
+      "run_id": "run-20261114-091613-763a",
+      "phase": "dev",
+      "config": "default_lib",
+      "rep": 1,
+      "currency": "TEST",
+      "total_cost": 280259.0,
+      "tasks": [
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-763a",
+          "task_id": "spd-distance-matrix",
+          "best_node": "n0001",
+          "dev_score": 0.5710603915002721,
+          "holdout_score": 0.609404286819868,
+          "total_cost": 29013.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 234.45914491804433,
+            "run": 7.952788875059923,
+            "queue": 0.00028408499201759696,
+            "wall": 289.151168
+          },
+          "quote": {
+            "cost": 7000.0,
+            "seconds": 240.0,
+            "score": 0.78
+          },
+          "quote_error": {
+            "cost": 22013.0,
+            "seconds": 49.151167999999984,
+            "score": -0.170595713180132
+          },
+          "model_calls": 13,
+          "tokens": {
+            "input": 15605,
+            "cached_input": 0,
+            "output": 4232,
+            "reasoning": 9176
+          },
+          "cost_by_role": {
+            "planner": 11093.0,
+            "executor": 16285.0,
+            "diagnoser": 1635.0,
+            "summarizer": 0
+          },
+          "experiments": 8,
+          "accepted_nodes": [
+            "n0001"
+          ],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/spd-distance-matrix/ledger.jsonl",
+            "task_end_seq": 37,
+            "stop_seq": 36,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8,
+              11,
+              12,
+              15,
+              19,
+              20,
+              23,
+              26,
+              28,
+              31,
+              35
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/spd-distance-matrix/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/spd-distance-matrix/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-763a",
+          "task_id": "spd-rolling-mean",
+          "best_node": "n0002",
+          "dev_score": 1.5395054235628294,
+          "holdout_score": 1.58121625157882,
+          "total_cost": 15163.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 133.55047608201858,
+            "run": 0.8893757070181891,
+            "queue": 9.099999442696571e-05,
+            "wall": 135.040762
+          },
+          "quote": {
+            "cost": 2000.0,
+            "seconds": 15.0,
+            "score": 0.9
+          },
+          "quote_error": {
+            "cost": 13163.0,
+            "seconds": 120.040762,
+            "score": 0.6812162515788199
+          },
+          "model_calls": 6,
+          "tokens": {
+            "input": 6292,
+            "cached_input": 0,
+            "output": 1624,
+            "reasoning": 7247
+          },
+          "cost_by_role": {
+            "planner": 8392.0,
+            "executor": 3753.0,
+            "diagnoser": 1489.0,
+            "summarizer": 1529.0
+          },
+          "experiments": 2,
+          "accepted_nodes": [
+            "n0001",
+            "n0002"
+          ],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/spd-rolling-mean/ledger.jsonl",
+            "task_end_seq": 17,
+            "stop_seq": 16,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              9,
+              10,
+              13,
+              14
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/spd-rolling-mean/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/spd-rolling-mean/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-763a",
+          "task_id": "spd-max-drawdown",
+          "best_node": "n0003",
+          "dev_score": 2.478242148628054,
+          "holdout_score": 2.431309393189891,
+          "total_cost": 21697.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 244.03778716601664,
+            "run": 1.661862165958155,
+            "queue": 0.00010679103434085846,
+            "wall": 247.377123
+          },
+          "quote": {
+            "cost": 500.0,
+            "seconds": 0.5,
+            "score": 0.8512
+          },
+          "quote_error": {
+            "cost": 21197.0,
+            "seconds": 246.877123,
+            "score": 1.580109393189891
+          },
+          "model_calls": 7,
+          "tokens": {
+            "input": 7114,
+            "cached_input": 0,
+            "output": 1924,
+            "reasoning": 12659
+          },
+          "cost_by_role": {
+            "planner": 12486.0,
+            "executor": 5747.0,
+            "diagnoser": 1854.0,
+            "summarizer": 1610.0
+          },
+          "experiments": 3,
+          "accepted_nodes": [
+            "n0001",
+            "n0003"
+          ],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/spd-max-drawdown/ledger.jsonl",
+            "task_end_seq": 19,
+            "stop_seq": 18,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              9,
+              10,
+              13,
+              16,
+              17
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/spd-max-drawdown/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/spd-max-drawdown/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-763a",
+          "task_id": "spd-edit-distance",
+          "best_node": "n0002",
+          "dev_score": 0.009238705431469731,
+          "holdout_score": 0.008163204040380043,
+          "total_cost": 31035.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 304.13686066502123,
+            "run": 2.099852163984906,
+            "queue": 0.00015862603322602808,
+            "wall": 309.653483
+          },
+          "quote": {
+            "cost": 9500.0,
+            "seconds": 125.0,
+            "score": 0.012235
+          },
+          "quote_error": {
+            "cost": 21535.0,
+            "seconds": 184.653483,
+            "score": -0.004071795959619956
+          },
+          "model_calls": 10,
+          "tokens": {
+            "input": 12896,
+            "cached_input": 0,
+            "output": 4071,
+            "reasoning": 14068
+          },
+          "cost_by_role": {
+            "planner": 10938.0,
+            "executor": 20097.0,
+            "diagnoser": 0,
+            "summarizer": 0
+          },
+          "experiments": 6,
+          "accepted_nodes": [
+            "n0002"
+          ],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/spd-edit-distance/ledger.jsonl",
+            "task_end_seq": 30,
+            "stop_seq": 29,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8,
+              11,
+              15,
+              16,
+              19,
+              22,
+              25,
+              28
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/spd-edit-distance/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/spd-edit-distance/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-763a",
+          "task_id": "spd-membership-filter",
+          "best_node": "n0001",
+          "dev_score": 0.9809993137967489,
+          "holdout_score": 1.0078263264095428,
+          "total_cost": 28372.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 234.7063168749446,
+            "run": 2.58360346002155,
+            "queue": 0.0004681650025304407,
+            "wall": 251.363312
+          },
+          "quote": {
+            "cost": 2300.0,
+            "seconds": 130.0,
+            "score": 0.52
+          },
+          "quote_error": {
+            "cost": 26072.0,
+            "seconds": 121.36331200000001,
+            "score": 0.4878263264095428
+          },
+          "model_calls": 16,
+          "tokens": {
+            "input": 15672,
+            "cached_input": 0,
+            "output": 3780,
+            "reasoning": 8920
+          },
+          "cost_by_role": {
+            "planner": 12571.0,
+            "executor": 15801.0,
+            "diagnoser": 0,
+            "summarizer": 0
+          },
+          "experiments": 11,
+          "accepted_nodes": [
+            "n0001"
+          ],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/spd-membership-filter/ledger.jsonl",
+            "task_end_seq": 47,
+            "stop_seq": 46,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8,
+              11,
+              15,
+              16,
+              19,
+              23,
+              24,
+              27,
+              29,
+              32,
+              36,
+              37,
+              40,
+              43
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/spd-membership-filter/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/spd-membership-filter/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-763a",
+          "task_id": "tab-adult-income",
+          "best_node": "n0000",
+          "dev_score": 0.0,
+          "holdout_score": -2.530268048203705,
+          "total_cost": 33294.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 298.69552583398763,
+            "run": 5.429319333954481,
+            "queue": 0.0,
+            "wall": 358.927375
+          },
+          "quote": {
+            "cost": 6000.0,
+            "seconds": 120.0,
+            "score": 0.65
+          },
+          "quote_error": {
+            "cost": 27294.0,
+            "seconds": 238.92737499999998,
+            "score": -3.180268048203705
+          },
+          "model_calls": 6,
+          "tokens": {
+            "input": 15878,
+            "cached_input": 0,
+            "output": 2136,
+            "reasoning": 15280
+          },
+          "cost_by_role": {
+            "planner": 18767.0,
+            "executor": 9459.0,
+            "diagnoser": 5068.0,
+            "summarizer": 0
+          },
+          "experiments": 3,
+          "accepted_nodes": [],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/tab-adult-income/ledger.jsonl",
+            "task_end_seq": 17,
+            "stop_seq": 16,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8,
+              11,
+              12,
+              15
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/tab-adult-income/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/tab-adult-income/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-763a",
+          "task_id": "tab-mushroom-edibility",
+          "best_node": "n0000",
+          "dev_score": 0.0,
+          "holdout_score": 0.17959059691343152,
+          "total_cost": 31718.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 185.46181475097546,
+            "run": 4.774319500022102,
+            "queue": 0.0,
+            "wall": 196.167747
+          },
+          "quote": {
+            "cost": 3700.0,
+            "seconds": 105.0,
+            "score": 0.85
+          },
+          "quote_error": {
+            "cost": 28018.0,
+            "seconds": 91.16774699999999,
+            "score": -0.6704094030865685
+          },
+          "model_calls": 6,
+          "tokens": {
+            "input": 22192,
+            "cached_input": 0,
+            "output": 2337,
+            "reasoning": 7189
+          },
+          "cost_by_role": {
+            "planner": 17381.0,
+            "executor": 14337.0,
+            "diagnoser": 0,
+            "summarizer": 0
+          },
+          "experiments": 3,
+          "accepted_nodes": [],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/tab-mushroom-edibility/ledger.jsonl",
+            "task_end_seq": 17,
+            "stop_seq": 16,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              6,
+              9,
+              12,
+              15
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/tab-mushroom-edibility/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/tab-mushroom-edibility/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-763a",
+          "task_id": "tab-online-shoppers",
+          "best_node": "n0000",
+          "dev_score": 0.0,
+          "holdout_score": 25.58584658049532,
+          "total_cost": 28245.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 135.04358054397744,
+            "run": 6.874971332988935,
+            "queue": 0.0,
+            "wall": 153.942325
+          },
+          "quote": {
+            "cost": 1650.0,
+            "seconds": 37.0,
+            "score": 0.02
+          },
+          "quote_error": {
+            "cost": 26595.0,
+            "seconds": 116.94232500000001,
+            "score": 25.56584658049532
+          },
+          "model_calls": 6,
+          "tokens": {
+            "input": 22814,
+            "cached_input": 0,
+            "output": 2270,
+            "reasoning": 3161
+          },
+          "cost_by_role": {
+            "planner": 10023.0,
+            "executor": 13834.0,
+            "diagnoser": 4388.0,
+            "summarizer": 0
+          },
+          "experiments": 3,
+          "accepted_nodes": [],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/tab-online-shoppers/ledger.jsonl",
+            "task_end_seq": 19,
+            "stop_seq": 18,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8,
+              9,
+              12,
+              15
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/tab-online-shoppers/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/tab-online-shoppers/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-763a",
+          "task_id": "tab-phishing-websites",
+          "best_node": "n0000",
+          "dev_score": 0.0,
+          "holdout_score": -229.69270946391703,
+          "total_cost": 31685.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 151.99474650100456,
+            "run": 17.38282275100937,
+            "queue": 0.0,
+            "wall": 173.388645
+          },
+          "quote": {
+            "cost": 7000.0,
+            "seconds": 330.0,
+            "score": 0.05
+          },
+          "quote_error": {
+            "cost": 24685.0,
+            "seconds": -156.611355,
+            "score": -229.74270946391704
+          },
+          "model_calls": 6,
+          "tokens": {
+            "input": 24565,
+            "cached_input": 0,
+            "output": 3719,
+            "reasoning": 3401
+          },
+          "cost_by_role": {
+            "planner": 5210.0,
+            "executor": 22485.0,
+            "diagnoser": 3990.0,
+            "summarizer": 0
+          },
+          "experiments": 2,
+          "accepted_nodes": [],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/tab-phishing-websites/ledger.jsonl",
+            "task_end_seq": 17,
+            "stop_seq": 16,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8,
+              10,
+              13,
+              15
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/tab-phishing-websites/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/tab-phishing-websites/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-763a",
+          "task_id": "tab-german-credit",
+          "best_node": "n0001",
+          "dev_score": 0.8338278931750744,
+          "holdout_score": 0.8724035608308601,
+          "total_cost": 30037.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 180.3008601249603,
+            "run": 6.711211542016827,
+            "queue": 0.0,
+            "wall": 193.398036
+          },
+          "quote": {
+            "cost": 2500.0,
+            "seconds": 120.0,
+            "score": 0.15
+          },
+          "quote_error": {
+            "cost": 27537.0,
+            "seconds": 73.39803599999999,
+            "score": 0.7224035608308601
+          },
+          "model_calls": 5,
+          "tokens": {
+            "input": 19904,
+            "cached_input": 0,
+            "output": 2769,
+            "reasoning": 7364
+          },
+          "cost_by_role": {
+            "planner": 13102.0,
+            "executor": 16935.0,
+            "diagnoser": 0,
+            "summarizer": 0
+          },
+          "experiments": 3,
+          "accepted_nodes": [
+            "n0001"
+          ],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/tab-german-credit/ledger.jsonl",
+            "task_end_seq": 17,
+            "stop_seq": 16,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8,
+              12,
+              13
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/tab-german-credit/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/tab-german-credit/holdout_score.json"
+          }
+        }
+      ],
+      "evidence": {
+        "run_ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/ledger.jsonl",
+        "run_end_seq": 2
+      }
+    },
+    {
+      "schema": "run_report/1",
+      "run_id": "run-20261114-091613-b698",
+      "phase": "dev",
+      "config": "default_lib",
+      "rep": 2,
+      "currency": "TEST",
+      "total_cost": 246680.0,
+      "tasks": [
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-b698",
+          "task_id": "spd-distance-matrix",
+          "best_node": "n0006",
+          "dev_score": 1.0217120083427422,
+          "holdout_score": 1.1143979374635782,
+          "total_cost": 22274.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 153.61427658502362,
+            "run": 7.404259540955536,
+            "queue": 0.00014374798047356308,
+            "wall": 195.900695
+          },
+          "quote": {
+            "cost": 1200.0,
+            "seconds": 42.0,
+            "score": 0.426
+          },
+          "quote_error": {
+            "cost": 21074.0,
+            "seconds": 153.900695,
+            "score": 0.6883979374635782
+          },
+          "model_calls": 11,
+          "tokens": {
+            "input": 13135,
+            "cached_input": 0,
+            "output": 3556,
+            "reasoning": 5583
+          },
+          "cost_by_role": {
+            "planner": 10853.0,
+            "executor": 9477.0,
+            "diagnoser": 0,
+            "summarizer": 1944.0
+          },
+          "experiments": 6,
+          "accepted_nodes": [
+            "n0006"
+          ],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/spd-distance-matrix/ledger.jsonl",
+            "task_end_seq": 32,
+            "stop_seq": 31,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8,
+              11,
+              15,
+              16,
+              19,
+              22,
+              25,
+              26,
+              29
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/spd-distance-matrix/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/spd-distance-matrix/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-b698",
+          "task_id": "spd-rolling-mean",
+          "best_node": "n0001",
+          "dev_score": 1.1548427536415011,
+          "holdout_score": 1.1390141726139793,
+          "total_cost": 8004.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 80.30327850001049,
+            "run": 0.8223639569769148,
+            "queue": 0.00011900000390596688,
+            "wall": 85.39051
+          },
+          "quote": {
+            "cost": 12000.0,
+            "seconds": 190.0,
+            "score": 0.85
+          },
+          "quote_error": {
+            "cost": -3996.0,
+            "seconds": -104.60949,
+            "score": 0.2890141726139793
+          },
+          "model_calls": 3,
+          "tokens": {
+            "input": 2957,
+            "cached_input": 0,
+            "output": 1098,
+            "reasoning": 3949
+          },
+          "cost_by_role": {
+            "planner": 2561.0,
+            "executor": 4294.0,
+            "diagnoser": 0,
+            "summarizer": 1149.0
+          },
+          "experiments": 1,
+          "accepted_nodes": [
+            "n0001"
+          ],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/spd-rolling-mean/ledger.jsonl",
+            "task_end_seq": 11,
+            "stop_seq": 10,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/spd-rolling-mean/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/spd-rolling-mean/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-b698",
+          "task_id": "spd-max-drawdown",
+          "best_node": "n0002",
+          "dev_score": 2.30127643476082,
+          "holdout_score": 1.8021558154291664,
+          "total_cost": 11746.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 99.44765470991842,
+            "run": 1.7124237499956507,
+            "queue": 8.425000123679638e-05,
+            "wall": 102.311523
+          },
+          "quote": {
+            "cost": 400.0,
+            "seconds": 3.0,
+            "score": 0.501
+          },
+          "quote_error": {
+            "cost": 11346.0,
+            "seconds": 99.311523,
+            "score": 1.3011558154291665
+          },
+          "model_calls": 6,
+          "tokens": {
+            "input": 6447,
+            "cached_input": 0,
+            "output": 1806,
+            "reasoning": 3493
+          },
+          "cost_by_role": {
+            "planner": 5348.0,
+            "executor": 3338.0,
+            "diagnoser": 1465.0,
+            "summarizer": 1595.0
+          },
+          "experiments": 2,
+          "accepted_nodes": [
+            "n0001",
+            "n0002"
+          ],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/spd-max-drawdown/ledger.jsonl",
+            "task_end_seq": 19,
+            "stop_seq": 18,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              10,
+              11,
+              14,
+              16
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/spd-max-drawdown/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/spd-max-drawdown/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-b698",
+          "task_id": "spd-edit-distance",
+          "best_node": "n0005",
+          "dev_score": 0.010565954217526609,
+          "holdout_score": 0.00915812945430762,
+          "total_cost": 28012.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 255.04176312300842,
+            "run": 2.1251743759494275,
+            "queue": 0.00014825104153715074,
+            "wall": 260.815885
+          },
+          "quote": {
+            "cost": 7500.0,
+            "seconds": 450.0,
+            "score": 0.18
+          },
+          "quote_error": {
+            "cost": 20512.0,
+            "seconds": -189.18411500000002,
+            "score": -0.1708418705456924
+          },
+          "model_calls": 10,
+          "tokens": {
+            "input": 12219,
+            "cached_input": 0,
+            "output": 4002,
+            "reasoning": 11791
+          },
+          "cost_by_role": {
+            "planner": 8201.0,
+            "executor": 19811.0,
+            "diagnoser": 0,
+            "summarizer": 0
+          },
+          "experiments": 6,
+          "accepted_nodes": [
+            "n0005"
+          ],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/spd-edit-distance/ledger.jsonl",
+            "task_end_seq": 33,
+            "stop_seq": 32,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8,
+              12,
+              16,
+              20,
+              21,
+              24,
+              26,
+              29
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/spd-edit-distance/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/spd-edit-distance/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-b698",
+          "task_id": "spd-membership-filter",
+          "best_node": "n0001",
+          "dev_score": 0.9835818648620358,
+          "holdout_score": 0.9763547683364512,
+          "total_cost": 28469.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 231.00838058104273,
+            "run": 2.4633075000019744,
+            "queue": 0.00031508595566265285,
+            "wall": 244.491705
+          },
+          "quote": {
+            "cost": 5000.0,
+            "seconds": 45.0,
+            "score": 0.85
+          },
+          "quote_error": {
+            "cost": 23469.0,
+            "seconds": 199.491705,
+            "score": 0.1263547683364512
+          },
+          "model_calls": 15,
+          "tokens": {
+            "input": 14868,
+            "cached_input": 0,
+            "output": 3548,
+            "reasoning": 10053
+          },
+          "cost_by_role": {
+            "planner": 15718.0,
+            "executor": 12751.0,
+            "diagnoser": 0,
+            "summarizer": 0
+          },
+          "experiments": 10,
+          "accepted_nodes": [
+            "n0001"
+          ],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/spd-membership-filter/ledger.jsonl",
+            "task_end_seq": 45,
+            "stop_seq": 44,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8,
+              12,
+              13,
+              16,
+              20,
+              21,
+              24,
+              27,
+              29,
+              33,
+              34,
+              37,
+              40
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/spd-membership-filter/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/spd-membership-filter/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-b698",
+          "task_id": "tab-adult-income",
+          "best_node": "n0001",
+          "dev_score": 0.16381349251039656,
+          "holdout_score": -2.4467000788376994,
+          "total_cost": 28738.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 193.71426666594925,
+            "run": 9.478930791054154,
+            "queue": 0.0,
+            "wall": 220.003999
+          },
+          "quote": {
+            "cost": 6000.0,
+            "seconds": 600.0,
+            "score": 0.25
+          },
+          "quote_error": {
+            "cost": 22738.0,
+            "seconds": -379.996001,
+            "score": -2.6967000788376994
+          },
+          "model_calls": 6,
+          "tokens": {
+            "input": 17491,
+            "cached_input": 0,
+            "output": 4537,
+            "reasoning": 6710
+          },
+          "cost_by_role": {
+            "planner": 7099.0,
+            "executor": 21639.0,
+            "diagnoser": 0,
+            "summarizer": 0
+          },
+          "experiments": 4,
+          "accepted_nodes": [
+            "n0001"
+          ],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/tab-adult-income/ledger.jsonl",
+            "task_end_seq": 22,
+            "stop_seq": 21,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8,
+              11,
+              14,
+              17
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/tab-adult-income/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/tab-adult-income/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-b698",
+          "task_id": "tab-mushroom-edibility",
+          "best_node": "n0002",
+          "dev_score": 0.6682272824005111,
+          "holdout_score": 0.5485705918776781,
+          "total_cost": 29683.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 167.64858187403297,
+            "run": 8.124660625006072,
+            "queue": 0.0,
+            "wall": 187.13521
+          },
+          "quote": {
+            "cost": 6800.0,
+            "seconds": 110.0,
+            "score": 0.18
+          },
+          "quote_error": {
+            "cost": 22883.0,
+            "seconds": 77.13521,
+            "score": 0.3685705918776781
+          },
+          "model_calls": 6,
+          "tokens": {
+            "input": 21441,
+            "cached_input": 0,
+            "output": 2477,
+            "reasoning": 5765
+          },
+          "cost_by_role": {
+            "planner": 5044.0,
+            "executor": 20581.0,
+            "diagnoser": 4058.0,
+            "summarizer": 0
+          },
+          "experiments": 4,
+          "accepted_nodes": [
+            "n0002"
+          ],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/tab-mushroom-edibility/ledger.jsonl",
+            "task_end_seq": 19,
+            "stop_seq": 18,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8,
+              11,
+              14,
+              15
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/tab-mushroom-edibility/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/tab-mushroom-edibility/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-b698",
+          "task_id": "tab-online-shoppers",
+          "best_node": "n0000",
+          "dev_score": 0.0,
+          "holdout_score": 25.58584658049532,
+          "total_cost": 28823.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 111.12901512501412,
+            "run": 5.465555249014869,
+            "queue": 0.0,
+            "wall": 167.520048
+          },
+          "quote": {
+            "cost": 7500.0,
+            "seconds": 140.0,
+            "score": 0.72
+          },
+          "quote_error": {
+            "cost": 21323.0,
+            "seconds": 27.520048000000003,
+            "score": 24.865846580495322
+          },
+          "model_calls": 6,
+          "tokens": {
+            "input": 22637,
+            "cached_input": 0,
+            "output": 2095,
+            "reasoning": 4091
+          },
+          "cost_by_role": {
+            "planner": 10291.0,
+            "executor": 9766.0,
+            "diagnoser": 8766.0,
+            "summarizer": 0
+          },
+          "experiments": 3,
+          "accepted_nodes": [],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/tab-online-shoppers/ledger.jsonl",
+            "task_end_seq": 16,
+            "stop_seq": 15,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8,
+              9,
+              12,
+              13
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/tab-online-shoppers/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/tab-online-shoppers/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-b698",
+          "task_id": "tab-phishing-websites",
+          "best_node": "n0002",
+          "dev_score": 0.9230769230721794,
+          "holdout_score": -206.44455262644286,
+          "total_cost": 28795.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 154.85162258302444,
+            "run": 7.164523417013697,
+            "queue": 0.0,
+            "wall": 185.328559
+          },
+          "quote": {
+            "cost": 5700.0,
+            "seconds": 510.0,
+            "score": 0.53
+          },
+          "quote_error": {
+            "cost": 23095.0,
+            "seconds": -324.67144099999996,
+            "score": -206.97455262644286
+          },
+          "model_calls": 5,
+          "tokens": {
+            "input": 19788,
+            "cached_input": 0,
+            "output": 3890,
+            "reasoning": 5117
+          },
+          "cost_by_role": {
+            "planner": 5324.0,
+            "executor": 18982.0,
+            "diagnoser": 4489.0,
+            "summarizer": 0
+          },
+          "experiments": 4,
+          "accepted_nodes": [
+            "n0002"
+          ],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/tab-phishing-websites/ledger.jsonl",
+            "task_end_seq": 16,
+            "stop_seq": 15,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8,
+              11,
+              14
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/tab-phishing-websites/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/tab-phishing-websites/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-b698",
+          "task_id": "tab-german-credit",
+          "best_node": "n0002",
+          "dev_score": 0.6290801186943619,
+          "holdout_score": 0.8382789317507419,
+          "total_cost": 32136.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 228.5358609999821,
+            "run": 6.519668916997034,
+            "queue": 0.0,
+            "wall": 241.680616
+          },
+          "quote": {
+            "cost": 1600.0,
+            "seconds": 25.0,
+            "score": 0.25
+          },
+          "quote_error": {
+            "cost": 30536.0,
+            "seconds": 216.680616,
+            "score": 0.5882789317507419
+          },
+          "model_calls": 5,
+          "tokens": {
+            "input": 20701,
+            "cached_input": 0,
+            "output": 2984,
+            "reasoning": 8451
+          },
+          "cost_by_role": {
+            "planner": 14353.0,
+            "executor": 17783.0,
+            "diagnoser": 0,
+            "summarizer": 0
+          },
+          "experiments": 2,
+          "accepted_nodes": [
+            "n0001",
+            "n0002"
+          ],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/tab-german-credit/ledger.jsonl",
+            "task_end_seq": 17,
+            "stop_seq": 16,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8,
+              11,
+              15
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/tab-german-credit/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/tab-german-credit/holdout_score.json"
+          }
+        }
+      ],
+      "evidence": {
+        "run_ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/ledger.jsonl",
+        "run_end_seq": 2
+      }
+    },
+    {
+      "schema": "run_report/1",
+      "run_id": "run-20261114-091613-d16c",
+      "phase": "dev",
+      "config": "default_lib",
+      "rep": 3,
+      "currency": "TEST",
+      "total_cost": 231116.0,
+      "tasks": [
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-d16c",
+          "task_id": "spd-distance-matrix",
+          "best_node": "n0004",
+          "dev_score": 1.0879603819631884,
+          "holdout_score": 1.0856810578141916,
+          "total_cost": 19127.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 169.47651137402863,
+            "run": 7.29332679201616,
+            "queue": 0.00013383198529481888,
+            "wall": 192.917034
+          },
+          "quote": {
+            "cost": 2400.0,
+            "seconds": 60.0,
+            "score": 0.72
+          },
+          "quote_error": {
+            "cost": 16727.0,
+            "seconds": 132.917034,
+            "score": 0.3656810578141916
+          },
+          "model_calls": 7,
+          "tokens": {
+            "input": 7942,
+            "cached_input": 0,
+            "output": 2864,
+            "reasoning": 8321
+          },
+          "cost_by_role": {
+            "planner": 8340.0,
+            "executor": 7783.0,
+            "diagnoser": 0,
+            "summarizer": 3004.0
+          },
+          "experiments": 4,
+          "accepted_nodes": [
+            "n0001",
+            "n0004"
+          ],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/spd-distance-matrix/ledger.jsonl",
+            "task_end_seq": 22,
+            "stop_seq": 21,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8,
+              11,
+              15,
+              16,
+              19
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/spd-distance-matrix/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/spd-distance-matrix/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-d16c",
+          "task_id": "spd-rolling-mean",
+          "best_node": "n0002",
+          "dev_score": 3.6766811605692125,
+          "holdout_score": 3.805285425076841,
+          "total_cost": 13210.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 109.3221654179797,
+            "run": 0.9782829170289915,
+            "queue": 9.6289993962273e-05,
+            "wall": 118.132554
+          },
+          "quote": {
+            "cost": 3500.0,
+            "seconds": 120.0,
+            "score": 65.0
+          },
+          "quote_error": {
+            "cost": 9710.0,
+            "seconds": -1.867446000000001,
+            "score": -61.19471457492316
+          },
+          "model_calls": 6,
+          "tokens": {
+            "input": 6275,
+            "cached_input": 0,
+            "output": 2227,
+            "reasoning": 4708
+          },
+          "cost_by_role": {
+            "planner": 2800.0,
+            "executor": 7196.0,
+            "diagnoser": 1616.0,
+            "summarizer": 1598.0
+          },
+          "experiments": 2,
+          "accepted_nodes": [
+            "n0001",
+            "n0002"
+          ],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/spd-rolling-mean/ledger.jsonl",
+            "task_end_seq": 18,
+            "stop_seq": 17,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8,
+              11,
+              14,
+              15
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/spd-rolling-mean/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/spd-rolling-mean/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-d16c",
+          "task_id": "spd-max-drawdown",
+          "best_node": "n0001",
+          "dev_score": 2.29630518913037,
+          "holdout_score": 2.2331907832981788,
+          "total_cost": 9006.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 78.74032229196746,
+            "run": 1.5548352490004618,
+            "queue": 6.52919989079237e-05,
+            "wall": 80.856222
+          },
+          "quote": {
+            "cost": 1000.0,
+            "seconds": 60.0,
+            "score": 500.0
+          },
+          "quote_error": {
+            "cost": 8006.0,
+            "seconds": 20.856222000000002,
+            "score": -497.7668092167018
+          },
+          "model_calls": 4,
+          "tokens": {
+            "input": 3810,
+            "cached_input": 0,
+            "output": 1143,
+            "reasoning": 4053
+          },
+          "cost_by_role": {
+            "planner": 2487.0,
+            "executor": 3192.0,
+            "diagnoser": 1953.0,
+            "summarizer": 1374.0
+          },
+          "experiments": 1,
+          "accepted_nodes": [
+            "n0001"
+          ],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/spd-max-drawdown/ledger.jsonl",
+            "task_end_seq": 12,
+            "stop_seq": 11,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8,
+              9
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/spd-max-drawdown/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/spd-max-drawdown/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-d16c",
+          "task_id": "spd-edit-distance",
+          "best_node": "n0000",
+          "dev_score": 0.009306003099041279,
+          "holdout_score": 0.0075179113659865696,
+          "total_cost": 35163.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 387.1812922480167,
+            "run": 2.147927833982976,
+            "queue": 0.0001221249985974282,
+            "wall": 390.29395
+          },
+          "quote": {
+            "cost": 10000.0,
+            "seconds": 600.0,
+            "score": 0.25
+          },
+          "quote_error": {
+            "cost": 25163.0,
+            "seconds": -209.70605,
+            "score": -0.24248208863401344
+          },
+          "model_calls": 10,
+          "tokens": {
+            "input": 13098,
+            "cached_input": 0,
+            "output": 4994,
+            "reasoning": 17071
+          },
+          "cost_by_role": {
+            "planner": 8747.0,
+            "executor": 24944.0,
+            "diagnoser": 1472.0,
+            "summarizer": 0
+          },
+          "experiments": 3,
+          "accepted_nodes": [],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/spd-edit-distance/ledger.jsonl",
+            "task_end_seq": 30,
+            "stop_seq": 29,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8,
+              11,
+              15,
+              16,
+              19,
+              22,
+              25,
+              26
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/spd-edit-distance/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/spd-edit-distance/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-d16c",
+          "task_id": "spd-membership-filter",
+          "best_node": "n0001",
+          "dev_score": 1.00720122140763,
+          "holdout_score": 1.0028693423824833,
+          "total_cost": 4642.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 33.25493920897134,
+            "run": 1.9566369160020258,
+            "queue": 5.033399793319404e-05,
+            "wall": 35.861555
+          },
+          "quote": {
+            "cost": 2100.0,
+            "seconds": 120.0,
+            "score": 0.7
+          },
+          "quote_error": {
+            "cost": 2542.0,
+            "seconds": -84.13844499999999,
+            "score": 0.3028693423824833
+          },
+          "model_calls": 3,
+          "tokens": {
+            "input": 2651,
+            "cached_input": 0,
+            "output": 754,
+            "reasoning": 1237
+          },
+          "cost_by_role": {
+            "planner": 2476.0,
+            "executor": 1044.0,
+            "diagnoser": 0,
+            "summarizer": 1122.0
+          },
+          "experiments": 1,
+          "accepted_nodes": [
+            "n0001"
+          ],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/spd-membership-filter/ledger.jsonl",
+            "task_end_seq": 11,
+            "stop_seq": 10,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/spd-membership-filter/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/spd-membership-filter/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-d16c",
+          "task_id": "tab-adult-income",
+          "best_node": "n0000",
+          "dev_score": 0.0,
+          "holdout_score": -2.530268048203705,
+          "total_cost": 28831.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 267.0029635850515,
+            "run": 6.154077039973345,
+            "queue": 0.0,
+            "wall": 278.274131
+          },
+          "quote": {
+            "cost": 10000.0,
+            "seconds": 270.0,
+            "score": 0.0035
+          },
+          "quote_error": {
+            "cost": 18831.0,
+            "seconds": 8.274131000000011,
+            "score": -2.533768048203705
+          },
+          "model_calls": 5,
+          "tokens": {
+            "input": 13641,
+            "cached_input": 0,
+            "output": 2595,
+            "reasoning": 12595
+          },
+          "cost_by_role": {
+            "planner": 11273.0,
+            "executor": 14264.0,
+            "diagnoser": 3294.0,
+            "summarizer": 0
+          },
+          "experiments": 1,
+          "accepted_nodes": [],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/tab-adult-income/ledger.jsonl",
+            "task_end_seq": 16,
+            "stop_seq": 15,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8,
+              11,
+              12
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/tab-adult-income/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/tab-adult-income/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-d16c",
+          "task_id": "tab-mushroom-edibility",
+          "best_node": "n0000",
+          "dev_score": 0.0,
+          "holdout_score": 0.17959059691343152,
+          "total_cost": 29973.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 194.8836037510191,
+            "run": 5.785292124986881,
+            "queue": 0.0,
+            "wall": 207.787443
+          },
+          "quote": {
+            "cost": 3400.0,
+            "seconds": 17.0,
+            "score": 0.35
+          },
+          "quote_error": {
+            "cost": 26573.0,
+            "seconds": 190.787443,
+            "score": -0.17040940308656846
+          },
+          "model_calls": 5,
+          "tokens": {
+            "input": 18519,
+            "cached_input": 0,
+            "output": 2093,
+            "reasoning": 9361
+          },
+          "cost_by_role": {
+            "planner": 6323.0,
+            "executor": 16562.0,
+            "diagnoser": 7088.0,
+            "summarizer": 0
+          },
+          "experiments": 1,
+          "accepted_nodes": [],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/tab-mushroom-edibility/ledger.jsonl",
+            "task_end_seq": 16,
+            "stop_seq": 15,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8,
+              11,
+              14
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/tab-mushroom-edibility/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/tab-mushroom-edibility/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-d16c",
+          "task_id": "tab-online-shoppers",
+          "best_node": "n0003",
+          "dev_score": 10.660377358489827,
+          "holdout_score": 9.865448422719732,
+          "total_cost": 29213.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 127.16163416698691,
+            "run": 6.572507750010118,
+            "queue": 0.0,
+            "wall": 145.207376
+          },
+          "quote": {
+            "cost": 3100.0,
+            "seconds": 120.0,
+            "score": 0.18
+          },
+          "quote_error": {
+            "cost": 26113.0,
+            "seconds": 25.20737600000001,
+            "score": 9.685448422719732
+          },
+          "model_calls": 6,
+          "tokens": {
+            "input": 22406,
+            "cached_input": 0,
+            "output": 2224,
+            "reasoning": 4583
+          },
+          "cost_by_role": {
+            "planner": 5331.0,
+            "executor": 14881.0,
+            "diagnoser": 9001.0,
+            "summarizer": 0
+          },
+          "experiments": 3,
+          "accepted_nodes": [
+            "n0003"
+          ],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/tab-online-shoppers/ledger.jsonl",
+            "task_end_seq": 17,
+            "stop_seq": 16,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8,
+              11,
+              12,
+              15
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/tab-online-shoppers/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/tab-online-shoppers/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-d16c",
+          "task_id": "tab-phishing-websites",
+          "best_node": "n0000",
+          "dev_score": 0.0,
+          "holdout_score": -229.69270946391703,
+          "total_cost": 28475.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 135.58654079202097,
+            "run": 6.414370081969537,
+            "queue": 0.0,
+            "wall": 155.701513
+          },
+          "quote": {
+            "cost": 8500.0,
+            "seconds": 145.0,
+            "score": 0.47
+          },
+          "quote_error": {
+            "cost": 19975.0,
+            "seconds": 10.701513000000006,
+            "score": -230.16270946391703
+          },
+          "model_calls": 6,
+          "tokens": {
+            "input": 22477,
+            "cached_input": 0,
+            "output": 2371,
+            "reasoning": 3627
+          },
+          "cost_by_role": {
+            "planner": 5027.0,
+            "executor": 14552.0,
+            "diagnoser": 8896.0,
+            "summarizer": 0
+          },
+          "experiments": 3,
+          "accepted_nodes": [],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/tab-phishing-websites/ledger.jsonl",
+            "task_end_seq": 17,
+            "stop_seq": 16,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8,
+              11,
+              12,
+              15
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/tab-phishing-websites/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/tab-phishing-websites/holdout_score.json"
+          }
+        },
+        {
+          "schema": "task_report/1",
+          "run_id": "run-20261114-091613-d16c",
+          "task_id": "tab-german-credit",
+          "best_node": "n0002",
+          "dev_score": 0.4124629080118692,
+          "holdout_score": 0.8575667655786346,
+          "total_cost": 33476.0,
+          "currency": "TEST",
+          "seconds": {
+            "llm": 292.72480054199696,
+            "run": 6.889784125989536,
+            "queue": 0.0,
+            "wall": 306.582121
+          },
+          "quote": {
+            "cost": 1200.0,
+            "seconds": 75.0,
+            "score": 0.1
+          },
+          "quote_error": {
+            "cost": 32276.0,
+            "seconds": 231.58212099999997,
+            "score": 0.7575667655786347
+          },
+          "model_calls": 4,
+          "tokens": {
+            "input": 16574,
+            "cached_input": 0,
+            "output": 3400,
+            "reasoning": 13502
+          },
+          "cost_by_role": {
+            "planner": 8000.0,
+            "executor": 25476.0,
+            "diagnoser": 0,
+            "summarizer": 0
+          },
+          "experiments": 3,
+          "accepted_nodes": [
+            "n0001",
+            "n0002"
+          ],
+          "evidence": {
+            "ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/tab-german-credit/ledger.jsonl",
+            "task_end_seq": 15,
+            "stop_seq": 14,
+            "quote_seq": 4,
+            "model_call_seqs": [
+              3,
+              5,
+              8,
+              11
+            ],
+            "tree_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/tab-german-credit/tree.jsonl",
+            "holdout_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/tab-german-credit/holdout_score.json"
+          }
+        }
+      ],
+      "evidence": {
+        "run_ledger_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/ledger.jsonl",
+        "run_end_seq": 2
+      }
+    }
+  ],
+  "ranking": [
+    {
+      "candidate": "default",
+      "mean_score": -19.66701734322244,
+      "mean_cost": 252685.0,
+      "score_per_currency": 0.0,
+      "run_ids": [
+        "run-20261114-091613-763a",
+        "run-20261114-091613-b698",
+        "run-20261114-091613-d16c"
+      ]
+    }
+  ],
+  "selection": {
+    "candidate": "default",
+    "mean_score": -19.66701734322244,
+    "mean_cost": 252685.0,
+    "score_per_currency": 0.0,
+    "run_ids": [
+      "run-20261114-091613-763a",
+      "run-20261114-091613-b698",
+      "run-20261114-091613-d16c"
+    ],
+    "config_path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/agent_token_pilot_v2.json",
+    "config_sha256": "f0ba329f64b0592e4e90fe1fb0968611ccd0a34a40b27c1fce9e1e7a139c367b"
+  },
+  "next_step": "Run selected config through batch validation admission before exam",
+  "budget_policy": "TEST-only budget override"
+}

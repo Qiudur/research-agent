@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "85ebe8bdcd472cdcc9da7c78bffc533ae1e6483cc95ed09597c77c2c4bb110b8",
+  "response_id": "resp_d1dbb625-f1d8-95a5-98a1-15eff8cde6de",
+  "status": "completed",
+  "output_text": "{\n\"code\": \"\\\"\\\"\\\"O(n) single-pass maximum-drawdown implementation.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\n\\ndef max_drawdown(prices: list[float]) -> float:\\n    \\\"\\\"\\\"Calculate maximum chronological peak-to-trough fraction in O(n).\\\"\\\"\\\"\\n    if len(prices) < 2:\\n        return 0.0\\n    \\n    max_price = prices[0]\\n    max_dd = 0.0\\n    \\n    for price in prices[1:]:\\n        if price > max_price:\\n            max_price = price\\n        # Drawdown from running peak to current price\\n        dd = (max_price - price) / max_price\\n        if dd > max_dd:\\n            max_dd = dd\\n    \\n    return max_dd\",\n\"notes\": \"Replaced O(n²) nested loop with O(n) single-pass algorithm. Maintains running peak and computes drawdown relative to it at each step. Preserves original semantics: empty/one-element lists return 0.0, non-decreasing returns 0.0, handles repeated peaks correctly. Verified edge cases match original output.\"\n}",
+  "tokens": {
+    "input": 883,
+    "cached_input": 0,
+    "output": 257,
+    "reasoning": 2052
+  },
+  "cost": 3192.0,
+  "error": null
+}

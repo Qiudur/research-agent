@@ -1,0 +1,33 @@
+--- parent/solution.py
++++ solution.py
+@@ -1,4 +1,4 @@
+-"""Simple, intentionally repetitive trailing-window implementation."""
++"""Optimized trailing-window rolling mean implementation."""
+ 
+ from __future__ import annotations
+ 
+@@ -6,9 +6,20 @@
+ def rolling_mean(values: list[float], window: int) -> list[float]:
+     if window <= 0:
+         raise ValueError("window must be positive")
++    
+     result = []
+-    for index in range(len(values)):
+-        start = max(0, index - window + 1)
+-        current = values[start:index + 1]
+-        result.append(sum(current) / len(current))
++    current_sum = 0.0
++    
++    for i in range(len(values)):
++        # Add new value to running sum
++        current_sum += values[i]
++        
++        # Remove oldest value if window is full
++        if i >= window:
++            current_sum -= values[i - window]
++        
++        # Actual window size at this position (smaller at start)
++        actual_size = min(i + 1, window)
++        result.append(current_sum / actual_size)
++    
+     return result

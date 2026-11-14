@@ -1,0 +1,45 @@
+"""Measured LightGBM baseline for this tabular task."""
+
+from __future__ import annotations
+
+import pandas as pd
+from lightgbm import LGBMClassifier
+
+
+def fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:
+    """Predict poison probabilities using LightGBM with native missing value handling."""
+    replace_with_nan = ['', ' ', 'NA', 'nan', 'N/A']
+    
+    # Load training data with empty strings treated as missing
+    train = pd.read_csv(train_csv, na_values=replace_with_nan)
+    y = train.pop("y").astype(int)
+    
+    # Create test DataFrame from input rows
+    test = pd.DataFrame(test_rows, columns=train.columns)
+    # Replace empty strings with NaN for consistent preprocessing
+    test = test.replace(replace_with_nan, regex=False)
+    
+    # Convert categorical columns to numeric codes (NaN preserved for missing)
+    # LightGBM handles NaN values natively
+    for name in train.columns:
+        if train[name].dtype == object:
+            # Combine train+test categories to ensure alignment
+            combined_cats = pd.Categorical(pd.concat([train[name], test[name]], ignore_index=True))
+            train[name] = combined_cats[:len(train)].codes.astype(float)
+            test[name] = combined_cats[len(train):].codes.astype(float)
+        elif pd.api.types.is_numeric_dtype(train[name]):
+            test[name] = pd.to_numeric(test[name], errors='coerce')
+    
+    # LightGBM handles missing values (NaN) natively during tree splits
+    model = LGBMClassifier(
+        random_state=20261114,
+        n_jobs=1,
+        verbosity=-1,
+        max_depth=-1,
+        min_child_samples=20,
+        learning_rate=0.05,
+        n_estimators=100
+    )
+    model.fit(train, y)
+    
+    return model.predict_proba(test)[:, 1].tolist()

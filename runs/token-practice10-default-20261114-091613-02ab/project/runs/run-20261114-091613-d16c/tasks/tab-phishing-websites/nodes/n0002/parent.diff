@@ -1,0 +1,51 @@
+--- parent/solution.py
++++ solution.py
+@@ -1,7 +1,8 @@
+-"""Measured LightGBM baseline for this tabular task."""
++"""LightGBM baseline with polynomial feature interactions."""
+ 
+ from __future__ import annotations
+ 
++import numpy as np
+ import pandas as pd
+ from lightgbm import LGBMClassifier
+ 
+@@ -10,6 +11,8 @@
+     train = pd.read_csv(train_csv)
+     y = train.pop("y").astype(int)
+     test = pd.DataFrame(test_rows, columns=train.columns)
++    
++    # Convert numeric columns
+     for name in train.columns:
+         if pd.api.types.is_numeric_dtype(train[name]):
+             test[name] = pd.to_numeric(test[name])
+@@ -17,6 +20,29 @@
+             categories = pd.Categorical(pd.concat([train[name], test[name]], ignore_index=True)).categories
+             train[name] = pd.Categorical(train[name], categories=categories)
+             test[name] = pd.Categorical(test[name], categories=categories)
++    
++    # Find top correlated numeric feature pairs
++    numeric_cols = [c for c in train.columns if pd.api.types.is_numeric_dtype(train[c])]
++    
++    if len(numeric_cols) >= 2:
++        corr_matrix = train[numeric_cols].corr()
++        
++        # Get correlation indices (lower triangle, excluding diagonal)
++        indices = np.tril_indices(len(numeric_cols), k=-1)
++        correlations = [(i, j, abs(corr_matrix.iloc[i, j])) 
++                        for i, j in zip(indices[0], indices[1])]
++        
++        # Sort by absolute correlation, descending
++        correlations.sort(key=lambda x: x[2], reverse=True)
++        
++        # Add interaction features for top correlated pairs
++        top_n = min(10, len(correlations))
++        for i, j, _ in correlations[:top_n]:
++            col_a, col_b = numeric_cols[i], numeric_cols[j]
++            inter_name = f"{col_a}_x_{col_b}"
++            train[inter_name] = train[col_a] * train[col_b]
++            test[inter_name] = test[col_a] * test[col_b]
++    
+     model = LGBMClassifier(random_state=20261114, n_jobs=1, verbosity=-1)
+     model.fit(train, y)
+     return model.predict_proba(test)[:, 1].tolist()

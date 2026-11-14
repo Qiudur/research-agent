@@ -1,0 +1,9 @@
+--- parent/solution.py
++++ solution.py
+@@ -2,4 +2,5 @@
+ 
+ def membership_filter(values: list[int], allowed: list[int]) -> list[int]:
+     allowed_set = set(allowed)
+-    return [value for value in values if value in allowed_set]
++    contains = allowed_set.__contains__
++    return [value for value in values if contains(value)]

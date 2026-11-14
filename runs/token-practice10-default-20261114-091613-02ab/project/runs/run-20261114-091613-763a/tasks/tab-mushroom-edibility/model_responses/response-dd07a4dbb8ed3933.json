@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "24b95759fbbc436a8eb3376127b9761ccc01ae3d53faef213b53130012c90082",
+  "response_id": "resp_8fdeb406-0969-995f-9880-5ed591282b0f",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Fix probability output format to ensure all predictions are finite floats in [0,1] range\",\n      \"rationale\": \"Previous LightGBM runs scoring exactly 0.0 suggest possible NaN/inf values or out-of-range probabilities being rejected by evaluator\",\n      \"estimate\": {\n        \"gain\": 0.4,\n        \"cost\": 800,\n        \"seconds\": 45\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Systematic missing value handling: mean/most-frequent imputation plus binary missing indicator per feature\",\n      \"rationale\": \"Visible sample shows heavy missing patterns; naive NaN handling may cause tree splits to fail silently\",\n      \"estimate\": {\n        \"gain\": 0.3,\n        \"cost\": 1200,\n        \"seconds\": 60\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Simple Logistic Regression baseline with proper preprocessing to verify pipeline correctness\",\n      \"rationale\": \"Lighter model than LightGBM, easier to debug; if LR gets non-zero then problem is LGBM-specific\",\n      \"estimate\": {\n        \"gain\": 0.35,\n        \"cost\": 1500,\n        \"seconds\": 55\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 3500,\n    \"score\": 0.55,\n    \"seconds\": 160\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"probability_format_fix\",\n      \"amount\": 800\n    },\n    {\n      \"direction\": \"missing_handling_improvement\",\n      \"amount\": 1200\n    },\n    {\n      \"direction\": \"lr_baseline_check\",\n      \"amount\": 1500\n    },\n    {\n      \"direction\": \"reserve_for_validation\",\n      \"amount\": 5963\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.02,\n      \"score\": 0.2\n    },\n    {\n      \"spent_ratio\": 0.08,\n      \"score\": 0.4\n    },\n    {\n      \"spent_ratio\": 0.17,\n      \"score\": 0.55\n    }\n  ]\n}",
+  "tokens": {
+    "input": 4015,
+    "cached_input": 0,
+    "output": 583,
+    "reasoning": 583
+  },
+  "cost": 5181.0,
+  "error": null
+}

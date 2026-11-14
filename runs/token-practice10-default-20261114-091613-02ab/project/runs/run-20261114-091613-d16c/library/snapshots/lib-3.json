@@ -1,0 +1,105 @@
+{
+  "entries": [
+    {
+      "action": "使用scipy.spatial.distance.cdist代替手动循环并转换格式",
+      "conditions": "存在需计算距离矩阵的嵌套Python循环时",
+      "created_version": "lib-1",
+      "credibility": 0.5,
+      "effect": {
+        "mean_cost": 0.0,
+        "mean_gain": 0.0,
+        "uses": 0,
+        "wins": 0
+      },
+      "id": "exp-0001",
+      "kind": "experience",
+      "negative": false,
+      "scenario": "speedup",
+      "schema": "entry/1",
+      "scope": "method",
+      "sources": [
+        {
+          "node_ids": [
+            "n0004"
+          ],
+          "run_id": "run-20261114-091613-d16c",
+          "task_id": "spd-distance-matrix"
+        }
+      ],
+      "status": "active",
+      "triggers": [
+        "nested_python_loop"
+      ],
+      "updated_version": "lib-1"
+    },
+    {
+      "action": "仅通过计算i<=j对并利用对称性镜像结果",
+      "conditions": "存在需计算距离矩阵的嵌套Python循环时",
+      "created_version": "lib-2",
+      "credibility": 0.5,
+      "effect": {
+        "mean_cost": 0.0,
+        "mean_gain": 0.0,
+        "uses": 0,
+        "wins": 0
+      },
+      "id": "exp-0002",
+      "kind": "experience",
+      "negative": true,
+      "scenario": "speedup",
+      "schema": "entry/1",
+      "scope": "method",
+      "sources": [
+        {
+          "node_ids": [
+            "n0002"
+          ],
+          "run_id": "run-20261114-091613-d16c",
+          "task_id": "spd-distance-matrix"
+        }
+      ],
+      "status": "active",
+      "triggers": [
+        "nested_python_loop"
+      ],
+      "updated_version": "lib-2"
+    },
+    {
+      "action": "用列表推导式替换显式for循环计算数学距离",
+      "conditions": "存在需计算距离矩阵的嵌套Python循环时",
+      "created_version": "lib-3",
+      "credibility": 0.5,
+      "effect": {
+        "mean_cost": 0.0,
+        "mean_gain": 0.0,
+        "uses": 0,
+        "wins": 0
+      },
+      "id": "exp-0003",
+      "kind": "experience",
+      "negative": true,
+      "scenario": "speedup",
+      "schema": "entry/1",
+      "scope": "method",
+      "sources": [
+        {
+          "node_ids": [
+            "n0003"
+          ],
+          "run_id": "run-20261114-091613-d16c",
+          "task_id": "spd-distance-matrix"
+        }
+      ],
+      "status": "active",
+      "triggers": [
+        "nested_python_loop"
+      ],
+      "updated_version": "lib-3"
+    }
+  ],
+  "metadata": {
+    "demoted_losses": {}
+  },
+  "schema": "library/1",
+  "version": "lib-3"
+}

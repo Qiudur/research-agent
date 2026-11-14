@@ -1,0 +1,119 @@
+{
+  "schema": "a_replay_context/1",
+  "created_ts": "2026-11-14T09:29:31.246Z",
+  "run_id": "run-20261114-091613-d16c",
+  "task_id": "spd-edit-distance",
+  "manifest_fields": {
+    "run_id": "run-20261114-091613-d16c",
+    "phase": "dev",
+    "config": "default_lib",
+    "rep": 3,
+    "bank_version": "bank-v1",
+    "tasks": [
+      "spd-distance-matrix",
+      "spd-rolling-mean",
+      "spd-max-drawdown",
+      "spd-edit-distance",
+      "spd-membership-filter",
+      "tab-adult-income",
+      "tab-mushroom-edibility",
+      "tab-online-shoppers",
+      "tab-phishing-websites",
+      "tab-german-credit"
+    ],
+    "library": {
+      "root": "runs/run-20261114-091613-d16c/library",
+      "start_version": "lib-0",
+      "frozen": false
+    },
+    "agent_config": {
+      "path": "config/agent_token_pilot_v2.json",
+      "sha256": "f0ba329f64b0592e4e90fe1fb0968611ccd0a34a40b27c1fce9e1e7a139c367b"
+    },
+    "prices": {
+      "path": "config/prices_real_token_test.json",
+      "sha256": "69ce9eb9157c86bd20e786b408b349ab0869bab9e67ee4243153f5764572e90d"
+    },
+    "hard_caps": {
+      "budget_ratio": 0.9
+    },
+    "code_commit": "482f3efd6e4d3134268a10bec0f75d2928d8e341",
+    "model": "qwen3.5-27b"
+  },
+  "library_root": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/library",
+  "model": "qwen3.5-27b",
+  "max_output_tokens": 2048,
+  "sources": {
+    "agent_config": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/agent_token_pilot_v2.json",
+      "sha256": "f0ba329f64b0592e4e90fe1fb0968611ccd0a34a40b27c1fce9e1e7a139c367b"
+    },
+    "baseline": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/spd-edit-distance/nodes/n0000/score.json",
+      "sha256": "a33627cfea8afc6eb96c587a05fc95bd6246dc291c29cf300d7ded516eb2093d"
+    },
+    "hard_caps": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/hard_caps.json",
+      "sha256": "58a21d156dfd99e3790ba33334d4e1c8e361ef3fc03a2d440f2c1042ee500958"
+    },
+    "opening_plan": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/spd-edit-distance/opening_plan.json",
+      "sha256": "24e5752f967bff524b1226635db911b2b6ec9c032a4a1873a274e03345a7f7b1"
+    },
+    "prices": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prices_real_token_test.json",
+      "sha256": "69ce9eb9157c86bd20e786b408b349ab0869bab9e67ee4243153f5764572e90d"
+    },
+    "prompt_diagnoser": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prompts/diagnoser_token_pilot_v2.md",
+      "sha256": "706ee4a5d327853d5f0f037077b7fafa61fda0f3794fad9b5e44a148751756f1"
+    },
+    "prompt_executor": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prompts/executor_token_pilot_v2.md",
+      "sha256": "4b431d5e24dfd24a9bf692b9b44be4fe748ba5f7f95efd78343b2f03f9465c17"
+    },
+    "prompt_planner": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prompts/planner_token_pilot_v2.md",
+      "sha256": "b15dd06037c1dcdfe7b20bb7df8463075130fb1a91e6868aa80a531a6b3172a0"
+    },
+    "prompt_summarizer": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prompts/summarizer.md",
+      "sha256": "7a6ea00623497d61efc014c24fee1de19ce3131fa912883b4f0bc768854358de"
+    },
+    "test_controls": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/spd-edit-distance/test_controls.json",
+      "sha256": "349e77e16423106d144d7cbe6710034af0a0a0888ebad0347031c007f5dbc1e2"
+    },
+    "triggers": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/triggers.json",
+      "sha256": "8bc50d1fa6380a68b7ef89fca4d420eae1b17d7651ef63e0b822435befd3b147"
+    }
+  },
+  "tree_sha256": "b27cf9ef5d9b405b55381ac471e02b9d45e07f533a1516bf159f20acbda4a8f4",
+  "nodes": {
+    "n0000": {
+      "library_version": "lib-6",
+      "library_snapshot_sha256": "35f9eb7469d1af6119b0b172f3db480bd42067af4545bf027c54a6163e407eb7",
+      "solution_sha256": "db56a35d8795cdb4115d94c7263f3eda9a2970b017869feeaddb676d343355b9",
+      "score_sha256": "a33627cfea8afc6eb96c587a05fc95bd6246dc291c29cf300d7ded516eb2093d"
+    },
+    "n0001": {
+      "library_version": "lib-6",
+      "library_snapshot_sha256": "35f9eb7469d1af6119b0b172f3db480bd42067af4545bf027c54a6163e407eb7",
+      "solution_sha256": "6148f97b045aafbf13471cf0e4042d08969776ae516f5c950b1c95b26590919c",
+      "score_sha256": "dc50c1b5b7f4e0a734bc6e6b9b3320728a62a1606e0732ac873ae72ddf5a6383"
+    },
+    "n0002": {
+      "library_version": "lib-7",
+      "library_snapshot_sha256": "71099e533a32d921fa32e8ee0b408abe4afcb1cf8ec516a3d1db609bf25f4c26",
+      "solution_sha256": "8672e769e9822da6b9ce3ff9f61389b0b4d3dcbedf34d2bf3e7eaa0564ad5510",
+      "score_sha256": "08fca17629e2358290ad0008f01b066df1d22093107c988648114fa0798ac030"
+    },
+    "n0003": {
+      "library_version": "lib-7",
+      "library_snapshot_sha256": "71099e533a32d921fa32e8ee0b408abe4afcb1cf8ec516a3d1db609bf25f4c26",
+      "solution_sha256": "6deb58cdffd1264eb7ad5d59cb7f6c453a25d88d38ab1ae7316f5bfc8fcf01cc",
+      "score_sha256": "58184094c9fb25d843c3971c4197a8bc976229a99238d889727e064bc4199d82"
+    }
+  }
+}

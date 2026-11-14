@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "0982134db941b1e30ac562ae34bc8d1e315f654df34a76e40e94f33f7fd81845",
+  "response_id": "resp_eb581aec-9854-96a8-b252-091ecb04db60",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Space optimization: use two-row rolling window instead of full matrix\",\n      \"rationale\": \"Baseline constructs complete 2D matrix; edit distance only needs previous row for next computation. Reduces memory allocation and improves cache locality without changing algorithm logic.\",\n      \"cites\": [],\n      \"estimate\": {\n        \"gain\": 0.005,\n        \"cost\": 1800,\n        \"seconds\": 45\n      }\n    },\n    {\n      \"hypothesis\": \"Vectorize DP transitions using NumPy broadcasting on diagonal bands\",\n      \"rationale\": \"n0002 tried simple numpy conversion but likely didn't vectorize the min operation correctly. Try explicit broadcasting of prev[j], row[j-1], prev[j-1] using slice operations for faster batch updates.\",\n      \"cites\": [\"exp-0005\"],\n      \"estimate\": {\n        \"gain\": 0.01,\n        \"cost\": 2200,\n        \"seconds\": 55\n      }\n    },\n    {\n      \"hypothesis\": \"Check if rapidfuzz or similar library provides direct Levenshtein implementation\",\n      \"rationale\": \"Many production systems use pre-optimized edit distance implementations. If available, wrapping existing solution yields immediate large speedup with minimal code changes.\",\n      \"cites\": [],\n      \"estimate\": {\n        \"gain\": 0.15,\n        \"cost\": 1500,\n        \"seconds\": 30\n      }\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 1800,\n    \"score\": 0.0128,\n    \"seconds\": 45\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"two_row_optimization\",\n      \"amount\": 1800\n    },\n    {\n      \"direction\": \"numpy_vectorization\",\n      \"amount\": 2200\n    },\n    {\n      \"direction\": \"library_wrap\",\n      \"amount\": 1500\n    },\n    {\n      \"direction\": \"reserve\",\n      \"amount\": 14178\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.4,\n      \"score\": 0.01\n    },\n    {\n      \"spent_ratio\": 0.5,\n      \"score\": 0.02\n    },\n    {\n      \"spent_ratio\": 0.7,\n      \"score\": 0.05\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1861,
+    "cached_input": 0,
+    "output": 615,
+    "reasoning": 708
+  },
+  "cost": 3184.0,
+  "error": null
+}

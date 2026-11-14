@@ -1,0 +1,24 @@
+{
+  "schema": "token_parallel_default_summary/1",
+  "label": "REAL MODEL DEV; TEST UNIT = ONE REPORTED TOKEN; NOT MONEY",
+  "campaign_dir": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab",
+  "study_report": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/default-study/self_research_report.json",
+  "ranking": [
+    {
+      "candidate": "default",
+      "mean_score": -19.66701734322244,
+      "mean_cost": 252685.0,
+      "score_per_currency": 0.0,
+      "run_ids": [
+        "run-20261114-091613-763a",
+        "run-20261114-091613-b698",
+        "run-20261114-091613-d16c"
+      ]
+    }
+  ],
+  "total_task_tokens": 758055.0,
+  "run_count": 3,
+  "started_utc": "2026-11-14T09:16:13.710Z",
+  "ended_utc": "2026-11-14T09:55:06.182Z",
+  "elapsed_seconds": 2332.5242453750107
+}

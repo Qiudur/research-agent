@@ -1,0 +1,38 @@
+{
+  "schema": "opening_plan/1",
+  "run_id": "run-20261114-091613-b698",
+  "task_id": "tab-mushroom-edibility",
+  "predicted": {
+    "cost": 6800.0,
+    "seconds": 110.0,
+    "score": 0.18
+  },
+  "expected_progress": [
+    {
+      "spent_ratio": 0.15,
+      "score": 0.1
+    },
+    {
+      "spent_ratio": 0.3,
+      "score": 0.16
+    },
+    {
+      "spent_ratio": 0.5,
+      "score": 0.22
+    }
+  ],
+  "budget_allocation": [
+    {
+      "direction": "model_development",
+      "amount": 5000
+    },
+    {
+      "direction": "feature_engineering",
+      "amount": 1000
+    },
+    {
+      "direction": "reserved_next_call",
+      "amount": 12000
+    }
+  ]
+}

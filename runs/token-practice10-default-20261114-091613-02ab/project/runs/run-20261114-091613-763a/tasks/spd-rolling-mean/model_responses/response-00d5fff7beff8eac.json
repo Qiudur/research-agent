@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "37bedea1f91b6e411e7e8b898e835c2c455d0ca8730ce4278124512d96788106",
+  "response_id": "resp_e4874d81-10ed-9709-901b-462227dc5b37",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Cache len() and list methods to local variables inside the loop to reduce attribute lookup overhead\",\n      \"rationale\": \"In tight loops, repeated attribute access (len(), append()) has measurable overhead in CPython. Local variable caching can shave a few percent off runtime without changing algorithm.\",\n      \"cites\": [],\n      \"estimate\": {\n        \"gain\": 0.005,\n        \"cost\": 2000,\n        \"seconds\": 15\n      }\n    },\n    {\n      \"hypothesis\": \"Replace floating-point division with multiplication by reciprocal for the averaging operation\",\n      \"rationale\": \"Division is typically slower than multiplication. Precomputing 1/window and multiplying instead of dividing each iteration may provide marginal speedup in the inner loop.\",\n      \"cites\": [],\n      \"estimate\": {\n        \"gain\": 0.003,\n        \"cost\": 1800,\n        \"seconds\": 12\n      }\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 3800,\n    \"score\": 0.976,\n    \"seconds\": 27\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"algorithm_optimization\",\n      \"amount\": 3800\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.195,\n      \"score\": 0.972\n    },\n    {\n      \"spent_ratio\": 0.288,\n      \"score\": 0.976\n    },\n    {\n      \"spent_ratio\": 0.9,\n      \"score\": 0.978\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1463,
+    "cached_input": 0,
+    "output": 421,
+    "reasoning": 597
+  },
+  "cost": 2481.0,
+  "error": null
+}

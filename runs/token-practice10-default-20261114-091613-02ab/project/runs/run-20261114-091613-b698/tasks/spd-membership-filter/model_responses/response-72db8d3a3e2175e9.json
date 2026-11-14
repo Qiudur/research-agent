@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0009",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "467fa9dfd58a0c6641a9d4f97d240b1c6d3bf16172fdece2a3a8822ef5f59ad5",
+  "response_id": "resp_4aec5dad-2007-9d57-b068-f1cbd40be949",
+  "status": "completed",
+  "output_text": "```json\n{\n  \"code\": \"from __future__ import annotations\\n\\ndef membership_filter(values: list[int], allowed: list[int]) -> list[int]:\\n    allowed_set = set(allowed)\\n    return [value for value in values if value in allowed_set]\",\n  \"notes\": \"Hypothesis suggests converting values to set for bulk intersection, but this would lose duplicates which must be preserved per spec. The current parent_code already optimizes by converting 'allowed' to a set for O(1) membership checks instead of O(n) list scans. This is the correct and sufficient optimization - further changes to cache value memberships would add overhead without guaranteed benefit since set lookup is already very fast.\"\n}\n```",
+  "tokens": {
+    "input": 737,
+    "cached_input": 0,
+    "output": 155,
+    "reasoning": 736
+  },
+  "cost": 1628.0,
+  "error": null
+}

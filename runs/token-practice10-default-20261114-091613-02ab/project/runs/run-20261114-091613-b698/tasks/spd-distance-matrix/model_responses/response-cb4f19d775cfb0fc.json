@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "summarizer",
+  "purpose": "summarize",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "e9f4270a96154af0f333f069a783b2cc9fbb001a69f9625d3cf568be9187c7fd",
+  "response_id": "resp_f242174f-d4e9-9fa1-84b3-df55c5f50915",
+  "status": "completed",
+  "output_text": "{\n  \"drafts\": [\n    {\n      \"scope\": \"method\",\n      \"scenario\": \"speedup\",\n      \"triggers\": [\"nested_python_loop\"],\n      \"conditions\": \"distance matrix computation requiring euclidean metric with input convertible to numpy arrays\",\n      \"action\": \"use scipy.spatial.distance.cdist with euclidean metric as replacement for manual nested loop calculation\",\n      \"negative\": false,\n      \"node_ids\": [\"n0006\"]\n    },\n    {\n      \"scope\": \"method\",\n      \"scenario\": \"speedup\",\n      \"triggers\": [\"nested_python_loop\"],\n      \"conditions\": \"euclidean distance matrix computation where scipy library is available\",\n      \"action\": \"avoid pure python micro-optimizations like coordinate pre-caching, list comprehension conversion, or local variable caching over vectorized library calls\",\n      \"negative\": true,\n      \"node_ids\": [\"n0001\", \"n0002\", \"n0003\", \"n0004\", \"n0005\"]\n    }\n  ],\n  \"narrowings\": []\n}",
+  "tokens": {
+    "input": 1022,
+    "cached_input": 0,
+    "output": 255,
+    "reasoning": 667
+  },
+  "cost": 1944.0,
+  "error": null
+}

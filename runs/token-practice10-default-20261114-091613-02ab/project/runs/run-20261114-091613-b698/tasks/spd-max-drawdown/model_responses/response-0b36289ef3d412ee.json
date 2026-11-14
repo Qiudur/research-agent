@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "a056f5d6e454450d88e88b072bb36a4da36eed12265e6c66a7dd22ade43dc710",
+  "response_id": "resp_d650eaf7-3c27-9b71-8e13-1f389eb57d85",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Optimized linear-time maximum-drawdown implementation.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\n\\ndef max_drawdown(prices: list[float]) -> float:\\n    \\\"\\\"\\\"Calculate maximum drawdown in O(n) time.\\n    \\n    Tracks running peak and computes drawdown in single pass.\\n    Returns largest peak-to-trough fraction where trough comes after peak.\\n    \\\"\\\"\\\"\\n    if not prices:\\n        return 0.0\\n    \\n    peak = prices[0]\\n    largest = 0.0\\n    \\n    for price in prices:\\n        if price > peak:\\n            peak = price\\n        else:\\n            drawdown = (peak - price) / peak\\n            largest = max(largest, drawdown)\\n    \\n    return largest\",\n  \"notes\": \"Replaced nested loops with single-pass algorithm tracking running maximum peak. Time complexity reduced from O(n²) to O(n). Maintains identical behavior for all edge cases (empty, single price, increasing/decreasing/repeated patterns) by computing same peak-to-trough fractions.\"\n}",
+  "tokens": {
+    "input": 864,
+    "cached_input": 0,
+    "output": 252,
+    "reasoning": 394
+  },
+  "cost": 1510.0,
+  "error": null
+}

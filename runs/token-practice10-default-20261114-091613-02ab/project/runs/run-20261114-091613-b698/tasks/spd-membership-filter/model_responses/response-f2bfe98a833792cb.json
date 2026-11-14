@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "80cb82dcdc47201fb9bda7dfca45370cda958fadf9b1db2c415f7f3b62f601b7",
+  "response_id": "resp_06114135-c679-9a95-b35f-406c07d0535d",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Debug and fix n0002 early-return logic to restore >1.0 score\",\n      \"rationale\": \"n0002 achieved 1.023 score but was rejected; other >1.0 experiments (n0003, n0005) also rejected. Likely has real benefit but contains subtle correctness bug. Fixing could recover 1.00+ baseline.\",\n      \"estimate\": {\n        \"gain\": 0.015,\n        \"cost\": 1200,\n        \"seconds\": 45\n      },\n      \"cites\": [\"n0002\"]\n    },\n    {\n      \"hypothesis\": \"Use dict.fromkeys() for O(1) membership with built-in hash optimization\",\n      \"rationale\": \"Different hashing strategy from set(); dict lookup may be slightly faster for integers. Small gain expected but worth testing given plateau.\",\n      \"estimate\": {\n        \"gain\": 0.005,\n        \"cost\": 1100,\n        \"seconds\": 40\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Convert values to set for bulk intersection, preserve order via original traversal\",\n      \"rationale\": \"If many duplicates in values, checking membership once per unique value may reduce total lookups. Test tradeoff between set conversion overhead vs reduced comparisons.\",\n      \"estimate\": {\n        \"gain\": 0.008,\n        \"cost\": 1300,\n        \"seconds\": 50\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 3600,\n    \"score\": 1.005,\n    \"seconds\": 135\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"debug_high_scoring_rejected\",\n      \"amount\": 1200\n    },\n    {\n      \"direction\": \"dict_lookup_variant\",\n      \"amount\": 1100\n    },\n    {\n      \"direction\": \"bulk_intersection_approach\",\n      \"amount\": 1300\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.1,\n      \"score\": 0.985\n    },\n    {\n      \"spent_ratio\": 0.3,\n      \"score\": 0.992\n    },\n    {\n      \"spent_ratio\": 0.5,\n      \"score\": 0.998\n    },\n    {\n      \"spent_ratio\": 1.0,\n      \"score\": 1.005\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1795,
+    "cached_input": 0,
+    "output": 647,
+    "reasoning": 822
+  },
+  "cost": 3264.0,
+  "error": null
+}

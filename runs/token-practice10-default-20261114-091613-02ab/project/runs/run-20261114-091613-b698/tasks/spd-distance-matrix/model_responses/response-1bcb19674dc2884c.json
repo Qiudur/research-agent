@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "a9c571da0d9491561874644f734a9b2953e651e2e60cab349b538324ad6d251b",
+  "response_id": "resp_19b98fba-c3d6-9e72-9a8a-7ed99c4eee6c",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Exploit matrix symmetry by computing only upper triangle and mirroring, reducing pairwise calculations by half.\",\n      \"rationale\": \"Nested loops compute all i,j pairs redundantly. Symmetry ensures distance[i][j] == distance[j][i], cutting loop iterations by ~50%. Critical to preserve diagonal (zero) and correct floating-point values.\",\n      \"estimate\": {\n        \"gain\": 0.25,\n        \"cost\": 900,\n        \"seconds\": 45\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Cache math.sqrt as local variable to avoid repeated global lookup overhead in tight inner loop.\",\n      \"rationale\": \"Function name resolution in Python adds measurable cost per call. Binding sqrt to a local alias inside the function reduces attribute access latency during millions of calls.\",\n      \"estimate\": {\n        \"gain\": 0.08,\n        \"cost\": 300,\n        \"seconds\": 15\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Pre-allocate result rows with list comprehension instead of dynamic append to minimize memory resizing.\",\n      \"rationale\": \"Appending to lists in Python has amortized O(1) but non-negligible allocation cost. Pre-sized lists may reduce overhead for fixed-length row construction.\",\n      \"estimate\": {\n        \"gain\": 0.05,\n        \"cost\": 300,\n        \"seconds\": 15\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"score\": 0.62,\n    \"cost\": 1500,\n    \"seconds\": 75\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"hypothesis_testing\",\n      \"amount\": 1500\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.11,\n      \"score\": 0.62\n    },\n    {\n      \"spent_ratio\": 0.25,\n      \"score\": 0.75\n    },\n    {\n      \"spent_ratio\": 0.5,\n      \"score\": 0.85\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1642,
+    "cached_input": 0,
+    "output": 545,
+    "reasoning": 896
+  },
+  "cost": 3083.0,
+  "error": null
+}

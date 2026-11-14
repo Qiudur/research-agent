@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "52b623c94f91b9453f4b4484a2b850040a2e59589826b3153b61eebe92f47333",
+  "response_id": "resp_37a43827-45f1-920e-830b-cdf6486e5830",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Optimized sliding-window rolling mean implementation.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\n\\ndef rolling_mean(values: list[float], window: int) -> list[float]:\\n    \\\"\\\"\\\"Compute rolling mean using O(n) sliding window with accumulator.\\n\\n    Args:\\n        values: List of finite float values\\n        window: Positive integer window size\\n\\n    Returns:\\n        List of rolling averages, where each result is the mean of\\n        current and up to window-1 preceding values\\n    \\\"\\\"\\\"\\n    if window <= 0:\\n        raise ValueError(\\\"window must be positive\\\")\\n\\n    result = []\\n    current_sum = 0.0\\n    left = 0\\n\\n    for right, value in enumerate(values):\\n        current_sum += value\\n\\n        # Maintain window size constraint\\n        if right - left + 1 > window:\\n            current_sum -= values[left]\\n            left += 1\\n\\n        window_len = right - left + 1\\n        result.append(current_sum / window_len)\\n\\n    return result\",\n  \"notes\": \"Implemented O(n) sliding window with running sum accumulator. Key changes: maintain current_sum and left pointer, subtract element leaving window (values[left]) when window size exceeded, add new element, compute mean using current window length. Handles all edge cases (empty, window=1, partial prefixes, oversized windows, mixed signs) identically to original.\"\n}",
+  "tokens": {
+    "input": 926,
+    "cached_input": 0,
+    "output": 323,
+    "reasoning": 3045
+  },
+  "cost": 4294.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "e0981693ad33c921b70b79a9e1ba9ef62d4e3cd27fe0dbb077de518c3a0d6c7b",
+  "response_id": "resp_dc0a56dc-4fa5-9016-a3a0-b0f74c25406f",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Use numpy vectorization for row transitions instead of pure Python inner loop\",\n      \"rationale\": \"Hotspot is nested Python loops. Numpy performs elementwise operations in compiled C, bypassing Python interpreter overhead per cell. Two-row optimization from n0002 already in place, making this natural next step.\",\n      \"estimate\": {\"gain\": 0.05, \"cost\": 3500, \"seconds\": 120},\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Try Myers bit-vector algorithm for unit-cost edit distance\",\n      \"rationale\": \"Myers algorithm has O((N+D^2)/W) complexity where W is word size, can be 10-100x faster than O(N*M) DP for typical inputs. Works well when strings are somewhat similar.\",\n      \"estimate\": {\"gain\": 0.15, \"cost\": 4000, \"seconds\": 180},\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Use python-Levenshtein or rapidfuzz library function directly\",\n      \"rationale\": \"Production C libraries implement highly optimized edit distance. If allowed by rules, this provides instant maximum speedup with minimal code.\",\n      \"estimate\": {\"gain\": 0.25, \"cost\": 2000, \"seconds\": 60},\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\"cost\": 9500, \"score\": 0.1, \"seconds\": 360},\n  \"budget_allocation\": [\n    {\"direction\": \"micro-optimize current implementation\", \"amount\": 4500},\n    {\"direction\": \"reserve for library-based solutions\", \"amount\": 3000},\n    {\"direction\": \"reserve for vectorization attempt\", \"amount\": 2000}\n  ],\n  \"expected_progress\": [\n    {\"spent_ratio\": 0.1, \"score\": 0.02},\n    {\"spent_ratio\": 0.2, \"score\": 0.05},\n    {\"spent_ratio\": 0.3, \"score\": 0.1},\n    {\"spent_ratio\": 0.4, \"score\": 0.15}\n  ]\n}",
+  "tokens": {
+    "input": 1650,
+    "cached_input": 0,
+    "output": 542,
+    "reasoning": 596
+  },
+  "cost": 2788.0,
+  "error": null
+}

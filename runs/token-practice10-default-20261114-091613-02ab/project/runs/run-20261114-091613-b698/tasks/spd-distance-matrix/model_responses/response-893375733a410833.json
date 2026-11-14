@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0003",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "5cc91ef71c3082620a58f23f5dfa42e312a5a425f2a40c046fcd9fd825d9bbbe",
+  "response_id": "resp_ec8aabbb-accd-9756-84b3-dd3819fb50ba",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Optimized distance matrix using math.hypot.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nfrom math import hypot\\n\\n\\ndef distance_matrix(points: list[tuple[float, float]]) -> list[list[float]]:\\n    result: list[list[float]] = []\\n    for x1, y1 in points:\\n        row: list[float] = []\\n        for x2, y2 in points:\\n            dx = x1 - x2\\n            dy = y1 - y2\\n            row.append(hypot(dx, dy))\\n        result.append(row)\\n    return result\",\n  \"notes\": \"Replaced sqrt(dx*dx + dy*dy) with hypot(dx, dy). Same numerical results, potential speedup from C-level implementation and overflow protection.\"\n}",
+  "tokens": {
+    "input": 950,
+    "cached_input": 0,
+    "output": 185,
+    "reasoning": 156
+  },
+  "cost": 1291.0,
+  "error": null
+}

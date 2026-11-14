@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "summarizer",
+  "purpose": "summarize",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "29756920a001ca067879dea9601654b448bdb204a6c93f1d98373c98f196dfb3",
+  "response_id": "resp_618a9ec4-7a5a-954b-ba9c-0b4b6b0ec1f9",
+  "status": "completed",
+  "output_text": "```json\n{\n  \"drafts\": [\n    {\n      \"scope\": \"method\",\n      \"scenario\": \"speedup\",\n      \"triggers\": [\"nested_python_loop\"],\n      \"conditions\": \"存在需计算距离矩阵的嵌套Python循环时\",\n      \"action\": \"使用scipy.spatial.distance.cdist代替手动循环并转换格式\",\n      \"negative\": false,\n      \"node_ids\": [\"n0004\"]\n    },\n    {\n      \"scope\": \"method\",\n      \"scenario\": \"speedup\",\n      \"triggers\": [\"nested_python_loop\"],\n      \"conditions\": \"存在需计算距离矩阵的嵌套Python循环时\",\n      \"action\": \"仅通过计算i<=j对并利用对称性镜像结果\",\n      \"negative\": true,\n      \"node_ids\": [\"n0002\"]\n    },\n    {\n      \"scope\": \"method\",\n      \"scenario\": \"speedup\",\n      \"triggers\": [\"nested_python_loop\"],\n      \"conditions\": \"存在需计算距离矩阵的嵌套Python循环时\",\n      \"action\": \"用列表推导式替换显式for循环计算数学距离\",\n      \"negative\": true,\n      \"node_ids\": [\"n0003\"]\n    }\n  ],\n  \"narrowings\": []\n}\n```",
+  "tokens": {
+    "input": 850,
+    "cached_input": 0,
+    "output": 300,
+    "reasoning": 1854
+  },
+  "cost": 3004.0,
+  "error": null
+}

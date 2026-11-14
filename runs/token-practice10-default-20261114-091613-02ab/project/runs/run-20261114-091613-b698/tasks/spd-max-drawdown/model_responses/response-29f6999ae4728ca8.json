@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "cc88a640d24c82cc63af286a59032e906760e405c71b580764014cfcebecf8a1",
+  "response_id": "resp_dcf4b784-0ab0-9032-b1de-88d3fc778d23",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Optimized linear-time maximum-drawdown implementation.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\nimport numpy as np\\n\\n\\ndef max_drawdown(prices: list[float]) -> float:\\n    \\\"\\\"\\\"Calculate maximum drawdown in O(n) time.\\n    \\n    Tracks running peak and computes drawdown in single pass.\\n    Returns largest peak-to-trough fraction where trough comes after peak.\\n    \\\"\\\"\\\"\\n    if not prices:\\n        return 0.0\\n    \\n    # Convert prices list to numpy array once at start\\n    prices_arr = np.array(prices)\\n    \\n    # Compute running peaks using cumulative maximum (numpy indexing)\\n    peaks = np.maximum.accumulate(prices_arr)\\n    \\n    # Compute all drawdowns at once using numpy operations\\n    drawdowns = (peaks - prices_arr) / peaks\\n    \\n    # Return maximum drawdown\\n    return float(np.max(drawdowns))\",\n  \"notes\": \"Converted prices list to numpy array once at start. Used np.maximum.accumulate() for vectorized peak tracking instead of Python loop. All drawdown calculations done via numpy indexing without explicit iteration. Edge cases handled: empty list returns 0.0, single/many elements work correctly.\"\n}",
+  "tokens": {
+    "input": 948,
+    "cached_input": 0,
+    "output": 287,
+    "reasoning": 593
+  },
+  "cost": 1828.0,
+  "error": null
+}

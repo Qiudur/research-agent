@@ -1,0 +1,16 @@
+{
+  "schema": "score/1",
+  "ok": true,
+  "split": "dev",
+  "score": 0.0012188786936198394,
+  "raw": 1.010254039976106,
+  "spread": 1.569216652236289e-05,
+  "correct": true,
+  "cheat_flags": [],
+  "error": null,
+  "seconds": {
+    "run": 1.0049210830184165,
+    "queue": 1.5166995581239462e-05
+  },
+  "seed": 6048053527799673110
+}

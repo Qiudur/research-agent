@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "8171ddd0014571f7325fe86c727fcb55f65e34b3ae77d2decd9b482d9a4530a0",
+  "response_id": "resp_cc8b8aac-bf4c-9a96-9c53-e546b0f0d4a6",
+  "status": "completed",
+  "output_text": "```json\n{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Replace nested Python loops with NumPy vectorized broadcasting to compute all pairwise distances in one operation\",\n      \"rationale\": \"The hotspot is nested Python loops which are slow due to interpreter overhead. NumPy broadcasting moves computation to optimized C backend, typically achieving 10-100x speedup for numerical arrays.\",\n      \"estimate\": {\"gain\": 0.45, \"cost\": 7000, \"seconds\": 240},\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Exploit distance matrix symmetry - only compute upper triangle and copy to lower triangle\",\n      \"rationale\": \"Euclidean distance is symmetric (d[i,j] == d[j,i]), so we only need to compute n*(n+1)/2 pairs instead of n². Reduces work by ~50% independent of other optimizations.\",\n      \"estimate\": {\"gain\": 0.25, \"cost\": 5000, \"seconds\": 180},\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Use math.hypot(dx, dy) instead of sqrt(dx*dx + dy*dy) for better numerical stability\",\n      \"rationale\": \"hypot avoids intermediate overflow/underflow and may have micro-optimizations. Low-risk incremental improvement, works even if other optimizations fail.\",\n      \"estimate\": {\"gain\": 0.05, \"cost\": 2000, \"seconds\": 90},\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\"cost\": 7000, \"score\": 0.78, \"seconds\": 240},\n  \"budget_allocation\": [\n    {\"direction\": \"vectorize_numpy\", \"amount\": 7000}\n  ],\n  \"expected_progress\": [\n    {\"spent_ratio\": 0.0, \"score\": 0.33},\n    {\"spent_ratio\": 0.175, \"score\": 0.78},\n    {\"spent_ratio\": 0.5, \"score\": 0.92},\n    {\"spent_ratio\": 0.9, \"score\": 0.98}\n  ]\n}\n```",
+  "tokens": {
+    "input": 1384,
+    "cached_input": 0,
+    "output": 524,
+    "reasoning": 575
+  },
+  "cost": 2483.0,
+  "error": null
+}

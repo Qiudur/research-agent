@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "ab66e4fedc7392e4929c7023aef6c4dd96ea510bc760a85f4c490f6cb7b0804c",
+  "response_id": "resp_45236921-4ce6-928e-8974-bfaba22208f9",
+  "status": "completed",
+  "output_text": "{\"hypotheses\":[{\"hypothesis\":\"Implement robust missing value handling by replacing empty strings with 'Unknown' category before encoding.\",\"rationale\":\"Visible sample shows empty strings for categorical columns (e.g., workclass, occupation). Default NaN handling might drop or misinterpret these. Explicit 'Unknown' preserves signal from missingness.\",\"estimate\":{\"gain\":0.05,\"cost\":2000,\"seconds\":180},\"cites\":[\"feat_prep_miss\",\"preproc_clean\"]},{\"hypothesis\":\"Apply Target Encoding with smoothing for high-cardinality categorical features (native_country, occupation).\",\"rationale\":\"High cardinality categories suffer from curse of dimensionality in one-hot. Target encoding captures predictive mean while smoothing prevents leakage and overfitting on rare levels.\",\"estimate\":{\"gain\":0.1,\"cost\":3000,\"seconds\":240},\"cites\":[\"feat_encode_target\",\"cat_high_card\"]},{\"hypothesis\":\"Tune LightGBM hyperparameters focusing on scale_pos_weight and min_data_in_leaf to address class imbalance.\",\"rationale\":\"Positive class rate is ~24%. Default settings may underfit minority class. Increasing scale_pos_weight improves recall/AUC tradeoff without complex ensembling.\",\"estimate\":{\"gain\":0.08,\"cost\":2500,\"seconds\":200},\"cites\":[\"model_lgbm\",\"hyperparam_imbal\"]},{\"hypothesis\":\"Log-transform skewed numeric features (capital_gain, capital_loss, fnlwgt) before model input.\",\"rationale\":\"Financial and weight features often follow log-normal distributions. Tree models split on quantiles, but log-transform linearizes variance making boundaries clearer for leaf assignment.\",\"estimate\":{\"gain\":0.03,\"cost\":1500,\"seconds\":120},\"cites\":[\"feat_transform_log\",\"numeric_scale\"]}],\"predicted\":{\"cost\":6000,\"seconds\":600,\"score\":0.25},\"budget_allocation\":[{\"direction\":\"experiment\",\"amount\":6000}],\"expected_progress\":[{\"spent_ratio\":0.027,\"score\":0.0},{\"spent_ratio\":0.08,\"score\":0.08},{\"spent_ratio\":0.16,\"score\":0.25}]}",
+  "tokens": {
+    "input": 2840,
+    "cached_input": 0,
+    "output": 465,
+    "reasoning": 3794
+  },
+  "cost": 7099.0,
+  "error": null
+}

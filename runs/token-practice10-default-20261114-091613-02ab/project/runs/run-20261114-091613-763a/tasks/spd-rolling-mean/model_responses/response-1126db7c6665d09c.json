@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "da97dea7e5f1e1c44324e918f81ebecf4844f3918519e0386b7759eb13ccb823",
+  "response_id": "resp_da97d925-d812-91b0-a65c-0f43518dbfa8",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Implement O(N) sliding window sum instead of O(N*W) slicing and summing\",\n      \"rationale\": \"Profile identifies hotspot as repetitive slicing and summation of overlapping windows. Maintaining a running sum allows constant-time updates per element.\",\n      \"estimate\": {\n        \"gain\": 0.85,\n        \"cost\": 2000,\n        \"seconds\": 15\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 2000,\n    \"seconds\": 15,\n    \"score\": 0.9\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"algorithm_optimization\",\n      \"amount\": 2000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.0,\n      \"score\": 0.0464\n    },\n    {\n      \"spent_ratio\": 0.05,\n      \"score\": 0.9\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1382,
+    "cached_input": 0,
+    "output": 269,
+    "reasoning": 4260
+  },
+  "cost": 5911.0,
+  "error": null
+}

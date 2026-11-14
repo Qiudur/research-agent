@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "4f134f5f1420cb85a45ebb86a56fd3ed4f3dd17cfab472d016072e9c827f14dc",
+  "response_id": "resp_4d90212b-3065-9734-ad36-ee86be24805e",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Convert allowed list to set for O(1) membership lookup\",\n      \"rationale\": \"Profile identifies repeated list membership scans as hotspot. Set conversion changes complexity from O(n*m) to O(n+m). This is the classic fix for this pattern and should yield massive speedup.\",\n      \"estimate\": {\n        \"gain\": 0.65,\n        \"cost\": 800,\n        \"seconds\": 45\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Handle edge case: early exit if allowed is empty\",\n      \"rationale\": \"Edge case 'empty allowed list' is listed. Returning empty immediately without any membership checks saves work when allowed is empty.\",\n      \"estimate\": {\n        \"gain\": 0.15,\n        \"cost\": 600,\n        \"seconds\": 35\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Hybrid: use list for small allowed sets, set for larger\",\n      \"rationale\": \"Small sets have overhead. Testing threshold around len(allowed)<5 might avoid unnecessary set creation while still capturing most benefits.\",\n      \"estimate\": {\n        \"gain\": 0.25,\n        \"cost\": 700,\n        \"seconds\": 40\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 2100,\n    \"seconds\": 120,\n    \"score\": 0.7\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"Hypothesis 1 - Set conversion\",\n      \"amount\": 800\n    },\n    {\n      \"direction\": \"Hypothesis 2 - Empty allowed optimization\",\n      \"amount\": 600\n    },\n    {\n      \"direction\": \"Hypothesis 3 - Hybrid strategy\",\n      \"amount\": 700\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.05,\n      \"score\": 0.65\n    },\n    {\n      \"spent_ratio\": 0.1,\n      \"score\": 0.75\n    },\n    {\n      \"spent_ratio\": 0.15,\n      \"score\": 0.8\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1277,
+    "cached_input": 0,
+    "output": 571,
+    "reasoning": 628
+  },
+  "cost": 2476.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "a765e51bcd804ffa2f535c623357786ed4f7562133b9641013de4617ca7d2486",
+  "response_id": "resp_8a38e12c-9388-90e6-aba6-e6ca63fe3451",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Measured LightGBM baseline for this tabular task.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    \\n    # Handle missing values by treating them as explicit 'MISSING' category\\n    for name in train.columns:\\n        if pd.api.types.is_numeric_dtype(train[name]):\\n            continue\\n        else:\\n            train[name] = train[name].fillna('MISSING')\\n    \\n    test = pd.DataFrame(test_rows, columns=train.columns)\\n    for name in train.columns:\\n        if pd.api.types.is_numeric_dtype(train[name]):\\n            test[name] = pd.to_numeric(test[name], errors='coerce')\\n        else:\\n            # Treat missing/empty values as explicit 'MISSING' category\\n            test[name] = test[name].fillna('MISSING').replace('', 'MISSING')\\n            categories = pd.Categorical(pd.concat([train[name], test[name]], ignore_index=True)).categories\\n            train[name] = pd.Categorical(train[name], categories=categories)\\n            test[name] = pd.Categorical(test[name], categories=categories)\\n    \\n    model = LGBMClassifier(random_state=20261114, n_jobs=1, verbosity=-1)\\n    model.fit(train, y)\\n    return model.predict_proba(test)[:, 1].tolist()\\n\",\n  \"notes\": \"Modified to treat missing values (empty strings and NaN) as explicit 'MISSING' category for all non-numeric features. This ensures consistent handling of missing patterns which may carry predictive signal according to the missing_heavy profile.\"\n}",
+  "tokens": {
+    "input": 3533,
+    "cached_input": 0,
+    "output": 417,
+    "reasoning": 694
+  },
+  "cost": 4644.0,
+  "error": null
+}

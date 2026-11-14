@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "29e55499487c6d5a5ccf29a0ea297ff5dc170921918e4cbcff6893c2393f1368",
+  "response_id": "resp_9cb01c9f-6031-9df4-8273-26f3db3902b8",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Measured LightGBM baseline for this tabular task.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    # Load training data with empty strings treated as missing\\n    train = pd.read_csv(train_csv, na_values=['', 'NA', 'nan'])\\n    y = train.pop(\\\"y\\\")\\n    \\n    # Create test DataFrame from input rows\\n    test = pd.DataFrame(test_rows, columns=train.columns)\\n    # Convert empty strings to NaN for consistency\\n    test = test.replace('', ['NA', 'nan'], regex=False).replace({None: float('nan')})\\n    \\n    # Identify categorical vs numeric columns\\n    cat_cols = []\\n    for name in train.columns:\\n        if pd.api.types.is_object_dtype(train[name]):\\n            cat_cols.append(name)\\n            # Ensure same encoding for train and test\\n            all_cats = pd.Categorical(pd.concat([train[name], test[name]], ignore_index=True)).categories\\n            train[name] = train[name].astype('category').cat.set_categories(all_cats)\\n            test[name] = test[name].astype('category').cat.set_categories(all_cats)\\n        else:\\n            # Numeric column\\n            test[name] = pd.to_numeric(test[name], errors='coerce')\\n    \\n    # LightGBM handles missing values natively (NaN)\\n    model = LGBMClassifier(\\n        random_state=20261114,\\n        n_jobs=1,\\n        verbosity=-1,\\n        categorical_feature=cat_cols,\\n        force_col_wise=True\\n    )\\n    model.fit(train, y)\\n    return model.predict_proba(test)[:, 1].tolist()\\n\",\n  \"notes\": \"Implemented LightGBM with native missing value handling. Empty strings in CSV are read as NaN via na_values parameter. Categorical columns are identified and passed to categorical_feature parameter for native tree splitting on categories. Test rows are converted to match training schema with consistent categorical encoding. LightGBM automatically learns optimal default direction for missing values during tree construction.\"\n}",
+  "tokens": {
+    "input": 3532,
+    "cached_input": 0,
+    "output": 495,
+    "reasoning": 671
+  },
+  "cost": 4698.0,
+  "error": null
+}

@@ -1,0 +1,42 @@
+{
+  "schema": "opening_plan/1",
+  "run_id": "run-20261114-091613-b698",
+  "task_id": "spd-edit-distance",
+  "predicted": {
+    "cost": 7500.0,
+    "seconds": 450.0,
+    "score": 0.18
+  },
+  "expected_progress": [
+    {
+      "spent_ratio": 0.075,
+      "score": 0.18
+    },
+    {
+      "spent_ratio": 0.15,
+      "score": 0.25
+    },
+    {
+      "spent_ratio": 0.3,
+      "score": 0.35
+    },
+    {
+      "spent_ratio": 0.9,
+      "score": 0.5
+    }
+  ],
+  "budget_allocation": [
+    {
+      "direction": "exp-0005",
+      "amount": 3000
+    },
+    {
+      "direction": "exp-0002",
+      "amount": 2500
+    },
+    {
+      "direction": "early_termination",
+      "amount": 2000
+    }
+  ]
+}

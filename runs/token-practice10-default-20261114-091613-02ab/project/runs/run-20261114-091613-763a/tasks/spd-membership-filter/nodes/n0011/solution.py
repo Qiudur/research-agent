@@ -1,0 +1,14 @@
+from __future__ import annotations
+
+def membership_filter(values: list[int], allowed: list[int]) -> list[int]:
+    """Filter values keeping only those in allowed set.
+    
+    Maintains original order and duplicates. Uses set for O(1) lookup.
+    Includes None/NaN type safety by relying on strict int type comparison.
+    """
+    allowed_set = set(allowed)
+    return [
+        value 
+        for value in values 
+        if isinstance(value, int) and not isinstance(value, bool) and value in allowed_set
+    ]

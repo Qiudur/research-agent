@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0005",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "1e78a7a4c8693afcbeccfe99862569b3307eb75aa8af2ce1a6e0546b16e1e143",
+  "response_id": "resp_3fdaf637-cf47-9fa4-a972-bac535d9aa6f",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"import numpy as np\\n\\n\\ndef distance_matrix(points: list[tuple[float, float]]) -> list[list[float]]:\\n    \\\"\\\"\\\"Compute pairwise Euclidean distances using NumPy broadcasting.\\\"\\\"\\\"\\n    n = len(points)\\n    if n == 0:\\n        return []\\n    \\n    # Convert to numpy array with shape (n, 2)\\n    arr = np.array(points)\\n    \\n    # Pre-allocate the distance matrix using np.empty\\n    dist = np.empty((n, n), dtype=float)\\n    \\n    # Use broadcasting to compute all pairwise differences at once\\n    # diff shape: (n, n, 2) - each element is [dx, dy] for a pair\\n    diff = arr[:, np.newaxis, :] - arr[np.newaxis, :, :]\\n    \\n    # Compute Euclidean distances from the differences\\n    # Assign to pre-allocated array\\n    dist[:] = np.sqrt(np.sum(diff ** 2, axis=-1))\\n    \\n    # Convert back to list of lists as required\\n    return dist.tolist()\\n\",\n  \"notes\": \"Implemented np.empty pre-allocation for the distance matrix as specified. The existing vectorized broadcasting approach is preserved; pre-allocation helps avoid extra memory allocation when assigning the computed distances.\"\n}",
+  "tokens": {
+    "input": 1006,
+    "cached_input": 0,
+    "output": 293,
+    "reasoning": 1048
+  },
+  "cost": 2347.0,
+  "error": null
+}

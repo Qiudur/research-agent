@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "8b1b2ffed0ee5a82e41f82e4b72f5ce1fbb49dbfc65d9a0fc142d48372b55d1a",
+  "response_id": "resp_2ca64703-b07d-9be2-a2bc-3af2d3596173",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Measured LightGBM baseline for this tabular task.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport math\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    \\n    # Build test dataframe preserving row order\\n    test = pd.DataFrame(test_rows, columns=train.columns)\\n    \\n    # Standardize dtypes between train and test\\n    for name in train.columns:\\n        if pd.api.types.is_numeric_dtype(train[name]):\\n            test[name] = pd.to_numeric(test[name], errors='coerce')\\n        else:\\n            categories = pd.Categorical(pd.concat([train[name], test[name]], ignore_index=True)).categories\\n            train[name] = pd.Categorical(train[name], categories=categories)\\n            test[name] = pd.Categorical(test[name], categories=categories)\\n    \\n    # Fit model\\n    model = LGBMClassifier(random_state=20261114, n_jobs=1, verbosity=-1)\\n    model.fit(train, y)\\n    \\n    # Get probabilities and ensure format compliance\\n    probs = model.predict_proba(test)[:, 1]\\n    \\n    # Ensure exact row count and format: finite float in [0, 1]\\n    result = []\\n    expected_len = len(test_rows)\\n    \\n    for i in range(expected_len):\\n        p = float(probs[i]) if i < len(probs) else 0.5\\n        # Clamp to valid range and handle non-finite values\\n        if not math.isfinite(p):\\n            p = 0.5\\n        elif p < 0.0:\\n            p = 0.0\\n        elif p > 1.0:\\n            p = 1.0\\n        result.append(p)\\n    \\n    return result\",\n  \"notes\": \"Fixed format compliance: explicitly handles row count matching, converts all outputs to float, ensures finite values in [0,1] range. Added errors='coerce' for numeric conversion safety. Should eliminate any hidden NaN/inf or out-of-range probability issues that caused normalized score penalty.\"\n}",
+  "tokens": {
+    "input": 3825,
+    "cached_input": 0,
+    "output": 522,
+    "reasoning": 368
+  },
+  "cost": 4715.0,
+  "error": null
+}
