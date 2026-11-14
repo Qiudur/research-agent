@@ -305,6 +305,8 @@ def run_campaign(campaign: Path) -> dict:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--prepare-only", action="store_true")
+    parser.add_argument("--prompt-key", action="store_true",
+                        help="Ask for the gateway key in this visible terminal, ignoring inherited keys")
     parser.add_argument("--campaign", type=Path, help="Prepared campaign directory to run")
     parser.add_argument("--baseline-campaign", type=Path, default=DEFAULT_BASELINE)
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
@@ -316,11 +318,15 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--base-url must be HTTPS without credentials or query parameters")
     if args.campaign and args.prepare_only:
         parser.error("--campaign and --prepare-only cannot be combined")
+    if args.prompt_key and args.prepare_only:
+        parser.error("--prompt-key is only for a live run")
     campaign = args.campaign or prepare_campaign(args.baseline_campaign, args.base_url, args.workers)
     if args.prepare_only:
         print(json.dumps(json.loads((campaign / "summary.json").read_text()), ensure_ascii=False))
         return 0
-    if not os.environ.get("OPENAI_API_KEY") and sys.stdin.isatty():
+    if args.prompt_key and not sys.stdin.isatty():
+        parser.error("--prompt-key requires a visible interactive terminal")
+    if args.prompt_key or (not os.environ.get("OPENAI_API_KEY") and sys.stdin.isatty()):
         os.environ["OPENAI_API_KEY"] = getpass("新网关 API key（输入不回显）：")
     print(f"Starting self-evolving practice campaign: {campaign}", flush=True)
     print(json.dumps(run_campaign(campaign), ensure_ascii=False), flush=True)
