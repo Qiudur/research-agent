@@ -204,7 +204,7 @@ class RoadshowReportTest(unittest.TestCase):
     def minimal_summary(self, **overrides):
         unavailable = {"available": False, "reason": "未比较"}
         summary = {
-            "schema": "formal_batch_summary/1", "mode": "complete", "currency": "TOKENS",
+            "schema": "formal_batch_summary/1", "mode": "complete", "label": "FORMAL", "currency": "TOKENS",
             "validation": {"admission": {"claim": "rejected", "score_not_lower_each_rep": False,
                                          "cost_reduced_on_average": True}},
             "config_summary": {
@@ -240,6 +240,7 @@ class RoadshowReportTest(unittest.TestCase):
         pending = "v2 自研究、验证与考试数字均待对应真实账本审计后填入"
         for name, text in (("absent", None), ("partial", self.minimal_summary(mode="partial")),
                            ("malformed", "{not json"), ("other_currency", self.minimal_summary(currency="TEST")),
+                           ("test_only", self.minimal_summary(label="TEST ONLY")),
                            ("no_admission", self.minimal_summary(validation={"admission": None}))):
             with self.subTest(name):
                 self.setUp()

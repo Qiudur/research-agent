@@ -417,6 +417,27 @@ class SummarizeFormalBatchTests(unittest.TestCase):
             self.assertIn("排队等并发槽位", markdown)
             self.assertIsNone(summary["validation"]["admission"])
 
+    def test_partial_mode_warns_instead_of_failing_on_missing_task_files(self):
+        with TemporaryDirectory() as temp:
+            fx = Fixture(Path(temp) / "project")
+            fx.write_bank()
+            plan = fx.write_plan()
+            now = time.time()
+            os.utime(plan, (now - 3600, now - 3600))
+            report = fx.write_run("practice", "naive", 1, started=now - 1800)
+            task_dir = fx.root / "runs" / report["run_id"] / "tasks" / "spd-practice-0"
+            (task_dir / "ledger.jsonl").unlink()
+            (fx.root / "runs" / report["run_id"] / "tasks" / "tab-practice-0" / "holdout_score.json").unlink()
+            summary = summarize(fx.batch_dir, partial=True)
+            run = summary["runs"][0]
+            self.assertIsNone(run["failed_calls"])  # one task ledger is missing, so it is unknown
+            self.assertEqual(run["stop_reasons"], {"ceiling": 1})
+            text = " ".join(summary["warnings"])
+            self.assertIn("缺少 ledger.jsonl", text)
+            self.assertIn("缺少 holdout_score.json", text)
+            markdown = render_markdown(summary)  # unknown counts render as a dash instead of crashing
+            self.assertIn("缺少 ledger.jsonl", markdown.split("## 7. 数据提醒")[1])
+
     def test_partial_mode_without_any_finished_run_is_not_a_failure(self):
         with TemporaryDirectory() as temp:
             fx = Fixture(Path(temp) / "project")

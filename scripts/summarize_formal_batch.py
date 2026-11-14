@@ -9,6 +9,10 @@ to write inside the batch's own project tree.
 
 All costs are internal TOKENS (the four token buckets all have rate 1).  They
 are not cash prices and not official contest scores.
+
+Usage (the output directory must be outside the batch's project tree):
+  python scripts/summarize_formal_batch.py --batch-dir <project>/runs/batch-... \
+      --output-dir <dir> [--name formal-batch-v2-summary] [--partial] [--research-cost 2094728]
 """
 
 from __future__ import annotations
@@ -147,6 +151,8 @@ def _task_evidence(run_dir: Path, task_id: str, *, strict: bool, warnings: list[
         evidence["saved_score"] = _number(saved.get("score"))
     elif strict:
         raise SummaryError(f"缺少 holdout_score.json：{holdout_path}")
+    else:
+        warnings.append(f"{run_dir.name}/{task_id}：缺少 holdout_score.json，原始指标记为未保存")
     return evidence
 
 
@@ -196,7 +202,7 @@ def _summarize_run(loaded: LoadedRun, *, limit: float, strict: bool,
         "mean_score": mean(task["score"] for task in tasks),
         "seconds": {key: sum(task["seconds"][key] for task in tasks) for key in SECONDS},
         "model_calls": sum(task["model_calls"] for task in tasks),
-        "failed_calls": sum(known_failed) if known_failed else None,
+        "failed_calls": sum(known_failed) if len(known_failed) == len(tasks) else None,
         "stop_reasons": dict(sorted(stops.items())),
         "max_task_tokens": peak["tokens"], "max_task_id": peak["task_id"],
         "over_limit_tasks": sum(1 for task in tasks if task["over_limit"]),

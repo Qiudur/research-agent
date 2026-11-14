@@ -168,7 +168,7 @@ def formal_results(repo: Path) -> str:
     try:
         data = json.loads(committed_text(repo, SUMMARY_PATH))
         if (data["schema"] != "formal_batch_summary/1" or data["mode"] != "complete"
-                or data["currency"] != "TOKENS"):
+                or data["label"] != "FORMAL" or data["currency"] != "TOKENS"):
             return ""
         admission = data["validation"]["admission"]
         if admission["claim"] not in ADMISSION_NAMES:
