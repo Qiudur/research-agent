@@ -21,7 +21,7 @@
     "profile_size": 700
   },
   "budget": {
-    "money": null,
+    "money": 40000,
     "wall_seconds": 1800
   },
   "limits": {

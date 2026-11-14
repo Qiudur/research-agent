@@ -17,7 +17,7 @@
     "returns": "One finite probability in [0,1] per test row, in the same order"
   },
   "budget": {
-    "money": null,
+    "money": 40000,
     "wall_seconds": 1800
   },
   "limits": {

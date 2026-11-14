@@ -4,14 +4,28 @@
   "scenario": "speedup",
   "title": "Speed up maximum drawdown",
   "description": "Optimize max_drawdown(prices), the largest loss from an earlier price to a later price, divided by the earlier price. Prices are strictly positive; an empty or non-decreasing series returns 0.0.",
-  "metric": {"name": "speedup", "higher_is_better": true},
+  "metric": {
+    "name": "speedup",
+    "higher_is_better": true
+  },
   "deliverable": {
     "file": "solution.py",
     "function": "max_drawdown",
     "signature": "max_drawdown(prices: list[float]) -> float",
     "returns": "Maximum chronological peak-to-trough fraction, matching original.py within floating-point tolerance"
   },
-  "benchmark": {"kind": "max_drawdown", "dev_size": 1800, "holdout_size": 2100, "profile_size": 300},
-  "budget": {"money": null, "wall_seconds": 1800},
-  "limits": {"run_seconds": 120, "memory_mb": 1024}
+  "benchmark": {
+    "kind": "max_drawdown",
+    "dev_size": 1800,
+    "holdout_size": 2100,
+    "profile_size": 300
+  },
+  "budget": {
+    "money": 40000,
+    "wall_seconds": 1800
+  },
+  "limits": {
+    "run_seconds": 120,
+    "memory_mb": 1024
+  }
 }

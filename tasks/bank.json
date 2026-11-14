@@ -1,247 +1,247 @@
 {
   "schema": "bank/1",
   "version": "bank-v1",
-  "frozen": false,
+  "frozen": true,
   "tasks": [
     {
       "task_id": "spd-distance-matrix",
       "tier": "practice",
-      "difficulty": null,
+      "difficulty": "hard",
       "trap": null,
       "score_formula": "ratio",
       "baseline_raw": 0.9873095729361026,
       "ceiling_raw": 4.096535790175876,
-      "naive_cost": null
+      "naive_cost": 15020.333333333334
     },
     {
       "task_id": "spd-rolling-mean",
       "tier": "practice",
-      "difficulty": null,
+      "difficulty": "medium",
       "trap": null,
       "score_formula": "ratio",
       "baseline_raw": 0.9942976512563689,
       "ceiling_raw": 30.92600892408368,
-      "naive_cost": null
+      "naive_cost": 13344.333333333334
     },
     {
       "task_id": "spd-max-drawdown",
       "tier": "practice",
-      "difficulty": null,
+      "difficulty": "easy",
       "trap": null,
       "score_formula": "ratio",
       "baseline_raw": 1.0005879225114818,
       "ceiling_raw": 677.9896371211082,
-      "naive_cost": null
+      "naive_cost": 9868.666666666666
     },
     {
       "task_id": "spd-edit-distance",
       "tier": "practice",
-      "difficulty": null,
+      "difficulty": "hard",
       "trap": null,
       "score_formula": "ratio",
       "baseline_raw": 1.002538665987726,
       "ceiling_raw": 78.83123969890919,
-      "naive_cost": null
+      "naive_cost": 34739.5
     },
     {
       "task_id": "spd-membership-filter",
       "tier": "practice",
-      "difficulty": null,
+      "difficulty": "easy",
       "trap": null,
       "score_formula": "ratio",
       "baseline_raw": 0.9955943886913474,
       "ceiling_raw": 277.7676008284439,
-      "naive_cost": null
+      "naive_cost": 13054.666666666666
     },
     {
       "task_id": "spd-prefix-sum",
       "tier": "validation",
-      "difficulty": null,
+      "difficulty": "easy",
       "trap": null,
       "score_formula": "ratio",
       "baseline_raw": 0.997358541271399,
       "ceiling_raw": 211.04136246209143,
-      "naive_cost": null
+      "naive_cost": 11295.0
     },
     {
       "task_id": "spd-dedupe-order",
       "tier": "validation",
-      "difficulty": null,
+      "difficulty": "medium",
       "trap": null,
       "score_formula": "ratio",
       "baseline_raw": 1.0127953716402704,
       "ceiling_raw": 165.8295975944869,
-      "naive_cost": null
+      "naive_cost": 13203.0
     },
     {
       "task_id": "spd-group-counts",
       "tier": "exam",
-      "difficulty": null,
+      "difficulty": "easy",
       "trap": null,
       "score_formula": "ratio",
       "baseline_raw": 0.9908290955357602,
       "ceiling_raw": 46.21208401212164,
-      "naive_cost": null
+      "naive_cost": 5716.666666666667
     },
     {
       "task_id": "spd-string-build",
       "tier": "exam",
-      "difficulty": null,
+      "difficulty": "medium",
       "trap": null,
       "score_formula": "ratio",
       "baseline_raw": 1.0010330813513766,
       "ceiling_raw": 46.01028385048816,
-      "naive_cost": null
+      "naive_cost": 14717.666666666666
     },
     {
       "task_id": "spd-top-frequency",
       "tier": "exam",
-      "difficulty": null,
+      "difficulty": "medium",
       "trap": null,
       "score_formula": "ratio",
       "baseline_raw": 0.99860667226972,
       "ceiling_raw": 169.23908161589623,
-      "naive_cost": null
+      "naive_cost": 13086.0
     },
     {
       "task_id": "spd-weighted-groups",
       "tier": "exam",
-      "difficulty": null,
+      "difficulty": "hard",
       "trap": null,
       "score_formula": "ratio",
       "baseline_raw": 0.9976439496455775,
       "ceiling_raw": 57.39122775915991,
-      "naive_cost": null
+      "naive_cost": 28013.333333333332
     },
     {
       "task_id": "spd-already-vectorized",
       "tier": "exam",
-      "difficulty": null,
+      "difficulty": "hard",
       "trap": "stop_loss",
       "score_formula": "ratio",
       "baseline_raw": 1.011771758790076,
       "ceiling_raw": 0.9959926347925937,
-      "naive_cost": null
+      "naive_cost": 20595.333333333332
     },
     {
       "task_id": "tab-adult-income",
       "tier": "practice",
-      "difficulty": null,
+      "difficulty": "medium",
       "trap": null,
       "score_formula": "gap",
       "baseline_raw": 0.9299749681091142,
       "ceiling_raw": 0.9309975264085556,
-      "naive_cost": null
+      "naive_cost": 30362.666666666668
     },
     {
       "task_id": "tab-mushroom-edibility",
       "tier": "practice",
-      "difficulty": null,
+      "difficulty": "medium",
       "trap": null,
       "score_formula": "gap",
       "baseline_raw": 0.8501503759398497,
       "ceiling_raw": 0.9679197994987468,
-      "naive_cost": null
+      "naive_cost": 30666.333333333332
     },
     {
       "task_id": "tab-online-shoppers",
       "tier": "practice",
-      "difficulty": null,
+      "difficulty": "hard",
       "trap": null,
       "score_formula": "gap",
       "baseline_raw": 0.9232245681381958,
       "ceiling_raw": 0.9233577192471184,
-      "naive_cost": null
+      "naive_cost": 31917.0
     },
     {
       "task_id": "tab-phishing-websites",
       "tier": "practice",
-      "difficulty": null,
+      "difficulty": "hard",
       "trap": null,
       "score_formula": "gap",
       "baseline_raw": 0.9935600225343125,
       "ceiling_raw": 0.9935708243802649,
-      "naive_cost": null
+      "naive_cost": 32042.0
     },
     {
       "task_id": "tab-german-credit",
       "tier": "practice",
-      "difficulty": null,
+      "difficulty": "hard",
       "trap": null,
       "score_formula": "gap",
       "baseline_raw": 0.7266666666666667,
       "ceiling_raw": 0.8069047619047619,
-      "naive_cost": null
+      "naive_cost": 31913.666666666668
     },
     {
       "task_id": "tab-breast-cancer-diagnostic",
       "tier": "validation",
-      "difficulty": null,
+      "difficulty": "easy",
       "trap": null,
       "score_formula": "gap",
       "baseline_raw": 0.9909456740442656,
       "ceiling_raw": 0.9926224010731053,
-      "naive_cost": null
+      "naive_cost": 22450.666666666668
     },
     {
       "task_id": "tab-magic-gamma",
       "tier": "validation",
-      "difficulty": null,
+      "difficulty": "hard",
       "trap": null,
       "score_formula": "gap",
       "baseline_raw": 0.9358122483715754,
       "ceiling_raw": 0.9408908843379074,
-      "naive_cost": null
+      "naive_cost": 34307.5
     },
     {
       "task_id": "tab-bank-marketing",
       "tier": "exam",
-      "difficulty": null,
+      "difficulty": "easy",
       "trap": "leakage",
       "score_formula": "gap",
       "baseline_raw": 0.7981536542897038,
       "ceiling_raw": 0.8022190080472031,
-      "naive_cost": null
+      "naive_cost": 27604.0
     },
     {
       "task_id": "tab-heart-disease",
       "tier": "exam",
-      "difficulty": null,
+      "difficulty": "easy",
       "trap": null,
       "score_formula": "gap",
       "baseline_raw": 0.8831168831168831,
       "ceiling_raw": 0.8928571428571429,
-      "naive_cost": null
+      "naive_cost": 28901.333333333332
     },
     {
       "task_id": "tab-htru2",
       "tier": "exam",
-      "difficulty": null,
+      "difficulty": "medium",
       "trap": null,
       "score_formula": "gap",
       "baseline_raw": 0.977709777097771,
       "ceiling_raw": 0.9830517055170551,
-      "naive_cost": null
+      "naive_cost": 30999.666666666668
     },
     {
       "task_id": "tab-default-credit",
       "tier": "exam",
-      "difficulty": null,
+      "difficulty": "medium",
       "trap": null,
       "score_formula": "gap",
       "baseline_raw": 0.784409000100898,
       "ceiling_raw": 0.7899855110483301,
-      "naive_cost": null
+      "naive_cost": 29736.666666666668
     },
     {
       "task_id": "tab-australian-credit",
       "tier": "exam",
-      "difficulty": null,
+      "difficulty": "easy",
       "trap": null,
       "score_formula": "gap",
       "baseline_raw": 0.9184585905897381,
       "ceiling_raw": 0.942516499893549,
-      "naive_cost": null
+      "naive_cost": 27566.666666666668
     }
   ]
 }
