@@ -13,6 +13,7 @@ from evaluation.report import run_report
 from ledger import Ledger
 from pilot.harness import PilotHarness, TASK_ID, WORKSPACE
 from pilot.roles import ScriptedRoles
+from research_agent.model import ModelCallError
 
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -29,6 +30,43 @@ class HoldoutPilot(PilotHarness):
 
 
 class OrchestrateTests(unittest.TestCase):
+    def test_model_json_error_still_reaches_one_holdout_and_report(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            config = root / "config"
+            (config / "prompts").mkdir(parents=True)
+            for name in ("agent.json", "hard_caps.json", "triggers.json"):
+                shutil.copyfile(PROJECT / "config" / name, config / name)
+            for source in (PROJECT / "config/prompts").iterdir():
+                shutil.copyfile(source, config / "prompts" / source.name)
+            shutil.copyfile(PROJECT / "tests/fixtures/prices_test_only.json",
+                            config / "prices_test_only.json")
+            run = root / "runs/run-20261114-120000-abcd"
+            create_manifest(project_root=root, run_dir=run, phase="dev", config="default", rep=1,
+                            bank_version="bank-v1", tasks=[TASK_ID], library_root=run / "library",
+                            library_start_version="lib-0", library_frozen=False, model="test-scripted",
+                            agent_config_path=config / "agent.json", prices_path=config / "prices_test_only.json",
+                            code_commit="a" * 40)
+            start_run(run)
+
+            class BadPlanner:
+                def plan(self, payload, *, node_id=None):
+                    raise ModelCallError("malformed JSON")
+
+            harness = HoldoutPilot(size=180, repetitions=2,
+                                   measurements_path=run / "measurements.jsonl")
+            result = execute_task(run_dir=run, task_id=TASK_ID, harness=harness,
+                                  baseline_solution=WORKSPACE / "original.py",
+                                  roles=BadPlanner(), test_only_budget=1.0)
+            self.assertEqual(result["outcome"]["reason"], "error")
+            self.assertEqual(result["outcome"]["best_node"], "n0000")
+            self.assertTrue(result["holdout"]["ok"])
+            finish_run(run)
+            report = run_report(run)
+            self.assertEqual(len(report["tasks"]), 1)
+            self.assertTrue((run / "tasks" / TASK_ID / "replay_context.json").is_file())
+            self.assertTrue((run / "tasks" / TASK_ID / "holdout_attempt.json").is_file())
+
     def test_real_timing_a_c_scripted_loop_quotes_before_experiment(self):
         with TemporaryDirectory() as temp:
             root = Path(temp)

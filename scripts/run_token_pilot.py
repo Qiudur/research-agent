@@ -30,6 +30,7 @@ from research_agent.roles import RoleAgents
 
 PROJECT = Path(__file__).resolve().parents[1]
 TASKS = ("spd-membership-filter", "tab-mushroom-edibility")
+ALLOWED_TASKS = TASKS + ("tab-german-credit",)
 MODEL = "qwen3.5-27b"
 BUDGET_TOKENS = 40_000
 RESERVE_TOKENS = 5_000
@@ -58,8 +59,8 @@ def prepare_task_copies(project_root: Path, campaign_dir: Path, task_ids: tuple[
     copied.mkdir(parents=True, exist_ok=False)
     bank = json.loads((project_root / "tasks/bank.json").read_text(encoding="utf-8"))
     entries = {entry["task_id"]: entry for entry in bank["tasks"]}
-    if any(task_id not in TASKS or entries[task_id]["tier"] != "practice" for task_id in task_ids):
-        raise ValueError("The token pilot accepts only the two approved practice tasks")
+    if any(task_id not in ALLOWED_TASKS or entries[task_id]["tier"] != "practice" for task_id in task_ids):
+        raise ValueError("The token pilot accepts only the selected practice tasks")
     bank["tasks"] = [entries[task_id] for task_id in task_ids]
     _write(copied / "bank.json", bank)
     sources = {}
@@ -158,7 +159,7 @@ def _run_one(project_root: Path, run_dir: Path, task_id: str,
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project-root", type=Path, default=PROJECT)
-    parser.add_argument("--task", choices=TASKS, action="append")
+    parser.add_argument("--task", choices=ALLOWED_TASKS, action="append")
     parser.add_argument("--base-url", default=BASE_URL)
     parser.add_argument("--library-source", type=Path,
                         help="Existing run/library directory for a dev-only reuse check")

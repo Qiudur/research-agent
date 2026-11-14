@@ -29,6 +29,14 @@ class TokenPilotTests(unittest.TestCase):
             self.assertEqual(inputs["label"], "DEV TOKEN MEASUREMENT - NOT MONEY")
             self.assertEqual(len(json.loads((copied / "bank.json").read_text())["tasks"]), 2)
 
+    def test_optional_german_credit_is_practice_only(self):
+        with TemporaryDirectory() as temp:
+            copied = prepare_task_copies(PROJECT, Path(temp) / "campaign",
+                                         ("tab-german-credit",))
+            bank = json.loads((copied / "bank.json").read_text())
+            self.assertEqual([row["task_id"] for row in bank["tasks"]],
+                             ["tab-german-credit"])
+
 
 if __name__ == "__main__":
     unittest.main()

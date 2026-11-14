@@ -7,7 +7,7 @@ import unittest
 
 from library import Library
 from research_agent.io import read_jsonl
-from research_agent.model import BudgetReserveError
+from research_agent.model import BudgetReserveError, ModelCallError
 from research_agent.replay import replay_node
 from research_agent.runner import TaskRunner
 
@@ -233,6 +233,43 @@ class RunnerTests(unittest.TestCase):
             self.assertEqual(latest["n0001"]["status"], "failed")
             self.assertEqual(latest["n0001"]["failure"]["kind"], "budget")
             self.assertEqual(latest["n0001"]["calls"], [])
+            self.assertEqual([event["kind"] for event in ledger.events].count("stop"), 1)
+
+    def test_planner_model_error_keeps_baseline_and_stop_event(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            ledger = FakeLedger()
+            harness = FakeHarness(root)
+            library = Library.open(root / "runs/run-test/library")
+
+            class BadPlanner(FakeRoles):
+                def plan(self, payload, *, node_id=None):
+                    raise ModelCallError("invalid structured output")
+
+            result = self.make_runner(root, harness,
+                                      BadPlanner(ledger, [], draft=False), ledger, library).run()
+            self.assertEqual(result.reason, "error")
+            self.assertEqual(result.best_node, "n0000")
+            self.assertEqual(result.experiments, 0)
+            self.assertEqual([event["kind"] for event in ledger.events].count("stop"), 1)
+
+    def test_summarizer_model_error_preserves_accepted_node(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            ledger = FakeLedger()
+            harness = FakeHarness(root)
+            library = Library.open(root / "runs/run-test/library")
+
+            class BadSummarizer(FakeRoles):
+                def summarize(self, payload, *, node_id=None):
+                    raise ModelCallError("invalid structured output")
+
+            result = self.make_runner(root, harness,
+                                      BadSummarizer(ledger, [idea("good")]),
+                                      ledger, library).run()
+            self.assertEqual(result.reason, "error")
+            self.assertEqual(result.best_node, "n0001")
+            self.assertEqual(result.experiments, 1)
             self.assertEqual([event["kind"] for event in ledger.events].count("stop"), 1)
 
     def test_exam_frozen_library_logs_use_without_mutation(self):

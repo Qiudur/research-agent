@@ -14,7 +14,7 @@ from typing import Any, Mapping
 
 from .artifacts import append_run_log, node_directory, save_score, save_solution
 from .io import append_jsonl, atomic_json, field, fields, read_json
-from .model import BudgetReserveError
+from .model import BudgetReserveError, ModelCallError
 from .scheduler import Scheduler
 from .tree import ExperimentTree
 
@@ -615,6 +615,10 @@ class TaskRunner:
                 self._summarize()
         except BudgetReserveError:
             reason = "budget_cap"
+        except ModelCallError:
+            # The provider may return malformed JSON after earlier valid work.
+            # Preserve the best completed node and let C perform its one holdout.
+            reason = "error"
         except Exception as exc:
             reason = "error"
             self._emit("stop", reason=reason, best_node=self.tree.best_node()["node_id"], dev_score=self.tree.best_node()["score"]["dev"])
