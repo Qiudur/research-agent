@@ -14,6 +14,7 @@ from typing import Any, Mapping
 
 from .artifacts import append_run_log, node_directory, save_score, save_solution
 from .io import append_jsonl, atomic_json, field, fields, read_json
+from .model import BudgetReserveError
 from .scheduler import Scheduler
 from .tree import ExperimentTree
 
@@ -146,10 +147,14 @@ class TaskRunner:
     def _role(self, method: str, payload: dict[str, Any], *, node_id: str | None = None, **options: Any) -> dict[str, Any]:
         cost_before = self._spent()
         elapsed_before = self._ledger_elapsed()
+        blocked_before_call = False
         try:
             response = getattr(self.roles, method)(payload, node_id=node_id, **options)
+        except BudgetReserveError:
+            blocked_before_call = True
+            raise
         finally:
-            if node_id is not None and node_id in self.tree.nodes:
+            if not blocked_before_call and node_id is not None and node_id in self.tree.nodes:
                 node = self.tree.get(node_id)
                 delta_cost = max(0.0, self._spent() - cost_before)
                 delta_llm = max(0.0, float(self._ledger_elapsed().get("llm", 0)) - float(elapsed_before.get("llm", 0)))
@@ -295,6 +300,8 @@ class TaskRunner:
             response = self._role("execute", payload, node_id=node_id, fix=attempt > 1)
             save_solution(node_dir, response.get("code", ""), parent_dir)
         except Exception as exc:
+            if isinstance(exc, BudgetReserveError):
+                raise
             return None, f"Executor output failed: {exc}"
         try:
             run_result = self.harness.run_script(self.task_id, node_dir, ["solution.py"])
@@ -389,7 +396,11 @@ class TaskRunner:
             if self.scheduler.stop_reason(spent=self._spent(), elapsed_wall=self._elapsed(), best_score=self.tree.best_node()["score"]["dev"]):
                 break
             self.tree.start_attempt(node_id, max_attempts=int(self.config["max_attempts"]))
-            result, error = self._run_attempt(node, attempt, error)
+            try:
+                result, error = self._run_attempt(node, attempt, error)
+            except BudgetReserveError:
+                self.tree.fail(node_id, "budget", "Model call blocked before dispatch by budget reserve")
+                raise
             if result is not None:
                 self.tree.succeed(node_id, result)
                 judged = self.tree.judge(node_id, result)
@@ -602,6 +613,8 @@ class TaskRunner:
                         self.reviewed_behind = False
             if self._elapsed() < self.scheduler.wall_seconds and self._spent() < self.scheduler.budget:
                 self._summarize()
+        except BudgetReserveError:
+            reason = "budget_cap"
         except Exception as exc:
             reason = "error"
             self._emit("stop", reason=reason, best_node=self.tree.best_node()["node_id"], dev_score=self.tree.best_node()["score"]["dev"])

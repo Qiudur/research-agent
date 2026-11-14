@@ -51,6 +51,18 @@ class ManifestTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "TEST prices"):
                 self.create(root, phase="exam")
 
+    def test_token_measurement_prices_cannot_be_exam_prices(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            self.setup_root(root)
+            prices = json.loads((root / "config/prices_test_only.json").read_text())
+            prices["currency"] = "TOKENS"
+            prices["test_only"] = True
+            (root / "config/prices_test_only.json").write_text(json.dumps(prices))
+            with self.assertRaisesRegex(ValueError, "Test-only prices"):
+                self.create(root, phase="exam")
+            self.assertEqual(self.create(root, phase="dev")["phase"], "dev")
+
     def test_unset_prices_fail_before_manifest(self):
         with TemporaryDirectory() as temp:
             root = Path(temp)

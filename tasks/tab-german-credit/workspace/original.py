@@ -1,4 +1,4 @@
-"""Measured LightGBM baseline for the Bank Marketing task."""
+"""Measured LightGBM baseline for this tabular task."""
 
 from __future__ import annotations
 

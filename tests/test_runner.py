@@ -7,6 +7,7 @@ import unittest
 
 from library import Library
 from research_agent.io import read_jsonl
+from research_agent.model import BudgetReserveError
 from research_agent.replay import replay_node
 from research_agent.runner import TaskRunner
 
@@ -210,6 +211,29 @@ class RunnerTests(unittest.TestCase):
             self.assertEqual(result.experiments, 0)
             self.assertEqual(result.best_node, "n0000")
             self.assertFalse(any(e["kind"] == "experiment" for e in ledger.events))
+
+    def test_reserve_during_executor_closes_node_and_stops(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            ledger = FakeLedger()
+            harness = FakeHarness(root)
+            library = Library.open(root / "runs/run-test/library")
+
+            class BlockedExecutor(FakeRoles):
+                def execute(self, payload, *, fix=False, node_id=None):
+                    raise BudgetReserveError("reserve reached")
+
+            roles = BlockedExecutor(ledger, [idea("good")], draft=False)
+            result = self.make_runner(root, harness, roles, ledger, library).run()
+            self.assertEqual(result.reason, "budget_cap")
+            self.assertEqual(result.best_node, "n0000")
+            self.assertEqual(result.experiments, 0)
+            latest = {node["node_id"]: node for node in read_jsonl(
+                root / "runs/run-test/tasks/tab-sample/tree.jsonl", "node/1")}
+            self.assertEqual(latest["n0001"]["status"], "failed")
+            self.assertEqual(latest["n0001"]["failure"]["kind"], "budget")
+            self.assertEqual(latest["n0001"]["calls"], [])
+            self.assertEqual([event["kind"] for event in ledger.events].count("stop"), 1)
 
     def test_exam_frozen_library_logs_use_without_mutation(self):
         with TemporaryDirectory() as temp:

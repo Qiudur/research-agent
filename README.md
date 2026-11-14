@@ -1,6 +1,6 @@
 # Research Agent · A/B/C 研究系统
 
-这是按《分工文档》实现的可审计研究系统：A 负责规划、写解、实验树、预算和能力库；B 提供两类任务与隔离评分；C 负责价格账本、练习/验证/考试编排、自研究、报告和看板。代码和测试已跑通，**正式模型实验尚未执行**。TEST 价目、脚本角色和已知参考候选只用于机制联调，不能当作自主提升或真实省钱结论。
+这是按《分工文档》实现的可审计研究系统：A 负责规划、写解、实验树、预算和能力库；B 提供两类任务与隔离评分；C 负责价格账本、练习/验证/考试编排、自研究、报告和看板。真实模型的 dev token 试点已经运行，正式四线比较尚未执行。TEST 价目、脚本角色和已知参考候选只用于机制联调，不能当作自主提升或真实省钱结论。
 
 ## 已交付
 
@@ -21,11 +21,18 @@
     .venv/bin/python -m unittest discover -s dashboard/tests -v
     .venv/bin/python scripts/preflight.py --model <正式模型名>
 
-2026-11-14 在 Python 3.11 虚拟环境中，主测试 133 项、技能层 6 项、看板 7 项均通过；24 道入库题的原始方案逐题通过真实沙箱 dev 评分，证据见 docs/B-全题dev烟测.json。wheel 已构建并从外部工作目录实测评分。真实 B 沙箱加 TEST 价目、脚本角色的三阶段四线端到端测试在 tests/test_real_batch_e2e.py；它跑 30 个 A 主循环任务和每任务一次 holdout，明确不构成真实模型效果。A 的真实计时和跨运行经验试验见 pilot/README.md。每个 TEST 运行的 manifest.phase 均为 dev，不会冒充正式考试。
+2026-11-14 在 Python 3.11 虚拟环境中，主测试 142 项、技能层 6 项、看板 7 项均通过；24 道入库题的原始方案逐题通过真实沙箱 dev 评分，证据见 docs/B-全题dev烟测.json。wheel 已构建并从外部工作目录实测评分。真实 B 沙箱加 TEST 价目、脚本角色的三阶段四线端到端测试在 tests/test_real_batch_e2e.py；它跑 30 个 A 主循环任务和每任务一次 holdout，明确不构成真实模型效果。A 的真实计时和跨运行经验试验见 pilot/README.md。每个 TEST 运行的 manifest.phase 均为 dev，不会冒充正式考试。
 
-## 正式运行
+## 真实模型 dev 试点
 
-先拿到比赛给定的模型名与准确价格，填 config/prices.json；给每道正式题填预算，在朴素配置上实测 naive_cost 后定难度，核对两场景 5/2/5 和陷阱，然后冻结 bank 版本、提交并保持工作区洁净。不要把本地 TEST 价格或凭据写入仓库。具体决策和未完成项见 docs/项目交付与决策.md。
+选择可本地部署的 qwen3.5-27b，经授权网关进行真实模型调用。每题自定 40,000 个四桶合计 token 预算，常规扩展阈值 36,000，每次调用前预留 5,000，墙钟 900 秒。价目表 config/prices_token_pilot.json 的币种为 TOKENS、四桶权重均为 1、test_only=true；它只计量资源，不是现金价格。运行脚本 scripts/run_token_pilot.py 将练习题复制进被 Git 忽略的 runs 目录，不修改原题，并留下 manifest、账本、实验树、单次 holdout、回放上下文和报告。密钥仅通过进程环境临时注入。实验配置、所有尝试和负结果见 docs/真实模型试点.md。
+
+    .venv/bin/python -m scripts.run_token_pilot
+    .venv/bin/python -m scripts.run_token_pilot --task tab-mushroom-edibility --agent-config config/agent_token_pilot_v2.json
+
+## 正式货币运行
+
+若要报告人民币或美元成本，需要核实模型的四桶真实计价并填 config/prices.json；给每道正式题定预算，在朴素配置上实测 naive_cost 后定难度，核对两场景 5/2/5 和陷阱，然后冻结 bank 版本、提交并保持工作区洁净。比赛目前未指定模型或题目预算，所以 token 试点采用自选预算，不能冒充比赛给定价格或正式成绩。不要把试点价目或凭据写成真实货币价格。具体决策和未完成项见 docs/项目交付与决策.md。
 
     export MODEL='比赛提供的实际模型名'
     # OPENAI_API_KEY 由安全渠道注入环境变量，不写入仓库或命令历史。
@@ -46,4 +53,4 @@
 
 ## 当前限制
 
-本机目前没有 OPENAI_API_KEY、正式模型价目或正式题目预算；bank 的 naive_cost、difficulty 仍待真实模型实测，frozen=false。因此正式自研究、验证、考试和真实成本下降数字都**尚未完成**。自动自研究没有总体金额上限，但内部每道题仍沿用 A 的正预算和 90% 硬闸；这与原计划的完全无预算探索有差异，已列入决策记录。正式录屏和答辩中的实测结论须等考试完成后制作。
+授权令牌已在本轮真实 dev 试点中临时使用，没有写入仓库或运行产物。正式货币价目未确认；bank 的 naive_cost、difficulty 仍待相同模型的朴素对照实测，frozen=false。因此正式自研究、验证、考试及真实货币成本下降数字都尚未完成。网关对 max_output_tokens 的行为不能保证推理 token 的绝对上限；预留闸门只降低超预算风险，账本会记录每次实际消耗。自动自研究没有总体金额上限，但内部每道题仍沿用 A 的正预算和 90% 扩展阈值。正式录屏和答辩中的实测结论须等考试完成后制作。

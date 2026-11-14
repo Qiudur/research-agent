@@ -65,6 +65,8 @@ def create_manifest(
     price_descriptor, prices = _descriptor(project_root, Path(prices_path), "prices/1")
     if prices.get("currency") == "TEST" and phase != "dev":
         raise ValueError("TEST prices are restricted to dev runs")
+    if prices.get("test_only") and phase != "dev":
+        raise ValueError("Test-only prices are restricted to dev runs")
     if not isinstance(prices.get("currency"), str) or not prices["currency"].strip():
         raise ValueError("Price currency is unset")
     unit = prices.get("unit_tokens")

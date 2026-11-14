@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 import unittest
 
-from research_agent.model import ModelCallError, ModelClient, TokenUsage, token_usage_from_response
+from research_agent.model import BudgetReserveError, ModelCallError, ModelClient, TokenUsage, token_usage_from_response
+from research_agent.model import _validate_schema
 from research_agent.roles import RoleAgents, SCHEMAS
 
 
@@ -15,6 +17,10 @@ ROOT = Path(__file__).resolve().parents[1]
 class FakeLedger:
     def __init__(self):
         self.calls = []
+        self.money = 0.0
+
+    def spent(self):
+        return self.money
 
     def llm_call(self, **kwargs):
         self.calls.append(kwargs)
@@ -55,6 +61,12 @@ def response(data, *, status="completed", input_tokens=100, cached_tokens=25, ou
 
 
 class ModelTests(unittest.TestCase):
+    def test_integer_schema_accepts_int_and_rejects_bool_or_float(self):
+        _validate_schema(4, {"type": "integer"})
+        for invalid in (True, 4.0):
+            with self.assertRaises(ModelCallError):
+                _validate_schema(invalid, {"type": "integer"})
+
     def test_usage_is_disjoint_for_ledger_pricing(self):
         self.assertEqual(token_usage_from_response(response({})), TokenUsage(75, 25, 50, 30))
         with self.assertRaises(ModelCallError):
@@ -76,7 +88,8 @@ class ModelTests(unittest.TestCase):
         )
         request = fake.responses.requests[0]
         self.assertEqual(request["model"], "chosen-at-runtime")
-        self.assertEqual(request["instructions"], "Fixed executor instructions")
+        self.assertTrue(request["instructions"].startswith("Fixed executor instructions"))
+        self.assertIn('"code"', request["instructions"])
         self.assertEqual(json.loads(request["input"]), {"task": "task-specific state"})
         self.assertEqual(request["reasoning"], {"effort": "low"})
         self.assertEqual(request["text"]["format"]["type"], "json_schema")
@@ -114,6 +127,71 @@ class ModelTests(unittest.TestCase):
             )
         self.assertEqual(ledger.calls[0]["usage"], TokenUsage(75, 25, 50, 30))
         self.assertFalse(ledger.calls[0]["ok"])
+
+    def test_reserve_blocks_dispatch_without_booking_a_call(self):
+        ledger = FakeLedger()
+        ledger.money = 36_001
+        fake = FakeClient(response({"code": "pass"}))
+        client = ModelClient("chosen-at-runtime", ledger, client=fake,
+                             budget_limit=40_000, reserve_cost=5_000)
+        with self.assertRaises(BudgetReserveError):
+            client.call_json(role="executor", purpose="code", effort="low",
+                             system_prompt="Code", payload={}, schema=SCHEMAS["code"])
+        self.assertEqual(fake.responses.requests, [])
+        self.assertEqual(ledger.calls, [])
+
+    def test_reserve_allows_call_at_exact_boundary(self):
+        ledger = FakeLedger()
+        ledger.money = 35_000
+        fake = FakeClient(response({"code": "pass", "notes": ""}))
+        client = ModelClient("chosen-at-runtime", ledger, client=fake,
+                             budget_limit=40_000, reserve_cost=5_000,
+                             clock=lambda: 1.0)
+        client.call_json(role="executor", purpose="code", effort="low",
+                         system_prompt="Code", payload={}, schema=SCHEMAS["code"])
+        self.assertEqual(len(fake.responses.requests), 1)
+        self.assertEqual(len(ledger.calls), 1)
+
+    def test_invalid_json_is_booked_and_visible_in_response_audit(self):
+        ledger = FakeLedger()
+        fake = FakeClient(response({}))
+        fake.responses.response.output_text = "not-json"
+        with TemporaryDirectory() as temp:
+            client = ModelClient("chosen-at-runtime", ledger, client=fake,
+                                 audit_dir=Path(temp), clock=lambda: 1.0)
+            with self.assertRaises(ModelCallError):
+                client.call_json(role="planner", purpose="plan", effort="low",
+                                 system_prompt="Plan", payload={}, schema=SCHEMAS["plan"])
+            audits = list(Path(temp).glob("response-*.json"))
+            self.assertEqual(len(audits), 1)
+            saved = json.loads(audits[0].read_text())
+            self.assertEqual(saved["output_text"], "not-json")
+            self.assertIsNotNone(saved["error"])
+            self.assertEqual(len(ledger.calls), 1)
+
+    def test_schema_shape_mismatch_is_not_treated_as_empty_plan(self):
+        ledger = FakeLedger()
+        fake = FakeClient(response({"hypotheses": [], "budget_plan": {}}))
+        client = ModelClient("chosen-at-runtime", ledger, client=fake,
+                             clock=lambda: 1.0)
+        with self.assertRaisesRegex(ModelCallError, "missing"):
+            client.call_json(role="planner", purpose="plan", effort="high",
+                             system_prompt="Plan", payload={}, schema=SCHEMAS["plan"])
+        self.assertFalse(ledger.calls[0]["ok"])
+
+    def test_single_json_code_fence_is_accepted_but_extra_prose_is_not(self):
+        ledger = FakeLedger()
+        fake = FakeClient(response({"code": "pass", "notes": "ok"}))
+        fake.responses.response.output_text = '```json\n{"code":"pass","notes":"ok"}\n```'
+        client = ModelClient("chosen-at-runtime", ledger, client=fake,
+                             clock=lambda: 1.0)
+        result = client.call_json(role="executor", purpose="code", effort="low",
+                                  system_prompt="Code", payload={}, schema=SCHEMAS["code"])
+        self.assertEqual(result.data["code"], "pass")
+        fake.responses.response.output_text += '\nAdditional prose'
+        with self.assertRaises(ModelCallError):
+            client.call_json(role="executor", purpose="code", effort="low",
+                             system_prompt="Code", payload={}, schema=SCHEMAS["code"])
 
 
 class RolesTests(unittest.TestCase):
