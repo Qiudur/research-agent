@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- source-head: 93240259bd9faf776adf08f8070eacf3d21ac913 -->
+<!-- source-head: 5fbc131e32fa955a545ba6bdeee7810aa1011f10 -->
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
@@ -43,6 +43,10 @@
     .nav { position: fixed; z-index: 20; right: 22px; top: 50%; transform: translateY(-50%); display: grid; gap: 12px; }
     .nav a { display: block; width: 12px; height: 12px; border: 1px solid var(--muted); border-radius: 50%; background: #ffffff20; }
     .nav a:hover, .nav a:focus { background: var(--cyan); }
+    .results { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: clamp(14px, 1.3vw, 18px); }
+    .results th, .results td { padding: .45em .7em; border-bottom: 1px solid var(--line); text-align: right; }
+    .results th:first-child, .results td:first-child, .results th:nth-child(2), .results td:nth-child(2) { text-align: left; }
+    .results th { color: var(--muted); font-weight: 700; }
     details { color: var(--muted); font-size: 15px; }
     details summary { cursor: pointer; color: var(--cyan); }
     .files { columns: 2; max-height: 28vh; overflow: auto; padding-left: 20px; overflow-wrap: anywhere; }
@@ -57,8 +61,8 @@
     <h1>自进化<br>Research Agent</h1>
     <p class="lead">让 Research Agent 研究自己。</p>
     <p class="small" style="max-width:1050px;font-size:18px">这是按《分工文档》实现的可审计研究系统：A 的规划、写解、实验树、预算和能力库，B 的两类任务与隔离评分，以及 C 的账本、阶段编排、自研究和报告，均已通过工程回归与真实沙箱联调。bank-v1 已根据真实 dev 成本校准冻结。首次正式内部 token 练习批次未产生有效候选；修复后的 v2 正在独立工作区运行，验证与考试尚未启动。正式账本的 TOKENS 是资源计量，不能视作现金价格或官方比赛成绩；已核验结果和待办见 内部 token 正式研究报告。</p>
-    <p><span class="tag">内部 token v2 练习研究进行中 · 验证／考试待真实账本</span></p>
-    <p class="small">截至 2026-11-14 20:02 UTC+08:00 · 代码 9324025 · 按仓库已提交内容生成</p>
+    <p><span class="tag">一次性正式考试中止 · 无完整三线成绩</span></p>
+    <p class="small">截至 2026-11-14 23:50 UTC+08:00 · 代码 5fbc131 · 按仓库已提交内容生成</p>
   </div><div class="footer"><span>自进化 Research Agent · A / B / C</span><span>01 / 05</span></div></section>
   <section class="slide" id="system"><div class="inner">
     <div class="eyebrow">01 / System</div><h2>从研究到审计，三层闭环</h2>
@@ -67,7 +71,7 @@
       <article class="card"><div class="eyebrow">B / Bench</div><h3>任务与隔离评分</h3><p>提速与表格二分类两类任务，沙箱隔离，并保留 dev 测量。</p></article>
       <article class="card"><div class="eyebrow">C / Control</div><h3>编排与报告</h3><p>价格账本、练习／验证／考试、自研究、报告和只读看板。</p></article>
     </div>
-    <div class="grid" style="margin-top:22px"><div class="card"><span class="metric">24</span><span class="label">入库题 · README</span></div><div class="card"><span class="metric">216</span><span class="label">已通过测试 · README</span></div><div class="card"><span class="metric">72</span><span class="label">累计源码相关提交</span></div></div>
+    <div class="grid" style="margin-top:22px"><div class="card"><span class="metric">24</span><span class="label">入库题 · README</span></div><div class="card"><span class="metric">216</span><span class="label">已通过测试 · README</span></div><div class="card"><span class="metric">89</span><span class="label">累计源码相关提交</span></div></div>
   </div><div class="footer"><span>来源：<a href="../README.md">README</a> · <a href="项目交付与决策.md">决策记录</a></span><span>02 / 05</span></div></section>
   <section class="slide" id="evidence"><div class="inner">
     <div class="eyebrow">02 / Evidence</div><h2>真实模型 dev 证据</h2>
@@ -77,15 +81,16 @@
       <article class="card"><div class="label">跨题迁移复评</div><span class="metric amber">+0.2851</span><p>归一化分数变化，但每遍 token 变化 +23.3%；结果仍属于 dev，不能证明正式准入。</p><p class="small"><a href="真实模型迁移复评.md">查看迁移记录 ↗</a></p></article>
     </div>
     <p class="notice">bank-v1 已冻结：24 题、72 次 dev 尝试，69 次正常完成、3 次提前停止，四桶合计 1,573,026 token；校准 holdout 0。完整审计：runs/naive-cost-audit-20261114-1041-agent/audit.json。不是现金价格或正式考试成绩。 <a href="提速朴素成本校准.md">提速明细 ↗</a> · <a href="表格朴素成本校准.md">表格明细 ↗</a></p>
-    <p class="notice">真实模型 dev 试验的 TEST ONLY 账本按网关返回的 token 计量；脚本角色 TEST 联调不是实际模型成本。冻结题库内部正式价格表为 TOKENS、test_only=false，同样不是现金价格或官方成绩。v2 自研究、验证与考试数字均待对应真实账本审计后填入。</p>
+
+    <p class="notice">真实模型 dev 试验的 TEST ONLY 账本按网关返回的 token 计量；脚本角色 TEST 联调不是实际模型成本。冻结题库内部正式价格表为 TOKENS、test_only=false，同样不是现金价格或官方成绩。一次性正式考试在 holdout 评分中止，完整三线成绩、总成本和回本点不可报告；详见内部 token 正式研究报告。</p>
   </div><div class="footer"><span>数值从仓库已提交证据文档提取</span><span>03 / 05</span></div></section>
   <section class="slide" id="changes"><div class="inner">
     <div class="eyebrow">03 / Repository Delta</div><h2>本轮仓库更新</h2>
     <div class="split"><div>
       <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:24px"><div class="card"><span class="metric">1</span><span class="label">新增相关提交</span></div><div class="card"><span class="metric">2</span><span class="label">涉及文件</span></div></div>
-      <p class="small">对比上次生成时的源码提交 502a700 → 9324025</p><div class="chips"><span>运行与配置 · 1</span><span>验证与测试 · 1</span></div>
+      <p class="small">对比上次生成时的源码提交 7ef4df6 → 5fbc131</p><div class="chips"><span>运行与配置 · 1</span><span>验证与测试 · 1</span></div>
       <details style="margin-top:24px"><summary>展开变更文件</summary><ul class="files"><li>scripts/generate_roadshow_report.py</li><li>tests/test_roadshow_report.py</li></ul></details>
-    </div><ol class="timeline"><li><strong>Keep roadshow token status accurate on regeneration</strong><span>2026-11-14 · 9324025</span></li></ol></div>
+    </div><ol class="timeline"><li><strong>Show interrupted formal exam status in roadshow</strong><span>2026-11-14 · 5fbc131</span></li></ol></div>
   </div><div class="footer"><span>提交记录：<a href="https://github.com/QZTnb/research-agent/commits/main/">Git 历史 ↗</a></span><span>04 / 05</span></div></section>
   <section class="slide" id="next"><div class="inner">
     <div class="eyebrow">04 / Decision</div><h2>下一步与边界</h2>
