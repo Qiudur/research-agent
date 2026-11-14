@@ -5,7 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Mapping
 
-from .model import ModelClient
+from .experience_script import writer_mode
+from .model import DEFAULT_THINKING_SWITCH_STYLE, ModelClient, check_thinking_switch_style, parse_role_controls
+from .scheduler import validate_options
 
 
 def _object(properties: dict[str, Any]) -> dict[str, Any]:
@@ -32,6 +34,16 @@ PLAN_SCHEMA = _object(
         "expected_progress": {"type": "array", "items": _object({"spent_ratio": _NUMBER, "score": _NUMBER})},
     }
 )
+
+# planner_mode "lean": budget_allocation is no longer required. It stays an
+# allowed property, so a plan may omit it or return an empty array; a filled
+# one is still validated. The company gateway does not enforce schemas (the
+# client validates field by field); an OpenAI-style strict endpoint would
+# insist that every property be required.
+PLAN_SCHEMA_LEAN = {
+    **PLAN_SCHEMA,
+    "required": [key for key in PLAN_SCHEMA["required"] if key != "budget_allocation"],
+}
 
 EXECUTE_SCHEMA = _object({"code": _STRING, "notes": _STRING})
 
@@ -91,8 +103,16 @@ class RoleAgents:
     ) -> None:
         if config.get("schema") != "agent/1":
             raise ValueError("Unknown agent config schema")
+        validate_options(config)
         self.model = model
+        self.planner_mode = config.get("planner_mode") or "standard"
         self.effort = dict(config["effort"])
+        # Optional agent/1 keys; absent means every role behaves exactly as before.
+        self.role_controls = parse_role_controls(config)
+        self.thinking_switch_style = check_thinking_switch_style(
+            config.get("thinking_switch_style", DEFAULT_THINKING_SWITCH_STYLE))
+        writer_mode(config)  # a typo in experience_writer should fail now, not after the budget is spent
+        self.summarizer_reserve = config.get("summarizer_reserve") or "standard"
         self.prompts: dict[str, str] = {}
         resolved_root = project_root.resolve()
         for role in ("planner", "executor", "diagnoser", "summarizer"):
@@ -109,20 +129,37 @@ class RoleAgents:
                 raise ValueError(f"Empty prompt for {role}")
             self.prompts[role] = prompt
 
-    def _call(self, role: str, purpose: str, payload: Mapping[str, Any], node_id: str | None) -> dict[str, Any]:
+    def _controls(self, role: str) -> dict[str, Any]:
+        """Per-call limits from role_controls; empty (no new arguments) by default."""
+        controls = dict(self.role_controls.get(role, {}))
+        if controls.get("thinking") is False:
+            controls["thinking_switch_style"] = self.thinking_switch_style
+        if role == "summarizer" and self.summarizer_reserve == "worst_case":
+            controls["wrapup_reserve"] = True
+        return controls
+
+    def _call(
+        self, role: str, purpose: str, payload: Mapping[str, Any], node_id: str | None,
+        schema: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
         return self.model.call_json(
             role=role,
             purpose=purpose,
             effort=self.effort[role],
             system_prompt=self.prompts[role],
             payload=payload,
-            schema=SCHEMAS[purpose],
+            schema=SCHEMAS[purpose] if schema is None else schema,
             node_id=node_id,
+            **self._controls(role),
         ).data
 
     def plan(self, payload: Mapping[str, Any], *, node_id: str | None = None) -> dict[str, Any]:
-        """Return hypotheses plus predicted cost, seconds and score."""
-        return self._call("planner", "plan", payload, node_id)
+        """Return hypotheses plus predicted cost, seconds and score.
+
+        planner_mode "lean" uses the plan schema without budget_allocation.
+        """
+        schema = PLAN_SCHEMA_LEAN if self.planner_mode == "lean" else None
+        return self._call("planner", "plan", payload, node_id, schema)
 
     def execute(self, payload: Mapping[str, Any], *, fix: bool = False, node_id: str | None = None) -> dict[str, Any]:
         """Return complete solution.py code; fix=True logs purpose=fix."""

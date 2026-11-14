@@ -45,7 +45,8 @@ class BatchTests(unittest.TestCase):
 
     def fake_executor(self, calls: list[tuple], *, tuned_score: float = 0.61,
                       emit_quote: bool = False,
-                      quote_history_seen: list[tuple[str, int]] | None = None):
+                      quote_history_seen: list[tuple[str, int]] | None = None,
+                      fail_holdout=None, over_budget_config: str | None = None):
         def execute(*, run_dir, task_id, harness, baseline_solution,
                     test_only_budget, **kwargs):
             if quote_history_seen is not None:
@@ -76,6 +77,8 @@ class BatchTests(unittest.TestCase):
             ledger = Ledger.open(run_dir, task_id)
             ledger.emit("task_start", budget=1, wall_seconds=60)
             tokens = 100 if config == "tuned_lib" else 200
+            if config == over_budget_config:
+                tokens = 2_000_000  # TEST price: cost 2.0 against the budget of 1.0
             ledger.llm_call(node_id=None, role="planner", purpose="plan", effort="high",
                             model="test-scripted", usage=Usage(input=tokens),
                             seconds=0.1, prompt_hash="a" * 64)
@@ -88,12 +91,16 @@ class BatchTests(unittest.TestCase):
                          "score": {"dev": value}, "cost": 0, "failure": None, "cites": []}
             (task_dir / "tree.jsonl").write_text(json.dumps(root_node) + chr(10), encoding="utf-8")
             ledger.emit("stop", reason="planner", best_node="n0000", dev_score=value)
-            holdout = {"schema": "score/1", "split": "holdout", "score": value,
-                       "ok": True, "correct": True, "raw": value, "spread": 0.0,
-                       "cheat_flags": [], "error": None, "seed": 1,
+            failed = bool(fail_holdout and fail_holdout(config, rep, task_id))
+            holdout = {"schema": "score/1", "split": "holdout", "score": None if failed else value,
+                       "ok": not failed, "correct": not failed, "raw": None if failed else value,
+                       "spread": 0.0, "cheat_flags": [],
+                       "error": ({"kind": "exception", "message": "Scoring worker failed"}
+                                 if failed else None), "seed": 1,
                        "seconds": {"run": 0.0, "queue": 0.0}}
             (task_dir / "holdout_score.json").write_text(json.dumps(holdout), encoding="utf-8")
-            ledger.emit("task_end", best_node="n0000", holdout_score=value,
+            ledger.emit("task_end", best_node="n0000",
+                        holdout_score=None if failed else value, holdout_failed=failed,
                         total_cost=ledger.spent(), seconds={"llm": 0.1, "run": 0,
                                                              "queue": 0, "wall": 1},
                         quote_error={"cost": None, "seconds": None, "score": None})
@@ -229,9 +236,159 @@ class BatchTests(unittest.TestCase):
                 if TIERS[kwargs["task_id"]] == "validation":
                     (kwargs["run_dir"] / "library/tampered.txt").write_text("x")
 
-            with self.assertRaisesRegex(ValueError, "Frozen library changed"):
-                self.run_batch(root, baselines, tamper, run_exam=False)
+            # Detected per run: every tampered validation run is a recorded failure
+            # and the (incomplete) admission cannot be claimed from them.
+            result = self.run_batch(root, baselines, tamper, run_exam=False)
+            self.assertEqual(result["status"], "partial")
+            self.assertEqual(len(result["failed_runs"]), 6)
+            self.assertTrue(all("Frozen library changed" in row["error"]
+                                for row in result["failed_runs"]))
+            self.assertEqual(result["admission"]["claim"], "incomplete")
             self.assertFalse((root / "batches/first/exam_attempt.json").exists())
+
+    def run_failing(self, root, baselines, fail_if, *, ordinary=None, **kwargs):
+        ordinary = ordinary or self.fake_executor([])
+
+        def executor(**call):
+            manifest = json.loads((call["run_dir"] / "manifest.json").read_text())
+            if fail_if(TIERS[call["task_id"]], manifest["config"], manifest["rep"]):
+                raise RuntimeError("solution.py vanished during holdout scoring")
+            return ordinary(**call)
+
+        return self.run_batch(root, baselines, executor, **kwargs)
+
+    def test_one_failed_run_is_isolated_and_the_report_is_still_written(self):
+        for workers in (1, 4):
+            with self.subTest(workers=workers), TemporaryDirectory() as temp:
+                root = Path(temp)
+                baselines = self.setup_project(root)
+                result = self.run_failing(
+                    root, baselines,
+                    lambda tier, config, rep: (tier, config, rep) == ("validation", "tuned_lib", 2),
+                    max_workers=workers)
+                written = json.loads((root / "batches/first/batch_report.json").read_text())
+                self.assertEqual(written["status"], "partial")
+                self.assertEqual(result["status"], "partial")
+                [failure] = result["failed_runs"]
+                self.assertEqual((failure["logical_phase"], failure["config"], failure["rep"]),
+                                 ("validation", "tuned_lib", 2))
+                self.assertIn("vanished", failure["error"])
+                self.assertEqual(failure["error_type"], "RuntimeError")
+                self.assertTrue(failure["run_id"].startswith("run-"))
+                self.assertTrue((root / "runs" / failure["run_id"]).is_dir())  # evidence kept
+                self.assertEqual([len(result["reports"][tier]) for tier in
+                                  ("practice", "validation", "exam")], [12, 5, 9])
+                # Admission needs all six validation runs; otherwise no claim is made.
+                self.assertEqual(result["admission"]["claim"], "incomplete")
+                self.assertEqual(result["admission"]["missing_runs"],
+                                 [{"config": "tuned_lib", "rep": 2}])
+                self.assertIsNone(result["admission"]["comparison"])
+                self.assertTrue(result["tuned_exam_skipped"])
+                self.assertNotIn("tuned_lib", {r["config"] for r in result["reports"]["exam"]})
+                self.assertEqual(result["skipped_runs"], [])
+
+    def test_practice_failure_skips_only_runs_that_need_its_library(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            baselines = self.setup_project(root)
+            result = self.run_failing(
+                root, baselines,
+                lambda tier, config, rep: (tier, config, rep) == ("practice", "default_lib", 1))
+            self.assertEqual(result["status"], "partial")
+            self.assertEqual([(row["logical_phase"], row["config"], row["rep"])
+                              for row in result["failed_runs"]], [("practice", "default_lib", 1)])
+            self.assertEqual({(row["logical_phase"], row["config"], row["rep"])
+                              for row in result["skipped_runs"]},
+                             {("validation", "default_lib", 1), ("exam", "default_lib", 1)})
+            self.assertTrue(all("practice run" in row["reason"] for row in result["skipped_runs"]))
+            self.assertEqual(result["admission"]["claim"], "incomplete")
+            exam = {(r["config"], r["rep"]) for r in result["reports"]["exam"]}
+            self.assertIn(("naive", 1), exam)       # independent lines keep going
+            self.assertIn(("default", 1), exam)
+            self.assertNotIn(("default_lib", 1), exam)
+
+    def test_failed_untrained_practice_run_does_not_block_admission(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            baselines = self.setup_project(root)
+            result = self.run_failing(
+                root, baselines,
+                lambda tier, config, rep: (tier, config, rep) == ("practice", "naive", 3))
+            self.assertEqual(result["status"], "partial")
+            self.assertEqual(result["admission"]["claim"], "admitted")
+            self.assertEqual([len(result["reports"][tier]) for tier in
+                              ("practice", "validation", "exam")], [11, 6, 12])
+            self.assertEqual(result["skipped_runs"], [])
+
+    def test_interrupt_still_writes_batch_report_before_propagating(self):
+        class Interrupt(BaseException):
+            pass
+
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            baselines = self.setup_project(root)
+            ordinary = self.fake_executor([])
+
+            def executor(**call):
+                if TIERS[call["task_id"]] == "validation":
+                    raise Interrupt("operator stop")
+                return ordinary(**call)
+
+            with self.assertRaises(Interrupt):
+                self.run_batch(root, baselines, executor)
+            written = json.loads((root / "batches/first/batch_report.json").read_text())
+            self.assertEqual(written["status"], "partial")
+            self.assertIn("Interrupt", written["aborted"])
+            self.assertEqual(len(written["reports"]["practice"]), 12)
+            self.assertTrue(written["tuned_exam_skipped"])
+
+    def test_failed_holdout_is_listed_and_never_scored_as_zero(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            baselines = self.setup_project(root)
+            executor = self.fake_executor(
+                [], fail_holdout=lambda config, rep, task: (
+                    (config, rep, task) == ("tuned_lib", 1, "spd-validation-a")))
+            result = self.run_batch(root, baselines, executor)
+            self.assertEqual(result["status"], "complete")  # every run finished
+            [failure] = result["holdout_failures"]
+            self.assertEqual((failure["logical_phase"], failure["config"], failure["rep"],
+                              failure["task_id"]), ("validation", "tuned_lib", 1, "spd-validation-a"))
+            self.assertEqual(failure["error"]["kind"], "exception")
+            # The only validation task is excluded from every run: no admission claim.
+            admission = result["admission"]
+            self.assertEqual(admission["claim"], "incomplete")
+            self.assertEqual([item["task_id"] for item in admission["excluded_tasks"]],
+                             ["spd-validation-a"])
+            self.assertEqual(admission["excluded_tasks"][0]["failed_in"][0]["config"], "tuned_lib")
+            self.assertTrue(result["tuned_exam_skipped"])
+            row = next(r for r in result["reports"]["validation"]
+                       if (r["config"], r["rep"]) == ("tuned_lib", 1))
+            self.assertIsNone(row["tasks"][0]["holdout_score"])
+            self.assertEqual(row["holdout_failures"], 1)
+
+    def test_budget_violation_is_reported_in_the_batch_instead_of_stopping_it(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            baselines = self.setup_project(root)
+            result = self.run_batch(root, baselines,
+                                    self.fake_executor([], over_budget_config="naive"))
+            self.assertEqual(result["status"], "complete")
+            self.assertEqual(len(result["budget_violations"]), 9)  # 3 reps x (2 practice + 1 exam)
+            self.assertTrue(all(row["config"] == "naive" for row in result["budget_violations"]))
+            self.assertAlmostEqual(result["budget_violations"][0]["excess"], 1.0)
+            naive_exam = next(r for r in result["reports"]["exam"] if r["config"] == "naive")
+            self.assertEqual(naive_exam["budget_violations"], 1)
+
+    def test_complete_batch_reports_complete_status_with_no_failures(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            baselines = self.setup_project(root)
+            result = self.run_batch(root, baselines, self.fake_executor([]))
+            self.assertEqual((result["status"], result["failed_runs"], result["skipped_runs"],
+                              result["holdout_failures"], result["budget_violations"],
+                              result["aborted"]), ("complete", [], [], [], [], None))
+            self.assertEqual(result["admission"]["claim"], "admitted")
 
     def test_missing_formal_inputs_fail_before_any_run(self):
         with TemporaryDirectory() as temp:

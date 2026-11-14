@@ -14,7 +14,7 @@ from statistics import mean
 
 from ledger import Ledger
 
-from .admission import admit_configuration
+from .comparable import admit_complete, comparable_reports
 from .compare import compare_configurations
 from .proposal import ProposalLedger
 from .report import run_report
@@ -59,7 +59,12 @@ def _finite(value, name, nonnegative=False):
 
 def build_study(reports, *, research_reports=None, research_total_cost=None,
                 research_run_ids=None, admission=None):
-    """Require three paired runs per eligible config; keep TEST separate."""
+    """Require three paired runs per eligible config; keep TEST separate.
+
+    A task whose holdout failed is dropped from every run (pairing needs one task
+    list) and listed in study["excluded_tasks"]; it is never scored as zero.
+    """
+    reports, excluded_tasks = comparable_reports(reports)
     grouped = defaultdict(dict)
     phases, currencies, ids = set(), set(), set()
     exact_token_flags = []
@@ -155,7 +160,7 @@ def build_study(reports, *, research_reports=None, research_total_cost=None,
     return {"schema": "study/1", "phase": phase, "currency": currency, "test_only": test_only,
             "exact_token_accounting": currency == "TOKENS" and all(exact_token_flags),
             "tasks": list(tasks), "configurations": stats, "comparisons": comparisons,
-            "admission": admission,
+            "excluded_tasks": excluded_tasks, "admission": admission,
             "task_rows": rows, "breakeven": {"research_cost": research_cost,
             "research_run_ids": research_ids, "savings_per_task": savings, "tasks": breakeven,
             "eligible": (not rejected and all(delta >= 0 for delta in
@@ -245,6 +250,8 @@ def build_study_from_batch(batch_dir: Path, *, research_reports=None,
     batch = json.loads((batch_dir / "batch_report.json").read_text(encoding="utf-8"))
     if plan.get("schema") != "batch_plan/1" or batch.get("schema") != "batch_report/1":
         raise ValueError("Expected batch_plan/1 and batch_report/1")
+    if batch.get("status", "complete") != "complete":  # reports written before status existed are complete
+        raise ValueError("Batch is partial (failed or skipped runs); no study is plotted from it")
     if plan.get("label") != batch.get("label") or not plan.get("run_exam"):
         raise ValueError("Batch lacks a completed exam plan")
     if plan.get("bank_version") != batch.get("bank_version"):
@@ -284,7 +291,7 @@ def build_study_from_batch(batch_dir: Path, *, research_reports=None,
             manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
             tuned_configs.append(manifest.get("agent_config"))
         validation_reports.append(report)
-    if admit_configuration(validation_reports, baseline="default_lib", candidate="tuned_lib") != admission:
+    if admit_complete(validation_reports, baseline="default_lib", candidate="tuned_lib") != admission:
         raise ValueError("Recorded tuning admission differs from audited validation runs")
     entries = [row for row in batch.get("runs", []) if row.get("logical_phase") == "exam"]
     expected_runs = 12 if admission["claim"] == "admitted" else 9
@@ -362,6 +369,9 @@ def render_html(study):
     research_label = '研究 token 消耗' if is_tokens else '研究成本'
     if study["admission"] and study["admission"]["claim"] == "rejected":
         notice += ' 研究版未通过验证准入，考试只运行其余三条线。'
+    if study.get("excluded_tasks"):
+        notice += (' 已从所有运行中剔除 holdout 评分失败的题，未按零分计：'
+                   + '、'.join(item["task_id"] for item in study["excluded_tasks"]) + '。')
     roi = study["breakeven"]
     if study["admission"] and study["admission"]["claim"] == "rejected":
         spent = (f'已审计{research_label} {roi["research_cost"]:.4f} {escape(study["currency"])}；'

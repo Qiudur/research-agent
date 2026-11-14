@@ -160,8 +160,6 @@ class RealBatchSmokeTests(unittest.TestCase):
             self.assertEqual(len(batch["runs"]), 30)
             self.assertEqual(json.loads((batch_dir / "plan.json").read_text())["max_workers"], 4)
             self.assertEqual(len(scored.scores), 60)
-            self.assertTrue(all(count == 1 for (run, task, split), count in scored.scores.items()
-                                if split == "holdout"))
             self.assertEqual(sum(split == "holdout" for _, _, split in scored.scores), 30)
             self.assertNotIn("RA_EVAL", os.environ)
             self.assertTrue(study["test_only"])
@@ -182,6 +180,17 @@ class RealBatchSmokeTests(unittest.TestCase):
                 self.assertLess(kinds.index("quote"), kinds.index("experiment"))
                 self.assertEqual(kinds.count("task_end"), 1)
                 self.assertTrue((run_dir / "tasks" / task_id / "holdout_attempt.json").exists())
+                # One holdout attempt on the best node, plus one baseline reference
+                # score on the same hidden data when the best node is not the baseline.
+                best = next(event for event in events if event["kind"] == "stop")["best_node"]
+                self.assertEqual(scored.scores[(entry["run_id"], task_id, "holdout")],
+                                 1 if best == "n0000" else 2)
+                ending = next(event for event in events if event["kind"] == "task_end")
+                self.assertFalse(ending["holdout_failed"])
+                self.assertIsNotNone(ending["holdout_raw_lift"])
+                self.assertEqual(ending["baseline_holdout_raw"] is not None, True)
+                baseline = json.loads((run_dir / "tasks" / task_id / "baseline_holdout.json").read_text())
+                self.assertEqual(baseline["reused_best_result"], best == "n0000")
                 self.assertTrue((run_dir / "tasks" / task_id / "test_controls.json").exists())
                 self.assertTrue(all(event["model"] == "test-scripted" and event["cost"] > 0
                                     for event in events if event["kind"] == "llm_call"))

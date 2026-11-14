@@ -69,6 +69,36 @@ class StudyFiguresTests(unittest.TestCase):
         self.assertIn("ledger#7", html)
         self.assertIn("<svg", html)
 
+    def test_failed_holdout_task_is_excluded_from_the_study_and_listed(self):
+        reports = sample_reports()
+        for report in reports:
+            second = deepcopy(report["tasks"][0])
+            second["task_id"] = "spd-second"
+            report["tasks"].append(second)
+            report["total_cost"] *= 2
+        failing = reports[5]["tasks"][1]
+        failing["holdout_score"], failing["holdout_failed"] = None, True
+        study = build_study(reports)
+        self.assertEqual(study["tasks"], ["spd-example"])
+        self.assertEqual([item["task_id"] for item in study["excluded_tasks"]], ["spd-second"])
+        self.assertEqual(study["excluded_tasks"][0]["failed_in"][0]["run_id"],
+                         reports[5]["run_id"])
+        self.assertEqual(len(study["task_rows"]), 12)  # one remaining task x 12 runs
+        self.assertIn("剔除", render_html(study))
+        complete = build_study(sample_reports())
+        self.assertEqual(complete["excluded_tasks"], [])
+        self.assertNotIn("剔除", render_html(complete))
+
+    def test_partial_batch_is_refused_before_any_plotting(self):
+        with TemporaryDirectory() as temp:
+            batch_dir = Path(temp).resolve() / "batches/first"
+            batch_dir.mkdir(parents=True)
+            (batch_dir / "plan.json").write_text(json.dumps({"schema": "batch_plan/1"}))
+            (batch_dir / "batch_report.json").write_text(json.dumps({
+                "schema": "batch_report/1", "status": "partial", "failed_runs": [{"run_id": "run-x"}]}))
+            with self.assertRaisesRegex(ValueError, "partial"):
+                build_study_from_batch(batch_dir)
+
     def test_reject_incomplete_and_cross_phase_data(self):
         reports = sample_reports()
         with self.assertRaises(ValueError):

@@ -28,6 +28,9 @@ _ACTORS = {"online", "self_research", "human"}
 _STATUSES = {"active", "demoted", "retired"}
 _SETTINGS_OVERRIDES: ContextVar[dict[str, str] | None] = ContextVar(
     "library_settings_overrides", default=None)
+_BRIEF_KEYS = {"min_credibility", "max_chars", "max_total_chars"}
+_BRIEF_MIN_CHARS = 16  # keeps "[exp-0001]" and a few words visible after clipping
+_BRIEF_DEFAULT_ENTRIES = 8  # total cap when only max_chars is set: this many full-length lines
 
 
 @contextmanager
@@ -105,6 +108,28 @@ def _settings_path(root: Path, env_name: str, filename: str) -> Path:
     return Path(__file__).resolve().parents[1] / "config" / filename
 
 
+def _brief_settings(raw: Any) -> dict[str, Any]:
+    """Validate the optional agent/1 ``library_brief`` block; absent means no limits."""
+    if raw is None:
+        return {}
+    if not isinstance(raw, dict) or set(raw) - _BRIEF_KEYS:
+        raise LibraryError(f"library_brief must be an object with only {sorted(_BRIEF_KEYS)}")
+    settings: dict[str, Any] = {}
+    if "min_credibility" in raw:
+        value = raw["min_credibility"]
+        if (isinstance(value, bool) or not isinstance(value, (int, float))
+                or not 0 <= value <= 1):
+            raise LibraryError("library_brief.min_credibility must be a number between 0 and 1")
+        settings["min_credibility"] = float(value)
+    for key in ("max_chars", "max_total_chars"):
+        if key in raw:
+            value = raw[key]
+            if isinstance(value, bool) or not isinstance(value, int) or value < _BRIEF_MIN_CHARS:
+                raise LibraryError(f"library_brief.{key} must be an integer of at least {_BRIEF_MIN_CHARS}")
+            settings[key] = value
+    return settings
+
+
 def _validate_entry(entry: Entry, triggers: dict[str, Any]) -> None:
     required = {
         "schema", "id", "kind", "scope", "scenario", "triggers", "conditions",
@@ -170,6 +195,7 @@ class Library:
         self.frozen = frozen
         agent_config = _read_json(_settings_path(root, "RA_AGENT_CONFIG", "agent.json"), "agent/1")
         self.rules = agent_config["library_rules"]
+        self._brief_defaults = _brief_settings(agent_config.get("library_brief"))
         self._triggers = _read_json(_settings_path(root, "RA_TRIGGERS_CONFIG", "triggers.json"), "triggers/1")
         if state.get("schema") != "library/1" or not _VERSION.fullmatch(str(state.get("version"))):
             raise LibraryError("Invalid library state schema or version")
@@ -253,10 +279,26 @@ class Library:
         ))
         return copy.deepcopy(candidates[:k])
 
-    def brief(self, entries: list[Entry]) -> str:
-        lines = []
+    def _brief_lines(
+        self, entries: list[Entry], min_credibility: float | None,
+        max_chars: int | None, max_total_chars: int | None,
+    ) -> list[tuple[Entry, str]]:
+        given = {"min_credibility": min_credibility, "max_chars": max_chars,
+                 "max_total_chars": max_total_chars}
+        settings = {**self._brief_defaults,
+                    **_brief_settings({key: value for key, value in given.items() if value is not None})}
+        floor = settings.get("min_credibility")
+        line_cap = settings.get("max_chars")
+        total_cap = settings.get("max_total_chars")
+        if total_cap is None and line_cap is not None:
+            total_cap = line_cap * _BRIEF_DEFAULT_ENTRIES
+        limits = [value for value in (line_cap, total_cap) if value is not None]
+        shown: list[tuple[Entry, str]] = []
+        used = 0
         for item in entries:
             entry = self.get(item["id"])
+            if floor is not None and entry["credibility"] + 1e-12 < floor:
+                continue
             conditions = entry["conditions"].strip().replace("\n", " ")
             if entry["kind"] == "skill":
                 detail = entry["summary"].strip().replace("\n", " ")
@@ -264,8 +306,38 @@ class Library:
                 detail = entry["action"].strip().replace("\n", " ")
             prefix = "避免" if entry["negative"] else "可试"
             suffix = f"；适用条件：{conditions}" if conditions else ""
-            lines.append(f"[{entry['id']}] {prefix}：{detail}{suffix}")
-        return "\n".join(lines)
+            line = f"[{entry['id']}] {prefix}：{detail}{suffix}"
+            if limits and len(line) > min(limits):
+                line = line[:min(limits) - 1].rstrip() + "…"
+            if total_cap is not None and used + len(line) + bool(shown) > total_cap:
+                break  # entries arrive in rank order, so the lower-ranked ones are dropped
+            used += len(line) + bool(shown)
+            shown.append((entry, line))
+        return shown
+
+    def brief(
+        self, entries: list[Entry], *, min_credibility: float | None = None,
+        max_chars: int | None = None, max_total_chars: int | None = None,
+    ) -> str:
+        """Prompt text for the planner, one line per entry.
+
+        Without arguments the agent/1 ``library_brief`` block applies; with
+        neither, every entry is listed in full, as before. min_credibility drops
+        weaker entries, max_chars clips each line (the leading ``[id]`` always
+        survives) and max_total_chars bounds the whole text, dropping the
+        lowest-ranked entries that do not fit; it defaults to 8 full-length lines
+        once max_chars is set.
+        """
+        return "\n".join(line for _, line in self._brief_lines(
+            entries, min_credibility, max_chars, max_total_chars))
+
+    def brief_entries(
+        self, entries: list[Entry], *, min_credibility: float | None = None,
+        max_chars: int | None = None, max_total_chars: int | None = None,
+    ) -> list[Entry]:
+        """The entries brief() would show for the same arguments, in order."""
+        return [entry for entry, _ in self._brief_lines(
+            entries, min_credibility, max_chars, max_total_chars)]
 
     def load_skill(self, skill_id: str) -> str:
         entry = self.get(skill_id)

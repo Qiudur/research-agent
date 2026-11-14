@@ -22,14 +22,84 @@ def _number(value: Any, name: str) -> float:
     return number
 
 
+# Optional agent/1 switches. Every key is absent in config/agent.json, and an
+# absent (or null) key keeps the original behavior.
+SCENARIO_KEYS = ("spd", "tab")  # task_id prefixes: spd-... and tab-...
+STOP_LOSS_KEYS = ("first_n_no_gain", "consecutive_no_gain")
+PLANNER_MODES = ("standard", "lean")
+SUMMARIZER_RESERVES = ("standard", "worst_case")
+BASELINE_NODE_ID = "n0000"
+MAX_STOP_LOSS_NODES = 100
+MAX_HYPOTHESES_PER_PLAN = 20
+
+
+def scenario_key(task_id: str | None) -> str | None:
+    """Return the settings key (spd or tab) for a published task id, else None."""
+    prefix = str(task_id or "").partition("-")[0]
+    return prefix if prefix in SCENARIO_KEYS else None
+
+
+def _bounded_int(value: Any, name: str, low: int, high: int) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or not low <= value <= high:
+        raise ScheduleError(f"{name} must be an integer from {low} to {high}")
+    return value
+
+
+def _scenario_table(value: Any, name: str) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise ScheduleError(f"{name} must be an object keyed by {'/'.join(SCENARIO_KEYS)}")
+    unknown = sorted(str(key) for key in value if key not in SCENARIO_KEYS)
+    if unknown:
+        raise ScheduleError(f"{name} has unknown scenario keys {unknown}")
+    return value
+
+
+def validate_options(config: Mapping[str, Any]) -> None:
+    """Type and range checks for the optional switches (null means unset)."""
+    stop_loss = config.get("stop_loss")
+    if stop_loss is not None:
+        for scenario, rule in _scenario_table(stop_loss, "stop_loss").items():
+            if not isinstance(rule, Mapping):
+                raise ScheduleError(f"stop_loss.{scenario} must be an object")
+            unknown = sorted(str(key) for key in rule if key not in STOP_LOSS_KEYS)
+            if unknown:
+                raise ScheduleError(f"stop_loss.{scenario} has unknown keys {unknown}")
+            for key, value in rule.items():
+                if value is not None:
+                    _bounded_int(value, f"stop_loss.{scenario}.{key}", 1, MAX_STOP_LOSS_NODES)
+    for name in ("ceiling_excludes_baseline", "failure_feedback"):
+        if config.get(name) is not None and not isinstance(config[name], bool):
+            raise ScheduleError(f"{name} must be true or false")
+    mode = config.get("planner_mode")
+    if mode is not None and mode not in PLANNER_MODES:
+        raise ScheduleError(f"planner_mode must be one of {list(PLANNER_MODES)}")
+    reserve = config.get("summarizer_reserve")
+    if reserve is not None and reserve not in SUMMARIZER_RESERVES:
+        raise ScheduleError(f"summarizer_reserve must be one of {list(SUMMARIZER_RESERVES)}")
+    per_plan = config.get("hypotheses_per_plan")
+    if per_plan is not None:
+        _bounded_int(per_plan, "hypotheses_per_plan", 1, MAX_HYPOTHESES_PER_PLAN)
+    priors = config.get("cost_priors")
+    if priors is not None:
+        for scenario, value in _scenario_table(priors, "cost_priors").items():
+            if (isinstance(value, bool) or not isinstance(value, (int, float))
+                    or not math.isfinite(value) or value <= 0):
+                raise ScheduleError(f"cost_priors.{scenario} must be a positive finite number")
+
+
 @dataclass(frozen=True)
 class Scheduler:
-    """Rules-only scheduler: no manager model and no hidden budget changes."""
+    """Rules-only scheduler: no manager model and no hidden budget changes.
+
+    task_id selects the per-scenario (spd/tab) entries of the optional
+    stop_loss and cost_priors settings; without it they are ignored.
+    """
 
     config: Mapping[str, Any]
     hard_caps: Mapping[str, Any]
     budget: float
     wall_seconds: float
+    task_id: str = ""
 
     def __post_init__(self) -> None:
         if self.config.get("schema") != "agent/1":
@@ -46,22 +116,77 @@ class Scheduler:
             raise ScheduleError("Hard cap and wrap-up reserve are invalid")
         if int(self.config.get("plateau_nodes", 0)) <= 0 or int(self.config.get("explore_every", 0)) <= 0:
             raise ScheduleError("Review and exploration intervals must be positive")
+        validate_options(self.config)
 
     @property
     def spend_cap(self) -> float:
         return self.budget * float(self.hard_caps["budget_ratio"])
 
+    @property
+    def scenario(self) -> str | None:
+        """spd or tab, taken from the task id prefix."""
+        return scenario_key(self.task_id)
+
+    def _scenario_setting(self, name: str) -> Any:
+        table = self.config.get(name)
+        if not table or self.scenario is None:
+            return None
+        return table.get(self.scenario)
+
+    @property
+    def cost_prior(self) -> float | None:
+        """Fixed per-hypothesis cost for this scenario, replacing the planner's guess."""
+        value = self._scenario_setting("cost_priors")
+        return None if value is None else float(value)
+
+    def estimated_cost(self, planner_cost: float) -> float:
+        """The cost to schedule with: the scenario prior when set, else the planner's estimate."""
+        prior = self.cost_prior
+        return prior if prior is not None else _number(planner_cost, "estimated_cost")
+
     def budget_remaining(self, spent: float) -> float:
         return max(0.0, self.spend_cap - _number(spent, "spent"))
 
-    def stop_reason(self, *, spent: float, elapsed_wall: float, best_score: float) -> str | None:
-        """Return a published stop reason when a hard upper bound is reached."""
+    def stop_reason(
+        self,
+        *,
+        spent: float,
+        elapsed_wall: float,
+        best_score: float,
+        best_node_id: str | None = None,
+    ) -> str | None:
+        """Return a published stop reason when a hard upper bound is reached.
+
+        With ceiling_excludes_baseline, a baseline (n0000) that already scores
+        1 or more is not a ceiling; only a better, accepted node can reach it.
+        """
         if _number(spent, "spent") >= self.spend_cap:
             return "budget_cap"
         if _number(elapsed_wall, "elapsed_wall") >= self.wall_seconds:
             return "time"
         if _number(best_score, "best_score") >= 1:
+            if self.config.get("ceiling_excludes_baseline") and best_node_id == BASELINE_NODE_ID:
+                return None
             return "ceiling"
+        return None
+
+    def stop_loss_reason(self, statuses: Sequence[str]) -> str | None:
+        """Return "stop_loss" when this scenario's early-exit rule is met.
+
+        statuses holds the final status (accepted, rejected or failed) of each
+        completed non-root node in completion order. first_n_no_gain stops when
+        the first N of them include no accepted node; consecutive_no_gain stops
+        when the latest K include none.
+        """
+        rule = self._scenario_setting("stop_loss")
+        if not rule:
+            return None
+        first_n = rule.get("first_n_no_gain")
+        if first_n and len(statuses) >= first_n and "accepted" not in statuses[:first_n]:
+            return "stop_loss"
+        streak = rule.get("consecutive_no_gain")
+        if streak and len(statuses) >= streak and "accepted" not in statuses[-streak:]:
+            return "stop_loss"
         return None
 
     def can_expand(
@@ -73,7 +198,7 @@ class Scheduler:
         estimated_seconds: float = 0.0,
     ) -> bool:
         """Preserve the hard reserve before starting an estimated experiment."""
-        cost = _number(estimated_cost, "estimated_cost")
+        cost = self.estimated_cost(estimated_cost)
         seconds = _number(estimated_seconds, "estimated_seconds")
         if cost < 0 or seconds < 0:
             raise ScheduleError("Estimated cost and seconds cannot be negative")
@@ -113,17 +238,23 @@ class Scheduler:
         *,
         cited_effects: Sequence[Mapping[str, Any]] = (),
         past_predictions: Sequence[Mapping[str, float]] = (),
+        cost_prior: float | None = None,
     ) -> float:
         """Rank gain per cost with guarded historical and forecast calibration.
 
         Each cited effect can contain uses, mean_gain, and mean_cost. Past predictions
         contain gain and actual_gain. Three pseudo-observations keep small samples
         near the planner estimate; the past-gain multiplier is bounded to 0.5–1.5.
+        A cost_prior replaces the planner's own cost estimate (which must still be valid).
         """
         plan_gain = max(0.0, _number(estimate.get("gain"), "estimate.gain"))
         plan_cost = _number(estimate.get("cost"), "estimate.cost")
         if plan_cost <= 0:
             raise ScheduleError("Estimated cost must be positive to rank hypotheses")
+        if cost_prior is not None:
+            plan_cost = _number(cost_prior, "cost_prior")
+            if plan_cost <= 0:
+                raise ScheduleError("cost_prior must be positive")
         weighted_gain = 0.0
         weighted_cost = 0.0
         weight_sum = 0.0
