@@ -9,7 +9,8 @@ import unittest
 from unittest.mock import patch
 
 from evaluation.admission import admit_configuration
-from evaluation.figures import CONFIGS, build_study, build_study_from_batch, render_html
+from evaluation.figures import (CONFIGS, _verify_formal_attempt_markers,
+                                build_study, build_study_from_batch, render_html)
 
 
 def sample_reports():
@@ -32,6 +33,29 @@ def sample_reports():
 
 
 class StudyFiguresTests(unittest.TestCase):
+    def test_formal_one_shot_markers_must_name_same_batch_and_commit(self):
+        with TemporaryDirectory() as temp:
+            project = Path(temp).resolve()
+            batch_dir = project / "batches/first"
+            batch_dir.mkdir(parents=True)
+            (project / "runs").mkdir()
+            with self.assertRaises(FileNotFoundError):
+                _verify_formal_attempt_markers(project, batch_dir, "bank-v1")
+            for stage in ("validation", "exam"):
+                path = project / "runs" / f"{stage}-bank-v1.attempt.json"
+                path.write_text(json.dumps({"schema": f"{stage}_attempt/1",
+                                            "bank_version": "bank-v1",
+                                            "code_commit": "a" * 40,
+                                            "batch_dir": str(batch_dir)}), encoding="utf-8")
+            self.assertEqual(_verify_formal_attempt_markers(project, batch_dir, "bank-v1"),
+                             "a" * 40)
+            path = project / "runs/exam-bank-v1.attempt.json"
+            tampered = json.loads(path.read_text(encoding="utf-8"))
+            tampered["code_commit"] = "b" * 40
+            path.write_text(json.dumps(tampered), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "different code commits"):
+                _verify_formal_attempt_markers(project, batch_dir, "bank-v1")
+
     def test_test_only_report_and_break_even(self):
         study = build_study(sample_reports(), research_reports=[{
             "schema": "run_report/1", "run_id": "self-1", "phase": "dev",

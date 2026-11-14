@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from ledger import Ledger
+from research_agent.replay import _verify_replay_context
 from token_accounting import is_exact_token_accounting
 
 
@@ -74,6 +75,20 @@ def task_report(run_dir: Path, task_id: str) -> dict:
         raise ValueError("Task best node is not an accepted tree node")
     tokens = {key: sum(int(event["tokens"][key]) for event in model_events)
               for key in ("input", "cached_input", "output", "reasoning")}
+    if (ledger.manifest["phase"] != "dev"
+            and is_exact_token_accounting(ledger.prices, ledger.manifest["model"])):
+        starts = [event for event in events if event["kind"] == "task_start"]
+        budget = starts[0].get("budget") if len(starts) == 1 else None
+        if (type(budget) not in (int, float) or not math.isfinite(budget)
+                or budget <= 0 or billed > budget
+                or not math.isclose(billed, sum(tokens.values()), rel_tol=1e-10, abs_tol=1e-12)):
+            raise ValueError("Formal token task exceeded its budget or ledger units differ")
+        library_root = run_dir.parent.parent / ledger.manifest["library"]["root"]
+        replay = _verify_replay_context(run_dir=run_dir, task_id=task_id,
+                                         node=best, library_root=library_root)
+        if (type(replay.get("max_output_tokens")) is not int
+                or not 1 <= replay["max_output_tokens"] <= 2048):
+            raise ValueError("Formal token replay exceeds the call output limit")
     role_cost = {role: sum(float(event["cost"]) for event in model_events if event["role"] == role)
                  for role in ("planner", "executor", "diagnoser", "summarizer")}
     quotes = [event for event in events if event["kind"] == "quote"]
