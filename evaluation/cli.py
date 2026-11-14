@@ -165,7 +165,7 @@ def _parser() -> argparse.ArgumentParser:
     batch.add_argument("--batch-dir", type=Path, required=True)
     batch.add_argument("--exam", action="store_true")
     batch.add_argument("--workers", type=int, default=1,
-                       help="Independent runs in parallel (1-4); sandbox calls stay serialized")
+                       help="Independent runs in parallel (1-8); sandbox calls stay serialized")
     chart = commands.add_parser("figures", help="Render the audited batch study")
     chart.add_argument("--batch-dir", type=Path, required=True)
     chart.add_argument("--auto-study-dir", type=Path)

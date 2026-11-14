@@ -186,7 +186,9 @@ class ModelClient:
                 from openai import OpenAI
             except ImportError as exc:
                 raise RuntimeError("Install research-agent-abc[llm] to make live model calls") from exc
-            client = OpenAI()
+            # Budget accounting cannot see usage from hidden SDK retries.
+            # Keep each recorded call to one gateway attempt and cap stalls.
+            client = OpenAI(timeout=180.0, max_retries=0)
         self.model = model
         self.ledger = ledger
         self.client = client

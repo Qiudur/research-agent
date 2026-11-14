@@ -5,6 +5,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 from research_agent.model import BudgetReserveError, ModelCallError, ModelClient, TokenUsage, token_usage_from_response
 from research_agent.model import _validate_schema
@@ -61,6 +62,11 @@ def response(data, *, status="completed", input_tokens=100, cached_tokens=25, ou
 
 
 class ModelTests(unittest.TestCase):
+    def test_default_transport_disables_unmetered_sdk_retries(self):
+        with patch("openai.OpenAI") as constructor:
+            ModelClient("chosen-at-runtime", None)
+        constructor.assert_called_once_with(timeout=180.0, max_retries=0)
+
     def test_integer_schema_accepts_int_and_rejects_bool_or_float(self):
         _validate_schema(4, {"type": "integer"})
         for invalid in (True, 4.0):

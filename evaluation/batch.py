@@ -235,8 +235,8 @@ def execute_batch(
         raise FileExistsError(f"Batch is one-shot: {batch_dir}")
     if run_exam and not run_validation:
         raise ValueError("Exam requires validation admission first")
-    if type(max_workers) is not int or not 1 <= max_workers <= 4:
-        raise ValueError("max_workers must be an integer between 1 and 4")
+    if type(max_workers) is not int or not 1 <= max_workers <= 8:
+        raise ValueError("max_workers must be an integer between 1 and 8")
     if not configs or len(set(configs)) != len(configs) or set(configs) - CONFIGS:
         raise ValueError("Configs must be unique run/1 configuration labels")
     if "tuned_lib" in configs and "default_lib" not in configs:

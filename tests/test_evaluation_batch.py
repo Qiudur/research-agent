@@ -120,7 +120,7 @@ class BatchTests(unittest.TestCase):
             baselines = self.setup_project(root)
             calls: list[tuple] = []
             ordinary = self.fake_executor(calls)
-            first_wave = threading.Barrier(4)
+            first_wave = threading.Barrier(8)
             counter_lock = threading.Lock()
             active = 0
             peak = 0
@@ -137,12 +137,12 @@ class BatchTests(unittest.TestCase):
 
             def executor(**kwargs):
                 manifest = json.loads((kwargs["run_dir"] / "manifest.json").read_text())
-                if kwargs["task_id"] == "spd-practice-a" and manifest["rep"] == 1:
+                if kwargs["task_id"] == "spd-practice-a" and manifest["rep"] in (1, 2):
                     first_wave.wait(timeout=10)
                 kwargs["harness"].score()
                 return ordinary(**kwargs)
 
-            result = self.run_batch(root, baselines, executor, max_workers=4,
+            result = self.run_batch(root, baselines, executor, max_workers=8,
                                     harness=ProbeHarness())
             self.assertEqual(peak, 1)
             self.assertEqual([len(result["reports"][tier]) for tier in
