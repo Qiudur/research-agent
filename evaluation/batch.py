@@ -24,7 +24,7 @@ from typing import Any, Callable, Mapping
 from library import Library
 from token_accounting import require_exact_token_accounting
 
-from .admission import admit_configuration
+from .comparable import admit_complete
 from .finalize import _eval_window, finish_run, start_run
 from .manifest import CONFIGS, create_manifest
 from .orchestrate import execute_task
@@ -331,6 +331,8 @@ def execute_batch(
     }, ensure_ascii=False, indent=2) + chr(10), encoding="utf-8")
     reports: dict[str, list[dict]] = {tier: [] for tier in TIERS}
     runs: list[dict] = []
+    failed_runs: list[dict] = []
+    skipped_runs: list[dict] = []
     practice_libraries: dict[tuple[str, int], Path] = {}
     task_harness = (_SerializedHarness(harness, Lock()) if max_workers > 1 else harness)
 
@@ -372,7 +374,8 @@ def execute_batch(
                 kwargs["roles"] = roles_factory(config, rep, task_id, run_dir)
             task_executor(**kwargs)
             completed_task = task_report(run_dir, task_id)
-            if completed_task["quote"] is not None:
+            # A failed holdout has no actual score to learn the next quote from.
+            if completed_task["quote"] is not None and not completed_task["holdout_failed"]:
                 quote_history[scenario].append({
                     "predicted": completed_task["quote"],
                     "actual": {
@@ -393,48 +396,102 @@ def execute_batch(
         return report, row, library_root
 
     def run_phase(tier: str, specs: list[tuple[str, int, Path | None]]) -> None:
+        """Run independent jobs; one failing run is recorded, never fatal to the rest."""
         jobs = [(config, rep, source, reserve_run()) for config, rep, source in specs]
+
+        def guarded(job: tuple) -> tuple[tuple | None, dict | None]:
+            config, rep, _, run_dir = job
+            try:
+                return one_run(tier, *job), None
+            except Exception as exc:  # noqa: BLE001 - evidence stays on disk
+                return None, {"logical_phase": tier, "run_id": run_dir.name,
+                              "config": config, "rep": rep,
+                              "error_type": type(exc).__name__, "error": str(exc)[:1000]}
+
         if max_workers == 1:
-            completed = [one_run(tier, *job) for job in jobs]
+            outcomes = [guarded(job) for job in jobs]
         else:
             with ThreadPoolExecutor(max_workers=max_workers) as pool:
-                futures = [pool.submit(one_run, tier, *job) for job in jobs]
-                completed = [future.result() for future in futures]
-        for (config, rep, _), (report, row, library_root) in zip(specs, completed):
+                outcomes = list(pool.map(guarded, jobs))
+        for (config, rep, _), (done, failure) in zip(specs, outcomes):
+            if failure is not None:
+                failed_runs.append(failure)
+                continue
+            report, row, library_root = done
             reports[tier].append(report)
             runs.append(row)
             if tier == "practice":
                 practice_libraries[(config, rep)] = library_root
 
-    run_phase("practice", [(config, rep, None) for rep in (1, 2, 3) for config in configs])
-    if run_validation:
-        if formal:
-            _mark_attempt(root, "validation", bank_version, code_commit, batch_dir)
-        run_phase("validation", [
-            (config, rep, practice_libraries[(config, rep)])
-            for rep in (1, 2, 3) for config in configs if config in TRAINED_CONFIGS])
+    def needs_library(tier: str, wanted: list[tuple[str, int]]) -> list[tuple[str, int, Path | None]]:
+        """Trained lines continue from their own practice library; skip if it never finished."""
+        specs: list[tuple[str, int, Path | None]] = []
+        for config, rep in wanted:
+            if config not in TRAINED_CONFIGS:
+                specs.append((config, rep, None))
+            elif (config, rep) in practice_libraries:
+                specs.append((config, rep, practice_libraries[(config, rep)]))
+            else:
+                skipped_runs.append({"logical_phase": tier, "config": config, "rep": rep,
+                                     "reason": "practice run of this configuration and repetition did not complete"})
+        return specs
+
     admission = None
-    if run_validation and "tuned_lib" in configs:
-        admission = admit_configuration(
-            reports["validation"], baseline="default_lib", candidate="tuned_lib")
-    if run_exam:
-        if formal:
-            _mark_attempt(root, "exam", bank_version, code_commit, batch_dir)
-        with (batch_dir / "exam_attempt.json").open("x", encoding="utf-8") as handle:
-            handle.write(json.dumps({"schema": "exam_attempt/1",
-                                     "label": "TEST ONLY" if not formal else "FORMAL"}) + chr(10))
-        run_phase("exam", [
-            (config, rep, practice_libraries[(config, rep)]
-             if config in TRAINED_CONFIGS else None)
-            for rep in (1, 2, 3) for config in configs
-            if config != "tuned_lib" or (admission is not None and admission["claim"] == "admitted")])
+    aborted: BaseException | None = None
+    try:
+        run_phase("practice", [(config, rep, None) for rep in (1, 2, 3) for config in configs])
+        if run_validation:
+            specs = needs_library("validation", [
+                (config, rep) for rep in (1, 2, 3) for config in configs
+                if config in TRAINED_CONFIGS])
+            # The one-shot marker is spent only when some validation run really starts.
+            if formal and specs:
+                _mark_attempt(root, "validation", bank_version, code_commit, batch_dir)
+            run_phase("validation", specs)
+        if run_validation and "tuned_lib" in configs:
+            # Decided only from a full set of paired repetitions; otherwise "incomplete".
+            admission = admit_complete(
+                reports["validation"], baseline="default_lib", candidate="tuned_lib")
+        if run_exam:
+            specs = needs_library("exam", [
+                (config, rep) for rep in (1, 2, 3) for config in configs
+                if config != "tuned_lib"
+                or (admission is not None and admission["claim"] == "admitted")])
+            if formal and specs:
+                _mark_attempt(root, "exam", bank_version, code_commit, batch_dir)
+            with (batch_dir / "exam_attempt.json").open("x", encoding="utf-8") as handle:
+                handle.write(json.dumps({"schema": "exam_attempt/1",
+                                         "label": "TEST ONLY" if not formal else "FORMAL"}) + chr(10))
+            run_phase("exam", specs)
+    except BaseException as exc:  # noqa: BLE001 - the report is written whatever happens
+        aborted = exc
+    task_rows = [(tier, report, task) for tier, rows in reports.items()
+                 for report in rows for task in report["tasks"]]
     result = {"schema": "batch_report/1", "label": "TEST ONLY" if not formal else "FORMAL",
-              "bank_version": bank_version, "runs": runs, "reports": reports,
+              "bank_version": bank_version,
+              "status": ("complete" if not failed_runs and not skipped_runs and aborted is None
+                         else "partial"),
+              "runs": runs, "reports": reports,
+              "failed_runs": failed_runs, "skipped_runs": skipped_runs,
+              "aborted": (f"{type(aborted).__name__}: {aborted}"[:1000]
+                          if aborted is not None else None),
               "admission": admission,
               "tuned_exam_skipped": bool(run_exam and "tuned_lib" in configs
-                                        and admission["claim"] != "admitted")}
+                                        and (admission is None or admission["claim"] != "admitted")),
+              "holdout_failures": [
+                  {"logical_phase": tier, "run_id": report["run_id"], "config": report["config"],
+                   "rep": report["rep"], "task_id": task["task_id"],
+                   "error": task.get("holdout_error")}
+                  for tier, report, task in task_rows if task.get("holdout_failed")],
+              "budget_violations": [
+                  {"logical_phase": tier, "run_id": report["run_id"], "config": report["config"],
+                   "rep": report["rep"], "task_id": task["task_id"],
+                   "total_cost": task["total_cost"], "excess": task["budget_excess"]}
+                  for tier, report, task in task_rows if task.get("budget_violation")]}
     (batch_dir / "batch_report.json").write_text(
         json.dumps(result, ensure_ascii=False, indent=2) + chr(10), encoding="utf-8")
+    if aborted is not None:
+        raise aborted
     return result
 
 

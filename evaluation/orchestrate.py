@@ -126,7 +126,7 @@ def execute_task(
                          max_output_tokens=max_output_tokens)
     holdout = finish_task(run_dir, task_id, harness)
     return {"outcome": vars(outcome), "holdout": holdout["score"],
-            "task_end": holdout["task_end"]}
+            "baseline_holdout": holdout["baseline"], "task_end": holdout["task_end"]}
 
 
 __all__ = ["execute_task"]

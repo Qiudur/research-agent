@@ -113,7 +113,7 @@ class SelfResearchTests(unittest.TestCase):
 
     def fake_executor(self, calls, *, tamper: Path | None = None,
                       default_score: float = .55, tuned_score: float = .60,
-                      tuned_tokens: int = 100):
+                      tuned_tokens: int = 100, fail_holdout_task: str | None = None):
         def execute(*, run_dir, task_id, harness, baseline_solution,
                     test_only_budget, **kwargs):
             self.assertEqual(test_only_budget, 1.0)
@@ -147,19 +147,35 @@ class SelfResearchTests(unittest.TestCase):
                     "cost": 0, "failure": None, "cites": []}
             (node.parent.parent / "tree.jsonl").write_text(json.dumps(tree) + chr(10))
             ledger.emit("stop", reason="planner", best_node="n0000", dev_score=score)
-            holdout = {"schema": "score/1", "split": "holdout", "score": score,
-                       "ok": True, "correct": True, "raw": score, "spread": 0.0,
-                       "cheat_flags": [], "error": None, "seed": 1,
+            failed = task_id == fail_holdout_task
+            holdout = {"schema": "score/1", "split": "holdout", "score": None if failed else score,
+                       "ok": not failed, "correct": not failed, "raw": None if failed else score,
+                       "spread": 0.0, "cheat_flags": [],
+                       "error": ({"kind": "exception", "message": "Scoring worker failed"}
+                                 if failed else None), "seed": 1,
                        "seconds": {"run": 0.0, "queue": 0.0}}
             (node.parent.parent / "holdout_score.json").write_text(json.dumps(holdout))
-            ledger.emit("task_end", best_node="n0000", holdout_score=score,
-                        total_cost=ledger.spent(), seconds={"llm": .1, "run": 0,
+            ledger.emit("task_end", best_node="n0000", holdout_score=None if failed else score,
+                        holdout_failed=failed, total_cost=ledger.spent(), seconds={"llm": .1, "run": 0,
                                                              "queue": 0, "wall": 1},
                         quote_error={"cost": None, "seconds": None, "score": None})
             if tamper is not None:
                 tamper.write_text(tamper.read_text() + "changed")
             return {}
         return execute
+
+    def test_failed_holdout_stops_candidate_ranking_with_a_clear_error(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            baselines, candidates, planner = self.setup_project(root)
+            with self.assertRaisesRegex(ValueError, "failed holdout scoring: " + PRACTICE[1]):
+                evaluate_candidates(
+                    project_root=root, study_dir=root / "batches/study", harness=object(),
+                    candidates=candidates, baseline_solutions=baselines,
+                    prices_path=root / "config/prices_test_only.json", model="test-scripted",
+                    code_commit="a" * 40, test_only_budget=1.0,
+                    task_executor=self.fake_executor([], fail_holdout_task=PRACTICE[1]),
+                )
 
     def test_test_only_practice_selection_and_candidate_provenance(self):
         with TemporaryDirectory() as temp:

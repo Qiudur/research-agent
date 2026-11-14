@@ -396,6 +396,10 @@ def evaluate_candidates(
             task_executor(**kwargs)
         finish_run(run_dir)
         report = run_report(run_dir)
+        if report.get("holdout_failures"):
+            # Candidate ranking needs every practice score; never rank on a partial mean.
+            raise ValueError("Self-research repetition has failed holdout scoring: "
+                             + ", ".join(report.get("holdout_failed_task_ids", [])))
         if any(_hash(Path(path)) != digest for path, digest in {**protected, **inputs}.items()):
             raise ValueError("Self-research input or protected file changed")
         attempt = {"candidate": name, "round": round_index,

@@ -81,20 +81,31 @@
 
 验证若拒绝候选，程序会跳过研究版考试，仍保留朴素版、默认空库、默认练过库三线考试；报告必须说明拒绝原因，不能计算研究版回本点。任何阶段失败都保留原目录和全局 attempt 标记，不删除、不在同一 bank_version 重考。修复后如需新考试，必须按协议重建新版本并重新冻结。
 
+单个运行或单题出问题时批次不会再整体中止：
+
+- 每题 holdout 在 `tasks/<题>/holdout_candidate/<节点>/` 的私有副本上打分，打分前后核对原节点 `solution.py` 仍在且 SHA-256 与封存记录一致；任何异常（评分器抛错、文件缺失或被改、B 返回无效）都写进 `holdout_score.json`（`score: null`、安全的 `error`），`task_end` 照写并带 `holdout_failed: true`，一次性标记照旧不重试。经过的证据另见 `holdout_integrity.json` 与 `holdout_failure.json`。
+- 每题 agent 停止后，基线方案（n0000）会在同一份 holdout 上再打一次分作参照，写入 `baseline_holdout.json`（不算该题的一次性 attempt；最佳节点就是 n0000 时直接复用，差为 0）。`task_end` 带 `baseline_holdout_score`、`baseline_holdout_raw` 与 `holdout_raw_lift`（最佳 raw 减基线 raw：表格题是 AUC 差，提速题是加速比差）。
+- 某个运行失败时，`batch_report.json` 的 `failed_runs` 记 run_id、阶段、配置、重数和错误，其余运行继续；依赖失败练习库的验证/考试运行记在 `skipped_runs`。批次结束无论如何都写 `batch_report.json`，`status` 为 `complete` 或 `partial`（被打断时另有 `aborted`）。命令行遇 `partial` 退出码为 3。
+- 验证六个运行不齐全时准入 claim 为 `incomplete`（不是拒绝），研究版不进入考试。有 holdout 失败的题会从该组所有运行里剔除后再比较，并列在 `excluded_tasks`，不按零分计；`holdout_failures` 汇总所有失败题。
+- 单题 token 超出预算不再中止批次：任务报告写 `budget_violation: true` 与 `budget_excess`，运行报告汇总 `budget_violations`，`batch_report.json` 的 `budget_violations` 逐条列出。
+
 ## 6. 审计与图表
 
-batch_report.json、各 run 的 report.json、manifest、账本、回放和一次性标记是事实来源。先检查完整性与每题不超过 40,000 token；超支如实记为协议违例，不抹平或用零覆盖。图表要引用同一批次与同一自研究 selection；figures 会重算准入并核对配置/提示词及研究成本。
+batch_report.json、各 run 的 report.json、manifest、账本、回放和一次性标记是事实来源。先检查完整性（`status` 必须为 `complete`）并列出每题 40,000 token 的超支情况；超支如实记为协议违例（`budget_violation`），不抹平或用零覆盖。`scripts/audit_formal_outputs.py` 会重算每题账本、报告超支题数（`over_budget_tasks` 与逐条 `over_budget`），不再假定为 0；遇到 `partial` 批次或 holdout 失败题会明确拒绝。图表要引用同一批次与同一自研究 selection；figures 会重算准入并核对配置/提示词及研究成本。
 
     "$PY" - "$BATCH_DIR/batch_report.json" <<'PY'
     import json, sys
     from pathlib import Path
     batch = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
-    over = [(phase, run['run_id'], task['task_id'], task['total_cost'])
+    over = [(phase, run['run_id'], task['task_id'], task['total_cost'], task['budget_excess'])
             for phase, runs in batch['reports'].items() for run in runs
-            for task in run['tasks'] if task['total_cost'] > 40000]
-    print({'admission': batch['admission'], 'over_budget': over,
+            for task in run['tasks'] if task['budget_violation']]
+    print({'status': batch['status'], 'admission': batch['admission']['claim'],
+           'failed_runs': batch['failed_runs'], 'skipped_runs': len(batch['skipped_runs']),
+           'holdout_failures': batch['holdout_failures'], 'over_budget': over,
            'tuned_exam_skipped': batch['tuned_exam_skipped']})
-    raise SystemExit(bool(over))
+    # The batch report is always written; a nonzero exit flags anything an operator must disclose.
+    raise SystemExit(batch['status'] != 'complete' or bool(batch['holdout_failures']) or bool(over))
     PY
     "$PY" -m evaluation.cli figures --batch-dir "$BATCH_DIR" --auto-study-dir "$AUTO_STUDY" --output "$BATCH_DIR/figures.html"
 
