@@ -23,6 +23,13 @@ ROOT = Path(__file__).resolve().parents[1]
 REPORT = "docs/路演汇报.html"
 SOURCE_HEAD = re.compile(r"<!-- source-head: ([0-9a-f]{40}) -->")
 EXCLUDE_REPORT = ":(exclude)" + REPORT
+SUMMARY_PATH = "docs/evidence/formal-batch-v2-summary.json"
+CONFIG_NAMES = {"naive": "朴素版", "default": "默认设置／空库",
+                "default_lib": "默认设置／练过的库", "tuned_lib": "研究版／练过的库"}
+COMPARISON_NAMES = {"default_vs_naive": "默认 vs 朴素", "default_lib_vs_default": "练过的库 vs 空库",
+                    "tuned_lib_vs_default_lib": "研究版 vs 练过的库"}
+CLAIM_NAMES = {"better": "有明确优势", "no_clear_difference": "无明确差异"}
+ADMISSION_NAMES = {"admitted": "已准入", "rejected": "未准入"}
 
 
 def git(repo: Path, *args: str, check: bool = True) -> str:
@@ -152,6 +159,67 @@ def calibration_evidence(repo: Path) -> str:
             f"校准 holdout 0。完整审计：{audit_path}。不是现金价格或正式考试成绩。")
 
 
+def formal_results(repo: Path) -> str:
+    """HTML for the committed formal-batch summary; empty unless it is complete and usable.
+
+    The summary JSON is written by scripts/summarize_formal_batch.py. Anything
+    other than a finished internal-TOKENS summary leaves the pending wording.
+    """
+    try:
+        data = json.loads(committed_text(repo, SUMMARY_PATH))
+        if (data["schema"] != "formal_batch_summary/1" or data["mode"] != "complete"
+                or data["currency"] != "TOKENS"):
+            return ""
+        admission = data["validation"]["admission"]
+        if admission["claim"] not in ADMISSION_NAMES:
+            return ""
+        summaries = data["config_summary"]
+        rows = []
+        for phase in ("validation", "exam"):
+            if not summaries[phase]:
+                return ""
+            for config, item in summaries[phase].items():
+                scores = " / ".join(f"{float(value):.4f}" for value in item["scores"])
+                rows.append(
+                    f"<tr><td>{safe(phase)}</td><td>{safe(CONFIG_NAMES.get(config, config))}</td>"
+                    f"<td>{float(item['score_mean']):.4f}</td><td>{float(item['tokens_mean']):,.1f}</td>"
+                    f"<td>{safe(scores)}</td></tr>")
+        lines = [
+            f"validation 准入：{safe(ADMISSION_NAMES[admission['claim']])}"
+            f"（三遍分数均不低于练过的库：{'是' if admission['score_not_lower_each_rep'] else '否'}；"
+            f"平均 token 更低：{'是' if admission['cost_reduced_on_average'] else '否'}）。"]
+        for key, name in COMPARISON_NAMES.items():
+            comparison = data["exam"]["comparisons"][key]
+            if not comparison.get("available"):
+                lines.append(f"考试 {safe(name)}：未比较（{safe(comparison.get('reason', ''))}）。")
+                continue
+            change = comparison.get("mean_cost_change_pct")
+            lines.append(
+                f"考试 {safe(name)}：{safe(CLAIM_NAMES.get(comparison['claim'], comparison['claim']))}；"
+                f"平均分差 {float(comparison['mean_score_gap']):+.4f}；"
+                + (f"每遍平均 token 变化 {float(change):+.1f}%。" if change is not None else "每遍平均 token 变化未计算。"))
+        breakeven = data["breakeven"]
+        if breakeven["computed"]:
+            lines.append(
+                f"研究版数学回本点 {safe(int(breakeven['breakeven_tasks']))} 题"
+                f"（研究总成本 {float(breakeven['research_cost_tokens']):,.0f} token，"
+                f"考试每题平均少用 {float(breakeven['savings_per_task_tokens']):,.1f} token）。")
+        else:
+            lines.append("研究版回本点：不计算（" + safe("；".join(map(str, breakeven["reasons"]))) + "）。")
+        warnings = len(data.get("warnings") or [])
+        if warnings:
+            lines.append(f"汇总含 {warnings} 条数据提醒，对外引用前请先核对。")
+    except (ValueError, TypeError, KeyError, AttributeError):
+        return ""
+    return (
+        '<div class="card"><div class="label">正式批次结果 · validation 与 exam</div>'
+        '<table class="results"><thead><tr><th>阶段</th><th>配置</th><th>三遍平均归一化分数</th>'
+        '<th>每遍平均 token</th><th>各遍分数</th></tr></thead><tbody>' + "".join(rows) + '</tbody></table>'
+        + "".join(f"<p class=\"small\">{line}</p>" for line in lines)
+        + '<p class="small">全部成本为内部 TOKENS，不是现金价格或官方比赛成绩。来源：'
+        + safe(SUMMARY_PATH) + '（scripts/summarize_formal_batch.py 从已保存批次输出只读汇总，以独立审计为准）。</p></div>')
+
+
 def evidence(repo: Path) -> dict[str, str]:
     readme = committed_text(repo, "README.md")
     concurrency = committed_text(repo, "docs/真实模型并发基准.md")
@@ -235,13 +303,18 @@ def evidence(repo: Path) -> dict[str, str]:
         )
     else:
         accounting_notice = "TEST 联调不能代表真实模型成本、现金价格或官方成绩。"
-    if v2_pending:
+    results = formal_results(repo)
+    if results:
+        pass  # committed formal results replace the pending wording
+    elif v2_pending:
         accounting_notice += "v2 自研究、验证与考试数字均待对应真实账本审计后填入。"
     elif formal_pending:
         accounting_notice += "验证与考试数字待对应真实账本审计后填入。"
     return {
         "intro": project_intro,
-        "status": ("内部 token v2 练习研究进行中 · 验证／考试待真实账本" if v2_pending else
+        "formal_results": results,
+        "status": ("内部 token 正式批次已完成 · 验证／考试结果已汇总" if results else
+                   "内部 token v2 练习研究进行中 · 验证／考试待真实账本" if v2_pending else
                    "题库已冻结 · 正式四线待运行" if calibration and formal_pending else
                    "DEV / TEST ONLY · 正式四线比较未执行" if formal_pending else
                    "阶段状态请以 README 为准"),
@@ -306,6 +379,10 @@ HTML = Template("""<!doctype html>
     .nav { position: fixed; z-index: 20; right: 22px; top: 50%; transform: translateY(-50%); display: grid; gap: 12px; }
     .nav a { display: block; width: 12px; height: 12px; border: 1px solid var(--muted); border-radius: 50%; background: #ffffff20; }
     .nav a:hover, .nav a:focus { background: var(--cyan); }
+    .results { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: clamp(14px, 1.3vw, 18px); }
+    .results th, .results td { padding: .45em .7em; border-bottom: 1px solid var(--line); text-align: right; }
+    .results th:first-child, .results td:first-child, .results th:nth-child(2), .results td:nth-child(2) { text-align: left; }
+    .results th { color: var(--muted); font-weight: 700; }
     details { color: var(--muted); font-size: 15px; }
     details summary { cursor: pointer; color: var(--cyan); }
     .files { columns: 2; max-height: 28vh; overflow: auto; padding-left: 20px; overflow-wrap: anywhere; }
@@ -340,6 +417,7 @@ HTML = Template("""<!doctype html>
       <article class="card"><div class="label">跨题迁移复评</div><span class="metric amber">$transfer_score</span><p>归一化分数变化，但每遍 token 变化 $transfer_tokens；结果仍属于 dev，不能证明正式准入。</p><p class="small"><a href="真实模型迁移复评.md">查看迁移记录 ↗</a></p></article>
     </div>
     $calibration_notice
+    $formal_results
     <p class="notice">$accounting_notice</p>
   </div><div class="footer"><span>数值从仓库已提交证据文档提取</span><span>03 / 05</span></div></section>
   <section class="slide" id="changes"><div class="inner">
@@ -396,7 +474,7 @@ def build(repo: Path, head: str, commits: list[tuple[str, str, str]], files: lis
         transfer_score=safe(facts["transfer_score"]), transfer_tokens=safe(facts["transfer_tokens"]),
         limits=safe(facts["limits"]), next_items=next_html,
         accounting_notice=safe(facts["accounting_notice"]),
-        calibration_notice=calibration_html,
+        calibration_notice=calibration_html, formal_results=facts["formal_results"],
         period_commits=len(commits), file_count=len(files), period_label=safe(label),
         categories=category_html, files=file_html, commit_items=commit_html,
     )
