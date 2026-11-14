@@ -36,7 +36,8 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def prepare_project(source: Path, campaign: Path) -> Path:
+def prepare_project(source: Path, campaign: Path, *,
+                    task_ids: tuple[str, ...] = TASKS, proposal_rounds: int = 1) -> Path:
     """Copy only practice inputs; never alter the official bank or tasks."""
     source = source.resolve()
     project = campaign / "project"
@@ -44,14 +45,15 @@ def prepare_project(source: Path, campaign: Path) -> Path:
     shutil.copytree(source / "config", project / "config")
     (project / "tasks").mkdir()
     bank = json.loads((source / "tasks/bank.json").read_text(encoding="utf-8"))
-    selected = [entry for entry in bank["tasks"] if entry["task_id"] in TASKS]
-    if len(selected) != len(TASKS) or any(entry["tier"] != "practice" for entry in selected):
-        raise ValueError("The token self-research pilot requires its two practice tasks")
+    selected = [entry for entry in bank["tasks"] if entry["task_id"] in task_ids]
+    if (len(task_ids) != 2 or len(set(task_ids)) != 2 or len(selected) != len(task_ids)
+            or any(entry["tier"] != "practice" for entry in selected)):
+        raise ValueError("The token pilot requires two distinct practice tasks")
     bank["tasks"] = selected
     _write(project / "tasks/bank.json", bank)
     source_tasks = {}
     wall_seconds_per_task = {}
-    for task_id in TASKS:
+    for task_id in task_ids:
         shutil.copytree(source / "tasks" / task_id, project / "tasks" / task_id)
         original = source / "tasks" / task_id / "task.json"
         copied = project / "tasks" / task_id / "task.json"
@@ -70,7 +72,7 @@ def prepare_project(source: Path, campaign: Path) -> Path:
     _write(campaign / "protocol.json", {
         "schema": "token_self_research_protocol/1",
         "label": "REAL MODEL DEV; TEST UNIT = ONE REPORTED TOKEN; NOT MONEY",
-        "model": MODEL, "tasks": list(TASKS), "proposal_rounds": 1,
+        "model": MODEL, "tasks": list(task_ids), "proposal_rounds": proposal_rounds,
         "repetitions_per_candidate": 3,
         "budget_tokens_per_task": BUDGET_TOKENS,
         "wall_seconds_per_task": wall_seconds_per_task,

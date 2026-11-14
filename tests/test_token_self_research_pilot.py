@@ -36,6 +36,23 @@ class TokenSelfResearchPilotTests(unittest.TestCase):
                 self.assertEqual(protocol["wall_seconds_per_task"][task_id],
                                  copied["budget"]["wall_seconds"])
 
+    def test_prepare_transfer_pair_keeps_original_task_budgets(self):
+        task_ids = ("spd-distance-matrix", "tab-adult-income")
+        with TemporaryDirectory() as temp:
+            campaign = Path(temp) / "campaign"
+            project = prepare_project(PROJECT, campaign, task_ids=task_ids,
+                                      proposal_rounds=0)
+            protocol = json.loads((campaign / "protocol.json").read_text())
+            bank = json.loads((project / "tasks/bank.json").read_text())
+            self.assertEqual(protocol["tasks"], list(task_ids))
+            self.assertEqual(protocol["proposal_rounds"], 0)
+            self.assertEqual({row["task_id"] for row in bank["tasks"]}, set(task_ids))
+            for task_id in task_ids:
+                original = json.loads((PROJECT / "tasks" / task_id / "task.json").read_text())
+                copied = json.loads((project / "tasks" / task_id / "task.json").read_text())
+                self.assertEqual(copied["budget"], original["budget"])
+                self.assertEqual(protocol["wall_seconds_per_task"][task_id], 1800)
+
 
 if __name__ == "__main__":
     unittest.main()
