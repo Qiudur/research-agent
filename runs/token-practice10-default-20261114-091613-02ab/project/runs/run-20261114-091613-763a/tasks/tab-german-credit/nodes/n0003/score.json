@@ -1,0 +1,20 @@
+{
+  "schema": "score/1",
+  "ok": false,
+  "split": "dev",
+  "score": null,
+  "raw": null,
+  "spread": 0.0,
+  "correct": false,
+  "cheat_flags": [],
+  "error": {
+    "kind": "exception",
+    "message": "LGBMClassifier.fit() got an unexpected keyword argument 'early_stopping_rounds'",
+    "trace_tail": "Traceback (most recent call last):\n  File \"/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/tabular_worker.py\", line 98, in main\n    values = function(str(args.workspace / \"train.csv\"), rows)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-763a/tasks/tab-german-credit/nodes/n0003/solution.py\", line 53, in fit_predict\n    model.fit(\nTypeError: LGBMClassifier.fit() got an unexpected keyword argument 'early_stopping_rounds'\n"
+  },
+  "seconds": {
+    "run": 0.8734098749991972,
+    "queue": 0.0
+  },
+  "seed": 6283192924903348579
+}

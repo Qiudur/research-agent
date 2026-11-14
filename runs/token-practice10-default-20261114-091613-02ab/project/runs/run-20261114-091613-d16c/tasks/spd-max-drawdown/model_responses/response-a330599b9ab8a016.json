@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "summarizer",
+  "purpose": "summarize",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "97cc45fd42c83e2b74c12f87add03c2ce8b325c9438f03b9ae51d220dc0acf53",
+  "response_id": "resp_fe334ea7-49a5-9f90-a30e-6af74ed019c5",
+  "status": "completed",
+  "output_text": "{\n  \"drafts\": [\n    {\n      \"scope\": \"method\",\n      \"scenario\": \"speedup\",\n      \"triggers\": [\"nested_python_loop\"],\n      \"conditions\": \"Nested loops computing cumulative statistics or tracking extrema where running state can track results in single pass\",\n      \"action\": \"Replace O(n²) nested loop with single-pass O(n) algorithm tracking running peak/state\",\n      \"negative\": false,\n      \"node_ids\": [\"n0001\"]\n    }\n  ],\n  \"narrowings\": []\n}",
+  "tokens": {
+    "input": 644,
+    "cached_input": 0,
+    "output": 128,
+    "reasoning": 602
+  },
+  "cost": 1374.0,
+  "error": null
+}

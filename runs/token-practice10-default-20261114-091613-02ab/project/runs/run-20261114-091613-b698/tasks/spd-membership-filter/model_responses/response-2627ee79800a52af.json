@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "bb50838f34ba1fe18c0e3c911ed5900aeacb1098894cf72c70cee8afcda1990b",
+  "response_id": "resp_198994fd-2c4e-9283-a524-347290d6b4d4",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Implement strict early-return for empty allowed list before set construction\",\n      \"rationale\": \"n0002 achieved higher score (1.02) but was rejected, possibly due to correctness risk or side effects. Isolating the empty-check logic before any mutation/set creation ensures correctness while retaining O(1) benefit for that edge case.\",\n      \"estimate\": {\n        \"gain\": 0.03,\n        \"cost\": 1500,\n        \"seconds\": 60\n      },\n      \"cites\": [\n        \"recent_experiments.n0002\",\n        \"profile_summary.hotspot\"\n      ]\n    },\n    {\n      \"hypothesis\": \"Bind set instance to local variable to minimize attribute lookup overhead in loop\",\n      \"rationale\": \"Python local variable access is faster than repeated evaluation of expression 'value in set(allowed)' or implicit globals. Explicit binding 's = set(allowed)' followed by 'v in s' reduces interpretation overhead per iteration.\",\n      \"estimate\": {\n        \"gain\": 0.02,\n        \"cost\": 1500,\n        \"seconds\": 60\n      },\n      \"cites\": [\n        \"visible_sample_file\",\n        \"task.features.list_membership_in_loop\"\n      ]\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 3000,\n    \"score\": 1.01,\n    \"seconds\": 120\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"experimentation\",\n      \"amount\": 5000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.12,\n      \"score\": 0.98\n    },\n    {\n      \"spent_ratio\": 0.20,\n      \"score\": 1.01\n    },\n    {\n      \"spent_ratio\": 0.30,\n      \"score\": 1.05\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1427,
+    "cached_input": 0,
+    "output": 485,
+    "reasoning": 3296
+  },
+  "cost": 5208.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0003",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "0be6cf7dbafb8f9c1b8e3b7ea976bc20fb87a2b370b358e0506b54a6394c940c",
+  "response_id": "resp_24c7cbb1-d1cc-9ac3-8404-9f3f61af10b7",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Optimized distance matrix with list comprehensions and math.hypot.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nfrom math import hypot\\n\\n\\ndef distance_matrix(points: list[tuple[float, float]]) -> list[list[float]]:\\n    \\\"\\\"\\\"Compute pairwise Euclidean distances.\\n    \\n    Optimizations applied:\\n    1. List comprehensions - reduced interpreter overhead vs explicit loops\\n    2. math.hypot - C-implemented sqrt(x*x + y*y), more efficient and numerically stable\\n    3. No intermediate variables - direct computation in comprehension\\n    \\\"\\\"\\\"\\n    return [\\n        [hypot(x1 - x2, y1 - y2) for x2, y2 in points]\\n        for x1, y1 in points\\n    ]\",\n  \"notes\": \"Replaced nested for loops with double list comprehension and switched from manual sqrt(dx*dx+dy*dy) to math.hypot(). Removed symmetry optimization to allow clean list comprehension usage. math.hypot is implemented in C and handles edge cases like overflow/underflow better. Behavior matches original on empty input (returns []), single point, duplicates, and negative coordinates.\"\n}",
+  "tokens": {
+    "input": 1106,
+    "cached_input": 0,
+    "output": 270,
+    "reasoning": 832
+  },
+  "cost": 2208.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "diagnoser",
+  "purpose": "diagnose",
+  "node_id": "n0003",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "552aa40a7f65c5faee51c58d38d4f136b9252716bd4c65d7293d8760860c1a11",
+  "response_id": "resp_2633ea4a-cf68-9471-8815-63d7545bc20b",
+  "status": "completed",
+  "output_text": "{\n  \"hypothesis\": \"Data leakage or improper train/test separation causing model to exceed theoretical ceiling; possible target leakage through derived features or train/test row overlap\",\n  \"rationale\": \"Raw score 0.9246 exceeds both baseline 0.9232 and ceiling 0.9233 by significant margin in an ROC AUC metric where ceiling should represent maximum achievable. Normalized score of 10.66 indicates model performance far beyond theoretical limit, which only happens with data leakage or test contamination. The tiny ceiling-baseline gap (~0.00013) makes legitimate improvement impossible; 'correct':true doesn't rule out leakage in feature engineering.\",\n  \"advice\": \"Verify fit_predict function uses only train_csv for training and no test_rows data leaks into fitting logic. Check that derived features don't incorporate target column. Ensure no shared state between calls persists. Print shape/dimensions of fitted model attributes to confirm only train data was used. If using cross-validation, verify fold integrity.\"\n}",
+  "tokens": {
+    "input": 3529,
+    "cached_input": 0,
+    "output": 223,
+    "reasoning": 727
+  },
+  "cost": 4479.0,
+  "error": null
+}

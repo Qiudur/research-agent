@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "3c350c6c207a1f814ca9751ded76699af22b13be3ee67709337facf8a2894fae",
+  "response_id": "resp_21f5d3cb-8db3-9607-aab0-6798938e146a",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Use numpy array operations to compute edit distance rows in parallel, reducing Python-level overhead\",\n      \"rationale\": \"Current bottleneck is nested Python loops computing full DP matrix. numpy vectorization can replace inner loop calculations with fast C-level array ops, especially for min() operations across dimensions.\",\n      \"estimate\": {\"gain\": 0.3, \"cost\": 5000, \"seconds\": 45},\n      \"cites\": [\"numpy_vectorization\"]\n    },\n    {\n      \"hypothesis\": \"Implement space-optimized DP using only two rows with explicit cache-friendly access patterns\",\n      \"rationale\": \"Original code stores full matrix unnecessarily. Two-row DP reduces memory pressure and improves cache locality, potentially speeding up by 2-3x even without algorithm change.\",\n      \"estimate\": {\"gain\": 0.15, \"cost\": 3000, \"seconds\": 30},\n      \"cites\": [\"python_micro_optimizations\"]\n    }\n  ],\n  \"predicted\": {\"cost\": 7000, \"score\": 0.25, \"seconds\": 75},\n  \"budget_allocation\": [\n    {\"direction\": \"numpy_vectorization\", \"amount\": 5000},\n    {\"direction\": \"python_micro_optimizations\", \"amount\": 2000}\n  ],\n  \"expected_progress\": [\n    {\"spent_ratio\": 0.2, \"score\": 0.05},\n    {\"spent_ratio\": 0.5, \"score\": 0.15},\n    {\"spent_ratio\": 0.8, \"score\": 0.25}\n  ]\n}",
+  "tokens": {
+    "input": 1853,
+    "cached_input": 0,
+    "output": 391,
+    "reasoning": 836
+  },
+  "cost": 3080.0,
+  "error": null
+}

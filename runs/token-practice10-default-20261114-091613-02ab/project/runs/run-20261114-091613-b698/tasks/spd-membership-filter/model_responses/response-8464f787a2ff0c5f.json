@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0005",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "59a508b8d4116870c68752b1914c22275d1db3e59842477d02a21f54d07d43dd",
+  "response_id": "resp_e6ab6c60-4ce1-90a5-9810-a2efa5d91613",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"from __future__ import annotations\\n\\ndef membership_filter(values: list[int], allowed: list[int]) -> list[int]:\\n    # Optimize based on allowed list size:\\n    # - Small allowed: avoid set construction overhead\\n    # - Large allowed: use set for O(1) membership checks\\n    if len(allowed) <= 6:\\n        return [value for value in values if value in allowed]\\n    else:\\n        allowed_set = set(allowed)\\n        return [value for value in values if value in allowed_set]\",\n  \"notes\": \"Added branching on allowed list length. For small allowed lists (<=6 elements), direct list membership avoids set construction overhead. For larger lists, set lookup provides O(1) per value. Behavior matches original in all cases including empty allowed, duplicates, and absent values.\"\n}",
+  "tokens": {
+    "input": 732,
+    "cached_input": 0,
+    "output": 189,
+    "reasoning": 648
+  },
+  "cost": 1569.0,
+  "error": null
+}

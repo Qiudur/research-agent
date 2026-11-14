@@ -1,0 +1,10 @@
+--- parent/solution.py
++++ solution.py
+@@ -8,6 +8,7 @@
+         return []
+     
+     # Convert to numpy array with shape (n, 2)
++    # Using default float64 dtype to match original precision
+     arr = np.array(points)
+     
+     # Use broadcasting to compute all pairwise differences at once

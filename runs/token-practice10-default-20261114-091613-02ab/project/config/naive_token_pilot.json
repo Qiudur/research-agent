@@ -1,0 +1,37 @@
+{
+  "schema": "agent/1",
+  "history_mode": "full",
+  "effort": {
+    "planner": "high",
+    "executor": "high",
+    "diagnoser": "high",
+    "summarizer": "high"
+  },
+  "max_attempts": 3,
+  "plateau_nodes": 5,
+  "behind_schedule": {
+    "spent_ratio": 0.5,
+    "progress_ratio": 0.5
+  },
+  "explore_every": 4,
+  "query_k": 0,
+  "prompts": {
+    "planner": "config/prompts/naive_token_pilot.md",
+    "executor": "config/prompts/naive_token_pilot.md",
+    "diagnoser": "config/prompts/naive_token_pilot.md",
+    "summarizer": "config/prompts/naive_token_pilot.md"
+  },
+  "library_rules": {
+    "init_credibility": 0.5,
+    "win_delta": 0.1,
+    "loss_delta": -0.15,
+    "demote_below": 0.3,
+    "retire_after_losses": 3,
+    "skill_min_credibility": 0.7,
+    "skill_min_tasks": 2,
+    "tool_min_tasks": 2,
+    "max_experiences": 200,
+    "max_skills": 30,
+    "max_tools": 30
+  }
+}

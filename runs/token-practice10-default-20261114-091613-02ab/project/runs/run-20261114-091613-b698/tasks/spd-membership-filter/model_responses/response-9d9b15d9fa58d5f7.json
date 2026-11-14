@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0007",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "3238abd734ccd8d0bb2038abefbe9c7d76155f599865e0df2687bcb654ebe005",
+  "response_id": "resp_a5a5582a-0da6-943c-8a50-0487f967f399",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"from __future__ import annotations\\n\\ndef membership_filter(values: list[int], allowed: list[int]) -> list[int]:\\n    allowed_set = set(allowed)\\n    return list(filter(lambda x: x in allowed_set, values))\",\n  \"notes\": \"Implemented filter() with lambda as per hypothesis. Kept set conversion for O(1) lookups. Behavior identical to parent_code - preserves order, handles duplicates and edge cases correctly.\"\n}",
+  "tokens": {
+    "input": 736,
+    "cached_input": 0,
+    "output": 107,
+    "reasoning": 243
+  },
+  "cost": 1086.0,
+  "error": null
+}

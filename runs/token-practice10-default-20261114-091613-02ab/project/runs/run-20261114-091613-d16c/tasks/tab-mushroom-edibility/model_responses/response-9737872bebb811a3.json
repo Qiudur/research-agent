@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "5887ff6a9e7bcea701612ccbcf302a03961622e656ff388cc8c5234236dd928c",
+  "response_id": "resp_4ccc2b00-9373-9ec4-8642-3ecb32f95ce7",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Use LightGBM with native missing value handling\",\n      \"rationale\": \"Tree models handle categorical features and missing values automatically; expected to capture non-linear patterns in cap_shape/cap_color/stalk_root/habitat.\",\n      \"estimate\": {\n        \"gain\": 0.15,\n        \"cost\": 1200,\n        \"seconds\": 6\n      },\n      \"cites\": [\"tree_models_lgbm\", \"feature_automatic_handling\"]\n    },\n    {\n      \"hypothesis\": \"One-hot encode visible features + XGBoost\",\n      \"rationale\": \"Explicit encoding may improve separation if certain feature combinations strongly correlate with edibility (e.g., stalk_root='b'→edible).\",\n      \"estimate\": {\n        \"gain\": 0.12,\n        \"cost\": 1300,\n        \"seconds\": 7\n      },\n      \"cites\": [\"feature_encoding_onehot\", \"gradient_boosting_xgb\"]\n    },\n    {\n      \"hypothesis\": \"Logistic regression with L2 regularization\",\n      \"rationale\": \"Stable baseline for comparison; avoids overfitting on limited features while providing probability outputs.\",\n      \"estimate\": {\n        \"gain\": 0.08,\n        \"cost\": 900,\n        \"seconds\": 4\n      },\n      \"cites\": [\"regularized_linear_models\", \"probability_calibration\"]\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 3400,\n    \"score\": 0.35,\n    \"seconds\": 17\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"hypothesis_test\",\n      \"amount\": 3400\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.09,\n      \"score\": 0.2\n    },\n    {\n      \"spent_ratio\": 0.2,\n      \"score\": 0.35\n    }\n  ]\n}",
+  "tokens": {
+    "input": 3846,
+    "cached_input": 0,
+    "output": 490,
+    "reasoning": 1987
+  },
+  "cost": 6323.0,
+  "error": null
+}

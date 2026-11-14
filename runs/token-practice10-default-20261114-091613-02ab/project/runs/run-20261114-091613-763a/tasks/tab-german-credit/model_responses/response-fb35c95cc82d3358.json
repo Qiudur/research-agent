@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "6dac2857e07418790494869fce2f18b2dabba676f3a4e5254dae7567e73bd9b3",
+  "response_id": "resp_4ea7c86e-604d-9a7f-b963-88a7c62be39a",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"LightGBM classifier with proper categorical handling.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    \\n    test = pd.DataFrame(test_rows, columns=train.columns)\\n    \\n    # Identify numeric vs categorical columns\\n    cat_cols = []\\n    num_cols = []\\n    \\n    for name in train.columns:\\n        if pd.api.types.is_numeric_dtype(train[name]):\\n            num_cols.append(name)\\n            test[name] = pd.to_numeric(test[name], errors='coerce')\\n        else:\\n            cat_cols.append(name)\\n            # Store categories from train+test combined, then convert to ordered integers\\n            combined_categories = sorted(set(\\n                set(train[name].astype(str).unique()) | \\n                set(test[name].astype(str).unique())\\n            ))\\n            cat_mapping = {k: v for v, k in enumerate(combined_categories)}\\n            train[name] = train[name].astype(str).map(cat_mapping)\\n            test[name] = test[name].astype(str).map(cat_mapping)\\n    \\n    model = LGBMClassifier(\\n        random_state=20261114,\\n        n_jobs=1,\\n        verbosity=-1,\\n        class_weight='balanced',\\n        learning_rate=0.1,\\n        num_leaves=8,\\n        min_child_samples=20\\n    )\\n    model.fit(train, y)\\n    return model.predict_proba(test)[:, 1].tolist()\\n\",\n  \"notes\": \"Implemented ordinal encoding for categorical features by mapping each unique string value to an integer. Combined train+test categories to handle unseen test values gracefully. Added balanced class weight and regularization params (num_leaves=8, min_child_samples=20) for small sample size.\"\n}",
+  "tokens": {
+    "input": 3773,
+    "cached_input": 0,
+    "output": 464,
+    "reasoning": 1813
+  },
+  "cost": 6050.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "4288e569e513d6253e702b192a37d16bf60024857356bdfaf56e2ec3c7f05d85",
+  "response_id": "resp_67c94d9b-eb42-9979-8d50-f23e6851b80a",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"from __future__ import annotations\\n\\ndef membership_filter(values: list[int], allowed: list[int]) -> list[int]:\\n    \\\"\\\"\\\"Filter values to keep only those present in allowed, preserving order and duplicates.\\\"\\\"\\\"\\n    allowed_set = set(allowed)\\n    return [value for value in values if value in allowed_set]\",\n  \"notes\": \"Set conversion provides O(1) membership lookups vs O(n) list scans. Duplicates in values are naturally preserved during iteration. Edge cases (empty allowed, duplicates, absent values) all handled correctly.\"\n}",
+  "tokens": {
+    "input": 722,
+    "cached_input": 0,
+    "output": 132,
+    "reasoning": 504
+  },
+  "cost": 1358.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0003",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "f2ff0d73d462332bdbfb8d673e00c517e874036ee1518f1bb06aa9316a585031",
+  "response_id": "resp_be400c25-8660-9e4d-ab8e-9dcac439a9fa",
+  "status": "completed",
+  "output_text": "```json\n{\n  \"code\": \"\\\"\\\"\\\"Regularized LightGBM model to prevent overfitting.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    X_train = train.copy()\\n    test = pd.DataFrame(test_rows, columns=X_train.columns)\\n    \\n    # Align dtypes between train and test\\n    for name in X_train.columns:\\n        if pd.api.types.is_numeric_dtype(X_train[name]):\\n            test[name] = pd.to_numeric(test[name], errors='coerce')\\n        else:\\n            all_cats = sorted(set(pd.concat([X_train[name], test[name]], ignore_index=True).dropna()))\\n            cat_type = pd.CategoricalDtype(categories=all_cats, ordered=False)\\n            X_train[name] = X_train[name].astype(cat_type)\\n            test[name] = test[name].astype(cat_type)\\n    \\n    # Regularized model with fewer leaves to prevent overfitting\\n    model = LGBMClassifier(\\n        random_state=20261114,\\n        n_jobs=1,\\n        verbosity=-1,\\n        num_leaves=15,\\n        max_depth=4,\\n        learning_rate=0.05,\\n        min_child_samples=30,\\n        reg_alpha=0.5,\\n        reg_lambda=0.5,\\n        subsample=0.8,\\n        colsample_bytree=0.8\\n    )\\n    model.fit(X_train, y)\\n    return model.predict_proba(test)[:, 1].tolist()\\n\",\n  \"notes\": \"Removed any polynomial feature expansion (not present in baseline anyway). Added strong regularization (lower num_leaves, max_depth, reg_alpha, reg_lambda, subsampling) to prevent overfitting on 6635 rows with 30 features. This should match or exceed baseline ROC AUC by reducing variance.\"\n}\n```",
+  "tokens": {
+    "input": 3835,
+    "cached_input": 0,
+    "output": 480,
+    "reasoning": 571
+  },
+  "cost": 4886.0,
+  "error": null
+}

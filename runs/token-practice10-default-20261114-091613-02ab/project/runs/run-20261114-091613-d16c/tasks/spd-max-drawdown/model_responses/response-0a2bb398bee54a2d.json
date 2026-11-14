@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "9209066a4ca58080f49f228f78f5a324ad47edc34912c6db650149e1dd599a48",
+  "response_id": "resp_a8500e3a-27ce-968f-bf1f-6d760a22283d",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Replace O(n²) nested loop with single-pass O(n) algorithm tracking running peak\",\n      \"rationale\": \"The current implementation compares every price pair quadratically. Maximum drawdown can be computed in one pass by maintaining running maximum and computing drawdown relative to it at each step, reducing complexity from O(n²) to O(n).\",\n      \"estimate\": {\n        \"gain\": 1000.0,\n        \"cost\": 500,\n        \"seconds\": 30\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Use numpy vectorization to compute all drawdowns simultaneously\",\n      \"rationale\": \"If the O(n²) structure must be preserved for correctness verification, numpy array operations can replace Python loops and provide significant speedup through C-level operations.\",\n      \"estimate\": {\n        \"gain\": 50.0,\n        \"cost\": 500,\n        \"seconds\": 30\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 1000,\n    \"score\": 500.0,\n    \"seconds\": 60\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"algorithmic_optimization\",\n      \"amount\": 1000\n    },\n    {\n      \"direction\": \"reserve_remaining\",\n      \"amount\": 35000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.025,\n      \"score\": 100.0\n    },\n    {\n      \"spent_ratio\": 0.1,\n      \"score\": 500.0\n    },\n    {\n      \"spent_ratio\": 0.3,\n      \"score\": 800.0\n    },\n    {\n      \"spent_ratio\": 0.9,\n      \"score\": 1000.0\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1494,
+    "cached_input": 0,
+    "output": 486,
+    "reasoning": 507
+  },
+  "cost": 2487.0,
+  "error": null
+}

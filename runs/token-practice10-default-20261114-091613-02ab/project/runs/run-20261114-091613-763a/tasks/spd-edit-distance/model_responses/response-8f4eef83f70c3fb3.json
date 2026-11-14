@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "6652353e835ceb65130de5a71e7dbd651a690a1f337eadb473e338ff241dc0f4",
+  "response_id": "resp_8d32ceec-f043-9302-8298-4ccd994f4ab3",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Remove unnecessary matrix storage and keep only two rows\",\n      \"rationale\": \"The sample code stores all rows in matrix list despite using only 'previous' for calculations. Eliminating this reduces memory overhead and may improve cache performance.\",\n      \"estimate\": {\n        \"gain\": 0.0015,\n        \"cost\": 3000,\n        \"seconds\": 45\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Add early exit for identical strings and equal-length edge cases\",\n      \"rationale\": \"Edge cases include 'identical strings'. Early check returns 0 immediately without DP computation, benefiting that test case and similar inputs.\",\n      \"estimate\": {\n        \"gain\": 0.002,\n        \"cost\": 3000,\n        \"seconds\": 40\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Use local variable caching for row access inside inner loop\",\n      \"rationale\": \"Reduce repeated list indexing by caching frequently accessed values like row[j-1], previous[j] before min() call to reduce interpreter overhead.\",\n      \"estimate\": {\n        \"gain\": 0.001,\n        \"cost\": 2500,\n        \"seconds\": 40\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 9500,\n    \"score\": 0.012235,\n    \"seconds\": 125\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"micro-optimize current implementation\",\n      \"amount\": 6000\n    },\n    {\n      \"direction\": \"reserve for vectorization attempt\",\n      \"amount\": 10000\n    },\n    {\n      \"direction\": \"reserve for library-based solutions\",\n      \"amount\": 5000\n    },\n    {\n      \"direction\": \"contingency buffer\",\n      \"amount\": 15000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.1,\n      \"score\": 0.0092\n    },\n    {\n      \"spent_ratio\": 0.25,\n      \"score\": 0.011\n    },\n    {\n      \"spent_ratio\": 0.5,\n      \"score\": 0.02\n    },\n    {\n      \"spent_ratio\": 0.75,\n      \"score\": 0.05\n    },\n    {\n      \"spent_ratio\": 0.9,\n      \"score\": 0.08\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1404,
+    "cached_input": 0,
+    "output": 656,
+    "reasoning": 624
+  },
+  "cost": 2684.0,
+  "error": null
+}

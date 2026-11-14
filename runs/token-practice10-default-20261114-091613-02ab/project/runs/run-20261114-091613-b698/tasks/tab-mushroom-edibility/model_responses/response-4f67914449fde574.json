@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0004",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "331fbdc90200b4b953eb1db125b1d681c42f45de95918eed387fe7ddb5f5496b",
+  "response_id": "resp_1a9fe816-49a8-9a7a-8357-ea40d0fecbcb",
+  "status": "completed",
+  "output_text": "{\n\"code\":\"\\\"\\\"\\\"Simplified LightGBM to reduce interaction-induced overfitting.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    test = pd.DataFrame(test_rows, columns=train.columns)\\n    \\n    # Fill missing values with 'missing' token for consistent handling\\n    for name in train.columns:\\n        if not pd.api.types.is_numeric_dtype(train[name]):\\n            train[name] = train[name].fillna('missing')\\n            test[name] = test[name].fillna('missing')\\n            categories = pd.Categorical(pd.concat([train[name], test[name]], ignore_index=True)).categories\\n            train[name] = pd.Categorical(train[name], categories=categories)\\n            test[name] = pd.Categorical(test[name], categories=categories)\\n    \\n    # Shallow trees (stump-like) to avoid interaction overfitting\\n    model = LGBMClassifier(\\n        random_state=20261114,\\n        n_jobs=1,\\n        verbosity=-1,\\n        max_depth=1,\\n        num_leaves=2,\\n        min_child_samples=50\\n    )\\n    model.fit(train, y)\\n    return model.predict_proba(test)[:, 1].tolist()\",\n\"notes\":\"Hypothesis tested: cap_color x habitat interactions caused overfitting. Solution: simplified LGBM with max_depth=1 (single-level splits/stumps) to prevent multi-feature interactions while still fitting main effects. Missing values explicitly filled with 'missing' token for consistency. Should recover toward baseline 0.8501 by avoiding noise from spurious interactions in small 4-feature space.\"\n}",
+  "tokens": {
+    "input": 3602,
+    "cached_input": 0,
+    "output": 424,
+    "reasoning": 1069
+  },
+  "cost": 5095.0,
+  "error": null
+}

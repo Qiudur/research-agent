@@ -1,0 +1,14 @@
+"""Simple, intentionally repetitive trailing-window implementation."""
+
+from __future__ import annotations
+
+
+def rolling_mean(values: list[float], window: int) -> list[float]:
+    if window <= 0:
+        raise ValueError("window must be positive")
+    result = []
+    for index in range(len(values)):
+        start = max(0, index - window + 1)
+        current = values[start:index + 1]
+        result.append(sum(current) / len(current))
+    return result

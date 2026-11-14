@@ -1,0 +1,60 @@
+{
+  "schema": "self_research_plan/1",
+  "label": "TEST ONLY",
+  "bank_version": "bank-v1",
+  "practice_tasks": [
+    "spd-distance-matrix",
+    "spd-rolling-mean",
+    "spd-max-drawdown",
+    "spd-edit-distance",
+    "spd-membership-filter",
+    "tab-adult-income",
+    "tab-mushroom-edibility",
+    "tab-online-shoppers",
+    "tab-phishing-websites",
+    "tab-german-credit"
+  ],
+  "candidate_order": [
+    "default"
+  ],
+  "candidate_files": {
+    "default": {
+      "config": {
+        "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/agent_token_pilot_v2.json",
+        "sha256": "f0ba329f64b0592e4e90fe1fb0968611ccd0a34a40b27c1fce9e1e7a139c367b"
+      },
+      "prompts": {
+        "planner": {
+          "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prompts/planner_token_pilot_v2.md",
+          "sha256": "b15dd06037c1dcdfe7b20bb7df8463075130fb1a91e6868aa80a531a6b3172a0"
+        },
+        "executor": {
+          "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prompts/executor_token_pilot_v2.md",
+          "sha256": "4b431d5e24dfd24a9bf692b9b44be4fe748ba5f7f95efd78343b2f03f9465c17"
+        },
+        "diagnoser": {
+          "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prompts/diagnoser_token_pilot_v2.md",
+          "sha256": "706ee4a5d327853d5f0f037077b7fafa61fda0f3794fad9b5e44a148751756f1"
+        },
+        "summarizer": {
+          "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prompts/summarizer.md",
+          "sha256": "7a6ea00623497d61efc014c24fee1de19ce3131fa912883b4f0bc768854358de"
+        }
+      }
+    }
+  },
+  "protected_sha256": {
+    "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prices_real_token_test.json": "69ce9eb9157c86bd20e786b408b349ab0869bab9e67ee4243153f5764572e90d",
+    "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prices.json": "b32a0f2f9823494a5d5d28292d6e0a66a4c45a18ddadf01d6da04f64ee879cfb",
+    "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/hard_caps.json": "58a21d156dfd99e3790ba33334d4e1c8e361ef3fc03a2d440f2c1042ee500958",
+    "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/tasks/bank.json": "34961d13c319a4f212e55cb7b8c0ff40e4f2f617a11f748335b500829b1834ac"
+  },
+  "repetitions": [
+    1,
+    2,
+    3
+  ],
+  "max_workers": 3,
+  "sandbox_calls_serialized": true,
+  "budget_policy": "TEST-only budget override"
+}

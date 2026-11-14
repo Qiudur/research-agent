@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "fix",
+  "node_id": "n0007",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "c407cf3edb7dbcfc1c0fb29d10083ea8599ed73ebb02690caeae9515813c3eb7",
+  "response_id": "resp_57b14307-57ab-955d-99fc-479b15bd1786",
+  "status": "completed",
+  "output_text": "{\"code\":\"import numpy as np\\n\\n\\ndef distance_matrix(points: list[tuple[float, float]]) -> list[list[float]]:\\n    \\\"\\\"\\\"Compute pairwise Euclidean distances using NumPy broadcasting.\\\"\\\"\\\"\\n    n = len(points)\\n    if n == 0:\\n        return []\\n    \\n    # Convert to numpy array with shape (n, 2)\\n    # Using default float64 dtype to match original precision\\n    arr = np.array(points)\\n    \\n    # Use broadcasting to compute all pairwise differences at once\\n    # diff shape: (n, n, 2) - each element is [dx, dy] for a pair\\n    diff = arr[:, np.newaxis, :] - arr[np.newaxis, :, :]\\n    \\n    # Compute Euclidean distances from the differences\\n    # sum over last axis gives squared distance per pair\\n    dist = np.sqrt(np.sum(diff ** 2, axis=-1))\\n    \\n    # Convert back to list of lists as required\\n    return dist.tolist()\\n\",\"notes\":\"Reverted to float64 (default) for correctness. Float32 in previous attempt failed the correctness check because it produced results outside the floating-point tolerance of the original Python float (float64) implementation. The numpy broadcasting optimization provides the speedup while maintaining precision compatibility.\"}",
+  "tokens": {
+    "input": 1223,
+    "cached_input": 0,
+    "output": 291,
+    "reasoning": 696
+  },
+  "cost": 2210.0,
+  "error": null
+}

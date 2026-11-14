@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "49fe9e24789270dd1a5a2c36accfcab9d55d47465dd2dc5b4e36e396f95b76a5",
+  "response_id": "resp_e0b8bcde-8858-921f-8e0c-300aec179a85",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"from __future__ import annotations\\n\\ndef membership_filter(values: list[int], allowed: list[int]) -> list[int]:\\n    allowed_set = set(allowed)\\n    return [value for value in values if value in allowed_set]\",\n  \"notes\": \"Converted allowed list to set once before loop. Changes membership check from O(m) list scan to O(1) average set lookup, reducing overall complexity from O(n*m) to O(n+m). Preserves original behavior including order and duplicate handling.\"\n}",
+  "tokens": {
+    "input": 754,
+    "cached_input": 0,
+    "output": 119,
+    "reasoning": 270
+  },
+  "cost": 1143.0,
+  "error": null
+}

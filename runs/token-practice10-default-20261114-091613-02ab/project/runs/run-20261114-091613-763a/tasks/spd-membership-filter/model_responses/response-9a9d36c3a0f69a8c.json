@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "334d2d26602363c68707cb192caeea2472f11450326fe5f168f60db5e882933a",
+  "response_id": "resp_4ac68a23-d906-9ccd-b107-b661e7150a29",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Test if allowed list element ordering matters for matching when duplicates exist\",\n      \"rationale\": \"Set conversion removes order/duplicates from allowed list. If original behavior depends on allowed list structure beyond membership (e.g., first-match semantics), this could cause correctness failures on edge cases.\",\n      \"estimate\": {\n        \"gain\": 0.01,\n        \"cost\": 1200,\n        \"seconds\": 45\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Add explicit None/NaN/null type safety check for input values\",\n      \"rationale\": \"Some optimizations may have silently handled non-int types differently than original. Ensure strict int comparison preserves exact behavior.\",\n      \"estimate\": {\n        \"gain\": 0.005,\n        \"cost\": 1000,\n        \"seconds\": 35\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Verify duplicate preservation by testing allowed=[1,1] with values=[1,1,2]\",\n      \"rationale\": \"Multiple rejected nodes suggest hidden test failure. Check if allowed having duplicates affects expected output count even though logic uses set.\",\n      \"estimate\": {\n        \"gain\": 0.015,\n        \"cost\": 1400,\n        \"seconds\": 50\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 3600,\n    \"score\": 0.995,\n    \"seconds\": 130\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"correctness_validation\",\n      \"amount\": 2500\n    },\n    {\n      \"direction\": \"edge_case_testing\",\n      \"amount\": 1100\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.09,\n      \"score\": 0.981\n    },\n    {\n      \"spent_ratio\": 0.18,\n      \"score\": 0.988\n    },\n    {\n      \"spent_ratio\": 0.27,\n      \"score\": 0.995\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1854,
+    "cached_input": 0,
+    "output": 548,
+    "reasoning": 517
+  },
+  "cost": 2919.0,
+  "error": null
+}

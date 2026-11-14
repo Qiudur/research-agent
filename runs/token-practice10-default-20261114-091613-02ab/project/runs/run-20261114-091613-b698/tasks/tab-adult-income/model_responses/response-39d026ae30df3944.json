@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "d05bce42c40eadf1820942648b59a43e2eab5da3301aa3d398e76e46d35e1bad",
+  "response_id": "resp_87492d7e-23ae-988d-b605-24f58e1ea214",
+  "status": "completed",
+  "output_text": "{\n\"code\":\"\\\"\\\"\\\"Target Encoding with Smoothing for High Cardinality Features.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    # Load and prepare data\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    test = pd.DataFrame(test_rows, columns=train.columns)\\n    \\n    # Compute target encoding statistics from TRAIN ONLY\\n    global_mean = float(y.mean())\\n    \\n    cat_features = [\\\"native_country\\\", \\\"occupation\\\"]\\n    encoding_stats = {}\\n    \\n    for feat in cat_features:\\n        if feat not in train.columns:\\n            continue\\n        # Count occurrences per category\\n        counts = train[feat].value_counts().to_dict()\\n        total_train_count = len(train)\\n        # Mean of y per category\\n        means = {}\\n        for cat in counts.keys():\\n            mask = train[feat] == cat\\n            means[cat] = float(y[mask].mean())\\n        encoding_stats[feat] = {\\n            \\\"counts\\\": counts,\\n            \\\"means\\\": means,\\n            \\\"global_mean\\\": global_mean,\\n            \\\"total_count\\\": total_train_count,\\n        }\\n    \\n    # Apply target encoding with smoothing\\n    def apply_target_encoding(df: pd.DataFrame, feat: str, stats: dict) -> None:\\n        \\\"\\\"\\\"Encode feature with smoothed target encoding.\\\"\\\"\\\"\\n        alpha = 10  # Smoothing parameter\\n        global_m = stats[\\\"global_mean\\\"]\\n        counts = stats[\\\"counts\\\"]\\n        means = stats[\\\"means\\\"]\\n        \\n        def encode_val(val):\\n            if pd.isna(val):\\n                return global_m\\n            count = counts.get(val, 0)\\n            local_mean = means.get(val, global_m)\\n            # Smoothed encoding: weighted avg of local mean and global mean\\n            return (count * local_mean + alpha * global_m) / (count + alpha)\\n        \\n        df[feat] = df[feat].apply(encode_val)\\n    \\n    # Encode both train and test using stats computed from train only\\n    for feat in cat_features:\\n        if feat in encoding_stats:\\n            apply_target_encoding(train, feat, encoding_stats[feat])\\n            apply_target_encoding(test, feat, encoding_stats[feat])\\n    \\n    # Convert other numeric columns properly\\n    for name in train.columns:\\n        if pd.api.types.is_numeric_dtype(train[name]):\\n            continue  # Already numeric or encoded\\n        test[name] = pd.to_numeric(test[name], errors=\\\"coerce\\\")\\n    \\n    # Fit LightGBM model\\n    model = LGBMClassifier(\\n        random_state=20261114,\\n        n_jobs=1,\\n        verbosity=-1,\\n        max_depth=-1,\\n        learning_rate=0.05,\\n        n_estimators=100,\\n    )\\n    model.fit(train, y)\\n    \\n    # Predict probabilities\\n    return model.predict_proba(test)[:, 1].tolist()\",\n\"notes\":\"Implemented target encoding with Laplace-like smoothing for native_country and occupation features. Statistics are computed from training data only to prevent leakage. Smoothing parameter alpha=10 balances local category means with global mean. Unseen categories and missing values get global mean encoding.\"\n}",
+  "tokens": {
+    "input": 2536,
+    "cached_input": 0,
+    "output": 785,
+    "reasoning": 793
+  },
+  "cost": 4114.0,
+  "error": null
+}

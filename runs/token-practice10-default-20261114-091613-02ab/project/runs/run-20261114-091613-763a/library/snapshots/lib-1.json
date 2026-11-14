@@ -1,0 +1,41 @@
+{
+  "entries": [
+    {
+      "action": "用O(N)滑动窗口累积求和替代O(N*W)的切片后重新求和",
+      "conditions": "计算滚动窗口统计量时存在重复计算相同元素的情况",
+      "created_version": "lib-1",
+      "credibility": 0.5,
+      "effect": {
+        "mean_cost": 0.0,
+        "mean_gain": 0.0,
+        "uses": 0,
+        "wins": 0
+      },
+      "id": "exp-0001",
+      "kind": "experience",
+      "negative": false,
+      "scenario": "speedup",
+      "schema": "entry/1",
+      "scope": "method",
+      "sources": [
+        {
+          "node_ids": [
+            "n0001"
+          ],
+          "run_id": "run-20261114-091613-763a",
+          "task_id": "spd-rolling-mean"
+        }
+      ],
+      "status": "active",
+      "triggers": [
+        "repeated_recompute_window"
+      ],
+      "updated_version": "lib-1"
+    }
+  ],
+  "metadata": {
+    "demoted_losses": {}
+  },
+  "schema": "library/1",
+  "version": "lib-1"
+}

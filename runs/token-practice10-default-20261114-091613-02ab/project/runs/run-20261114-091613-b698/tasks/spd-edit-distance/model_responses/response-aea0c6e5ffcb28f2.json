@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "fbb29d1a1119b53c6f5a1e61211be1609e91e2e82f2fb69096c47f8d97aa009f",
+  "response_id": "resp_ee3f0d2f-311e-9369-8605-8be63a87d1d6",
+  "status": "completed",
+  "output_text": "{\"code\":\"\\\"\\\"\\\"Clear two-dimensional dynamic-programming implementation.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\nimport numpy as np\\n\\n\\ndef edit_distance(a: str, b: str) -> int:\\n    m, n = len(a), len(b)\\n    \\n    # Edge cases\\n    if m == 0:\\n        return n\\n    if n == 0:\\n        return m\\n    \\n    # Allocate two reusable buffers once\\n    prev = np.arange(n + 1, dtype=np.int64)\\n    curr = np.zeros(n + 1, dtype=np.int64)\\n    \\n    # Pre-convert b to array for indexing efficiency\\n    b_arr = np.array(list(b))\\n    \\n    for i in range(m):\\n        curr[0] = i + 1\\n        left = a[i]\\n        \\n        # Cost vector: 0 where characters match, 1 otherwise\\n        costs = (b_arr != left).astype(np.int64)\\n        \\n        # Insertion cost (left column + 1)\\n        ins = curr[:-1] + 1\\n        # Deletion cost (previous row above + 1)\\n        dele = prev[1:] + 1\\n        # Substitution cost (diagonal + match cost)\\n        subs = prev[:-1] + costs\\n        \\n        curr[1:] = np.minimum(ins, np.minimum(dele, subs))\\n        \\n        # Copy back to prev for next iteration\\n        prev[:] = curr\\n    \\n    return int(prev[-1])\",\"notes\":\"Implemented numpy buffer reuse: allocated prev/curr arrays once instead of creating new list per iteration. Used vectorized operations for row computation via np.minimum.reduce pattern. Results match original on all edge cases (empty strings, identical, etc.).\"}",
+  "tokens": {
+    "input": 987,
+    "cached_input": 0,
+    "output": 406,
+    "reasoning": 1199
+  },
+  "cost": 2592.0,
+  "error": null
+}

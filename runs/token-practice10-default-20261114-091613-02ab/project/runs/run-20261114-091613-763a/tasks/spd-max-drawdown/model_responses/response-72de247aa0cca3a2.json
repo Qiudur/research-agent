@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "edf2c807e40ec82be784f9e18c499cda1d21310d5ebeabd36465f963d00e8763",
+  "response_id": "resp_9c72ebeb-60d4-95dc-8ac2-6d71be876785",
+  "status": "completed",
+  "output_text": "{\n\"code\": \"\\\"\\\"\\\"Linear-time maximum-drawdown implementation using single-pass peak tracking.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\n\\ndef max_drawdown(prices: list[float]) -> float:\\n    \\\"\\\"\\\"Calculate the maximum chronological peak-to-trough percentage.\\n    \\n    Uses O(n) single-pass algorithm tracking running peak.\\n    Returns 0.0 for empty lists or non-decreasing sequences.\\n    \\\"\\\"\\\"\\n    if len(prices) < 2:\\n        return 0.0\\n    \\n    largest = 0.0\\n    peak = prices[0]\\n    \\n    for price in prices:\\n        if price > peak:\\n            peak = price\\n        else:\\n            drawdown = (peak - price) / peak\\n            largest = max(largest, drawdown)\\n    \\n    return largest\",\n\"notes\": \"Implemented O(n) single-pass algorithm by tracking running peak instead of comparing all pairs. Handles empty/short lists correctly. Drawdown only calculated when price <= peak, otherwise peak is updated. Semantically identical to original for all edge cases.\"\n}",
+  "tokens": {
+    "input": 867,
+    "cached_input": 0,
+    "output": 251,
+    "reasoning": 911
+  },
+  "cost": 2029.0,
+  "error": null
+}

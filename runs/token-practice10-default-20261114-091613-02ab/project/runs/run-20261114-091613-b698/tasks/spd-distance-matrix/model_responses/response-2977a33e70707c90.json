@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0004",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "6273af73fa07ac9a2fab7383f1c37b3f9b87ecd82504393d5610606f0e9f78cc",
+  "response_id": "resp_3040bf91-08cf-9bc7-90d0-1e77aa49280a",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Optimized distance matrix using symmetry exploitation.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nfrom math import sqrt\\n\\n\\ndef distance_matrix(points: list[tuple[float, float]]) -> list[list[float]]:\\n    n = len(points)\\n    result: list[list[float]] = [[0.0] * n for _ in range(n)]\\n    \\n    for i in range(n):\\n        x1, y1 = points[i]\\n        # Only compute upper triangle (j >= i) and mirror\\n        for j in range(i, n):\\n            if i == j:\\n                result[i][j] = 0.0\\n            else:\\n                x2, y2 = points[j]\\n                dx = x1 - x2\\n                dy = y1 - y2\\n                dist = sqrt(dx * dx + dy * dy)\\n                result[i][j] = dist\\n                result[j][i] = dist  # Mirror due to symmetry\\n    \\n    return result\",\n  \"notes\": \"Exploited symmetry property distance[i][j] = distance[j][i] by only computing upper triangle (including diagonal) and mirroring. Reduces sqrt calls from n² to n*(n+1)/2 (~50% fewer). Preserved exact behavior: diagonal stays 0.0, empty/single/duplicate inputs handled identically to original.\"\n}",
+  "tokens": {
+    "input": 956,
+    "cached_input": 0,
+    "output": 312,
+    "reasoning": 609
+  },
+  "cost": 1877.0,
+  "error": null
+}

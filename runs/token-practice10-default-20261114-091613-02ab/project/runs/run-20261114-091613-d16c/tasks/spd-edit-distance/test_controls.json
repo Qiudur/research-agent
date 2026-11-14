@@ -1,0 +1,6 @@
+{
+  "schema": "test_controls/1",
+  "label": "TEST ONLY - no real monetary budget",
+  "budget": 40000.0,
+  "currency": "TEST"
+}

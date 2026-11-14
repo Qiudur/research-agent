@@ -1,0 +1,125 @@
+{
+  "schema": "a_replay_context/1",
+  "created_ts": "2026-11-14T09:44:08.060Z",
+  "run_id": "run-20261114-091613-b698",
+  "task_id": "tab-phishing-websites",
+  "manifest_fields": {
+    "run_id": "run-20261114-091613-b698",
+    "phase": "dev",
+    "config": "default_lib",
+    "rep": 2,
+    "bank_version": "bank-v1",
+    "tasks": [
+      "spd-distance-matrix",
+      "spd-rolling-mean",
+      "spd-max-drawdown",
+      "spd-edit-distance",
+      "spd-membership-filter",
+      "tab-adult-income",
+      "tab-mushroom-edibility",
+      "tab-online-shoppers",
+      "tab-phishing-websites",
+      "tab-german-credit"
+    ],
+    "library": {
+      "root": "runs/run-20261114-091613-b698/library",
+      "start_version": "lib-0",
+      "frozen": false
+    },
+    "agent_config": {
+      "path": "config/agent_token_pilot_v2.json",
+      "sha256": "f0ba329f64b0592e4e90fe1fb0968611ccd0a34a40b27c1fce9e1e7a139c367b"
+    },
+    "prices": {
+      "path": "config/prices_real_token_test.json",
+      "sha256": "69ce9eb9157c86bd20e786b408b349ab0869bab9e67ee4243153f5764572e90d"
+    },
+    "hard_caps": {
+      "budget_ratio": 0.9
+    },
+    "code_commit": "482f3efd6e4d3134268a10bec0f75d2928d8e341",
+    "model": "qwen3.5-27b"
+  },
+  "library_root": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/library",
+  "model": "qwen3.5-27b",
+  "max_output_tokens": 2048,
+  "sources": {
+    "agent_config": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/agent_token_pilot_v2.json",
+      "sha256": "f0ba329f64b0592e4e90fe1fb0968611ccd0a34a40b27c1fce9e1e7a139c367b"
+    },
+    "baseline": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/tab-phishing-websites/nodes/n0000/score.json",
+      "sha256": "222a3969816cc38f873eb28a1d598e77b06d9aa7b6022a3ae2241810bede741f"
+    },
+    "hard_caps": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/hard_caps.json",
+      "sha256": "58a21d156dfd99e3790ba33334d4e1c8e361ef3fc03a2d440f2c1042ee500958"
+    },
+    "opening_plan": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/tab-phishing-websites/opening_plan.json",
+      "sha256": "3db52c2df4a8d41724528dafb8eaeac04c128c79f793688d8f9b6b7109adb51d"
+    },
+    "prices": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prices_real_token_test.json",
+      "sha256": "69ce9eb9157c86bd20e786b408b349ab0869bab9e67ee4243153f5764572e90d"
+    },
+    "prompt_diagnoser": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prompts/diagnoser_token_pilot_v2.md",
+      "sha256": "706ee4a5d327853d5f0f037077b7fafa61fda0f3794fad9b5e44a148751756f1"
+    },
+    "prompt_executor": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prompts/executor_token_pilot_v2.md",
+      "sha256": "4b431d5e24dfd24a9bf692b9b44be4fe748ba5f7f95efd78343b2f03f9465c17"
+    },
+    "prompt_planner": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prompts/planner_token_pilot_v2.md",
+      "sha256": "b15dd06037c1dcdfe7b20bb7df8463075130fb1a91e6868aa80a531a6b3172a0"
+    },
+    "prompt_summarizer": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prompts/summarizer.md",
+      "sha256": "7a6ea00623497d61efc014c24fee1de19ce3131fa912883b4f0bc768854358de"
+    },
+    "test_controls": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/tab-phishing-websites/test_controls.json",
+      "sha256": "349e77e16423106d144d7cbe6710034af0a0a0888ebad0347031c007f5dbc1e2"
+    },
+    "triggers": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/triggers.json",
+      "sha256": "8bc50d1fa6380a68b7ef89fca4d420eae1b17d7651ef63e0b822435befd3b147"
+    }
+  },
+  "tree_sha256": "f13cb638394434fa295a1f202ceef2348a01529917530c4ed101848f9a09505b",
+  "nodes": {
+    "n0000": {
+      "library_version": "lib-9",
+      "library_snapshot_sha256": "f5c6656f37915d5b0a0477705ee92ba927cb0669c4e0451c42088575bac44170",
+      "solution_sha256": "9b4d8c756f58e2cc8079159f27c0dcfabf225a383f9da83d0802254da725c4e7",
+      "score_sha256": "222a3969816cc38f873eb28a1d598e77b06d9aa7b6022a3ae2241810bede741f"
+    },
+    "n0001": {
+      "library_version": "lib-9",
+      "library_snapshot_sha256": "f5c6656f37915d5b0a0477705ee92ba927cb0669c4e0451c42088575bac44170",
+      "solution_sha256": "9b4d8c756f58e2cc8079159f27c0dcfabf225a383f9da83d0802254da725c4e7",
+      "score_sha256": "6ae2c2cf3c23e4ad0df1bab70c59e94c7924b9eac823fe65489b66fafc8527ac"
+    },
+    "n0002": {
+      "library_version": "lib-9",
+      "library_snapshot_sha256": "f5c6656f37915d5b0a0477705ee92ba927cb0669c4e0451c42088575bac44170",
+      "solution_sha256": "83f7f75401d54e3d137d49b46a9eb47148659ce1077069b2e09785e7aae5f16a",
+      "score_sha256": "93d5d071ac162654b9da57d6cd461069c24b873d4bb7abda15938145d90d6863"
+    },
+    "n0003": {
+      "library_version": "lib-9",
+      "library_snapshot_sha256": "f5c6656f37915d5b0a0477705ee92ba927cb0669c4e0451c42088575bac44170",
+      "solution_sha256": "c870271481d629f522b4f9f08bc654a00a417a70568c876ad7267eba0b7c7cb4",
+      "score_sha256": "e7a112b57a9e80903cc9881b3f059a4dd6e0f13d6bdc8d0cda4f592a79400138"
+    },
+    "n0004": {
+      "library_version": "lib-9",
+      "library_snapshot_sha256": "f5c6656f37915d5b0a0477705ee92ba927cb0669c4e0451c42088575bac44170",
+      "solution_sha256": null,
+      "score_sha256": null
+    }
+  }
+}

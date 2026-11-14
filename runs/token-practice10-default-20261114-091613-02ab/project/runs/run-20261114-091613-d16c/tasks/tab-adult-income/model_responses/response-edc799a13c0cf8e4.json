@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "ab66e4fedc7392e4929c7023aef6c4dd96ea510bc760a85f4c490f6cb7b0804c",
+  "response_id": "resp_1b3f02bd-4ced-92f7-a199-f2b38c6e8f87",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"LightGBM with target encoding for high-cardinality categoricals\",\n      \"rationale\": \"High cardinality categories like native_country, occupation, workclass benefit from frequency/target encoding rather than one-hot to reduce dimensionality while capturing predictive signal.\",\n      \"estimate\": {\n        \"gain\": 0.002,\n        \"cost\": 4500,\n        \"seconds\": 120\n      },\n      \"cites\": [\"gbm-classifier\", \"categorical-encoding\"]\n    },\n    {\n      \"hypothesis\": \"Feature engineering with education_num + capital_gain interaction terms\",\n      \"rationale\": \"Income prediction often benefits from nonlinear combinations; education level interacts with financial assets to determine earning potential.\",\n      \"estimate\": {\n        \"gain\": 0.001,\n        \"cost\": 3000,\n        \"seconds\": 90\n      },\n      \"cites\": [\"feature-engineering\", \"numeric-interactions\"]\n    },\n    {\n      \"hypothesis\": \"Age bucketization (decile bins) instead of raw age\",\n      \"rationale\": \"Age effects on income are not linear; discretizing captures life-stage transitions better than continuous treatment.\",\n      \"estimate\": {\n        \"gain\": 0.0005,\n        \"cost\": 2500,\n        \"seconds\": 60\n      },\n      \"cites\": [\"feature-binning\", \"discretization\"]\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 10000,\n    \"seconds\": 270,\n    \"score\": 0.0035\n  },\n  \"budget_allocation\": [\n    {\"direction\": \"baseline_gbm\", \"amount\": 4500},\n    {\"direction\": \"feature_engineering\", \"amount\": 3000},\n    {\"direction\": \"model_tuning\", \"amount\": 2500}\n  ],\n  \"expected_progress\": [\n    {\"spent_ratio\": 0.12, \"score\": 0.001},\n    {\"spent_ratio\": 0.25, \"score\": 0.0025},\n    {\"spent_ratio\": 0.5, \"score\": 0.004}\n  ]\n}",
+  "tokens": {
+    "input": 2840,
+    "cached_input": 0,
+    "output": 543,
+    "reasoning": 577
+  },
+  "cost": 3960.0,
+  "error": null
+}

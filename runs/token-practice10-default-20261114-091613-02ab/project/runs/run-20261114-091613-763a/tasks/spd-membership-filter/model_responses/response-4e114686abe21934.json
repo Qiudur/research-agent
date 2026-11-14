@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0008",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "d77443b1bd42519b696f51f8c408ad2e87393e81e9a40e109c04bc5a6a637489",
+  "response_id": "resp_22ce8ff5-03a2-90dd-9e6d-33ff8a7aadd8",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"from __future__ import annotations\\n\\ndef membership_filter(values: list[int], allowed: list[int]) -> list[int]:\\n    allowed_set = set(allowed)\\n    return [value for value in values if value in allowed_set]\\n\",\n  \"notes\": \"Converts allowed list to set once at function start, then binds to local variable allowed_set. Set membership is O(1) vs list O(n), eliminating repeated scanning overhead. Preserves original order and duplicate handling.\"\n}",
+  "tokens": {
+    "input": 718,
+    "cached_input": 0,
+    "output": 114,
+    "reasoning": 932
+  },
+  "cost": 1764.0,
+  "error": null
+}

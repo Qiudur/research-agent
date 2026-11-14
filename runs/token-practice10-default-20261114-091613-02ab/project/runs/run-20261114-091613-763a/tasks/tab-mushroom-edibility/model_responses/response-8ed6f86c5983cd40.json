@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "review",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "149993f88574ae87f33bc0ed4c5dd10484a6a96f55f37cab6bfa916db0aafc03",
+  "response_id": "resp_7efb1008-267f-981d-a459-de2821e31051",
+  "status": "completed",
+  "output_text": "{\n  \"decision\": \"switch\",\n  \"budget_moves\": [\n    {\n      \"from\": \"feature_interaction\",\n      \"to\": \"missing_handling\",\n      \"amount\": 500.0\n    },\n    {\n      \"from\": \"baseline_model\",\n      \"to\": \"missing_handling\",\n      \"amount\": 500.0\n    }\n  ],\n  \"note\": \"Two LightGBM attempts scored 0.0 suggesting implementation issues or insufficient signal from 4 features. Priority shifts to fixing base pipeline: verify probability output format, handle missing values systematically (mean impute + indicator, or most_frequent), test simplest possible classifier first. Switching focus to missing_handling with consolidated budget.\"\n}",
+  "tokens": {
+    "input": 3734,
+    "cached_input": 0,
+    "output": 165,
+    "reasoning": 457
+  },
+  "cost": 4356.0,
+  "error": null
+}

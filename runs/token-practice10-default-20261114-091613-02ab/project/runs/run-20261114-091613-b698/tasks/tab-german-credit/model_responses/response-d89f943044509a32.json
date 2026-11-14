@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "8622d50b1ac1c17e916a5c26366d85398aa812ffe9f8b050276a23435a25c632",
+  "response_id": "resp_78014c11-f784-9834-b426-bf2208f7aba2",
+  "status": "completed",
+  "output_text": "{\n\"code\":\"\\\"\\\"\\\"LightGBM with label encoding for all categorical features.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\nfrom sklearn.preprocessing import LabelEncoder\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    \\n    # Create test DataFrame preserving column order\\n    test = pd.DataFrame(test_rows, columns=train.columns)\\n    \\n    # Identify numeric vs categorical columns based on original dtype\\n    numeric_cols = [c for c in train.columns if pd.api.types.is_numeric_dtype(train[c])]\\n    categorical_cols = [c for c in train.columns if not pd.api.types.is_numeric_dtype(train[c])]\\n    \\n    # Ensure numeric columns are properly typed (handles string-formatted numbers)\\n    for col in numeric_cols:\\n        train[col] = pd.to_numeric(train[col], errors=\\\"coerce\\\")\\n        test[col] = pd.to_numeric(test[col], errors=\\\"coerce\\\")\\n    \\n    # Prepare numeric features\\n    X_train_num = train[numeric_cols].copy()\\n    X_test_num = test[numeric_cols].copy()\\n    \\n    # Process categorical features with label encoding\\n    X_train_cat_list = []\\n    X_test_cat_list = []\\n    \\n    for col in categorical_cols:\\n        le = LabelEncoder()\\n        train_col = train[col].astype(str)\\n        test_col = test[col].astype(str)\\n        \\n        # Fit on train, transform both\\n        train_encoded = le.fit_transform(train_col)\\n        \\n        # Transform test, assigning -1 for unseen categories\\n        test_encoded = test_col.apply(\\n            lambda x: le.transform([x])[0] if x in le.classes_ else -1\\n        )\\n        \\n        X_train_cat_list.append(pd.Series(train_encoded, name=col))\\n        X_test_cat_list.append(pd.Series(test_encoded, name=col))\\n    \\n    # Combine features\\n    X_train = X_train_num.copy()\\n    X_test = X_test_num.copy()\\n    \\n    if X_train_cat_list:\\n        X_train_cat = pd.concat(X_train_cat_list, axis=1)\\n        X_test_cat = pd.concat(X_test_cat_list, axis=1)\\n        X_train = pd.concat([X_train, X_train_cat], axis=1)\\n        X_test = pd.concat([X_test, X_test_cat], axis=1)\\n    \\n    # Fit and predict\\n    model = LGBMClassifier(random_state=20261114, n_jobs=1, verbosity=-1)\\n    model.fit(X_train, y)\\n    return model.predict_proba(X_test)[:, 1].tolist()\\n\",\n\"notes\":\"Changed from selective one-hot encoding to label encoding all categorical features. Each categorical column gets mapped to integers 0..(unique-1), with unseen test values mapped to -1. This reduces dimensionality compared to one-hot while preserving full information about each feature.\"\n}",
+  "tokens": {
+    "input": 4186,
+    "cached_input": 0,
+    "output": 702,
+    "reasoning": 929
+  },
+  "cost": 5817.0,
+  "error": null
+}

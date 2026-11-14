@@ -1,0 +1,31 @@
+--- parent/solution.py
++++ solution.py
+@@ -16,7 +16,7 @@
+     global_mean = float(y.mean())
+     
+     # High-cardinality features to encode with target encoding
+-    cat_features_target_enc = ["native_country", "occupation"]
++    cat_features_target_enc = ["native country", "occupation"]
+     encoding_stats = {}
+     
+     for feat in cat_features_target_enc:
+@@ -79,11 +79,18 @@
+         if pd.api.types.is_numeric_dtype(train[name]):
+             test[name] = pd.to_numeric(test[name], errors="coerce")
+     
+-    # Fit LightGBM model
++    # Calculate scale_pos_weight from training data class distribution
++    n_pos = int(sum(y))
++    n_neg = len(y) - n_pos
++    scale_pos_weight = n_neg / n_pos if n_pos > 0 else 1.0
++    
++    # Fit LightGBM model with tuned hyperparameters
+     model = LGBMClassifier(
+         random_state=20261114,
+         n_jobs=1,
+         verbosity=-1,
++        scale_pos_weight=scale_pos_weight,
++        min_data_in_leaf=30,
+     )
+     model.fit(train, y)
+     

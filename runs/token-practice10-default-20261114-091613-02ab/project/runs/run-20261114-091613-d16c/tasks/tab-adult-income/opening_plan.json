@@ -1,0 +1,38 @@
+{
+  "schema": "opening_plan/1",
+  "run_id": "run-20261114-091613-d16c",
+  "task_id": "tab-adult-income",
+  "predicted": {
+    "cost": 10000.0,
+    "seconds": 270.0,
+    "score": 0.0035
+  },
+  "expected_progress": [
+    {
+      "spent_ratio": 0.12,
+      "score": 0.001
+    },
+    {
+      "spent_ratio": 0.25,
+      "score": 0.0025
+    },
+    {
+      "spent_ratio": 0.5,
+      "score": 0.004
+    }
+  ],
+  "budget_allocation": [
+    {
+      "direction": "baseline_gbm",
+      "amount": 4500
+    },
+    {
+      "direction": "feature_engineering",
+      "amount": 3000
+    },
+    {
+      "direction": "model_tuning",
+      "amount": 2500
+    }
+  ]
+}

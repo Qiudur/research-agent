@@ -1,0 +1,26 @@
+{
+  "schema": "opening_plan/1",
+  "run_id": "run-20261114-091613-763a",
+  "task_id": "spd-max-drawdown",
+  "predicted": {
+    "cost": 500.0,
+    "seconds": 0.5,
+    "score": 0.8512
+  },
+  "expected_progress": [
+    {
+      "spent_ratio": 0.0,
+      "score": 0.0012188786936198394
+    },
+    {
+      "spent_ratio": 0.0125,
+      "score": 0.8512
+    }
+  ],
+  "budget_allocation": [
+    {
+      "direction": "algorithm_optimization",
+      "amount": 500
+    }
+  ]
+}

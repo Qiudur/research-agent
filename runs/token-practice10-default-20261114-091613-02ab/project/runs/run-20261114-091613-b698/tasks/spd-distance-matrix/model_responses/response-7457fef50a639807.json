@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "20a293182705055ecccecd288426269cd94bfee4f7adfd2287de93a558c0a66e",
+  "response_id": "resp_3eda1b85-6418-90ab-87fc-6c462ed4a2e4",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Optimized implementation with pre-cached coordinates.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nfrom math import sqrt\\n\\n\\ndef distance_matrix(points: list[tuple[float, float]]) -> list[list[float]]:\\n    \\\"\\\"\\\"Calculate pairwise Euclidean distances with cached coordinates.\\\"\\\"\\\"\\n    if not points:\\n        return []\\n    \\n    # Pre-extract and cache coordinates to reduce tuple unpacking in inner loop\\n    xs = [p[0] for p in points]\\n    ys = [p[1] for p in points]\\n    \\n    result: list[list[float]] = []\\n    for i in range(len(xs)):\\n        x1, y1 = xs[i], ys[i]\\n        row: list[float] = []\\n        for j in range(len(xs)):\\n            dx = x1 - xs[j]\\n            dy = y1 - ys[j]\\n            row.append(sqrt(dx * dx + dy * dy))\\n        result.append(row)\\n    return result\",\n  \"notes\": \"Pre-extracted x and y coordinates into separate lists before nested loops. This eliminates N^2 tuple unpacking operations in the inner loop, replacing them with simple list indexing. Preserves original function signature, return type (list of lists), and behavior on empty/single/duplicate inputs. Edge case handling added explicit check for empty input.\"\n}",
+  "tokens": {
+    "input": 958,
+    "cached_input": 0,
+    "output": 311,
+    "reasoning": 588
+  },
+  "cost": 1857.0,
+  "error": null
+}

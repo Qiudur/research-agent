@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "5887ff6a9e7bcea701612ccbcf302a03961622e656ff388cc8c5234236dd928c",
+  "response_id": "resp_35090978-2799-954e-a185-7967b8cfb8f0",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Implement LightGBM with default parameters on raw features, handling missing as NaN.\",\n      \"rationale\": \"LGBM handles missing effectively; baseline_raw suggests achievable 0.85 score.\",\n      \"estimate\": {\n        \"gain\": 0.85,\n        \"cost\": 1000,\n        \"seconds\": 30\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Encode missing values as a separate category in tree-based model.\",\n      \"rationale\": \"Captures missingness pattern which may be informative.\",\n      \"estimate\": {\n        \"gain\": 0.03,\n        \"cost\": 1200,\n        \"seconds\": 35\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Feature interaction between cap_shape and habitat via polynomial expansion.\",\n      \"rationale\": \"Synergistic effects might exist.\",\n      \"estimate\": {\n        \"gain\": 0.02,\n        \"cost\": 1500,\n        \"seconds\": 40\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 3700,\n    \"seconds\": 105,\n    \"score\": 0.85\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"baseline_model\",\n      \"amount\": 1000\n    },\n    {\n      \"direction\": \"missing_handling\",\n      \"amount\": 1200\n    },\n    {\n      \"direction\": \"feature_interaction\",\n      \"amount\": 1500\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.027,\n      \"score\": 0.85\n    },\n    {\n      \"spent_ratio\": 0.05,\n      \"score\": 0.88\n    },\n    {\n      \"spent_ratio\": 0.1,\n      \"score\": 0.9\n    }\n  ]\n}",
+  "tokens": {
+    "input": 3846,
+    "cached_input": 0,
+    "output": 511,
+    "reasoning": 3487
+  },
+  "cost": 7844.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "diagnoser",
+  "purpose": "diagnose",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "ecc348a16e8cf37be90443efa414dae21eb2d803652eb92203867d9adcb3e6cf",
+  "response_id": "resp_241d4ab0-4d5c-95bb-b0ce-7892f323d6cb",
+  "status": "completed",
+  "output_text": "{\n\"advice\":\"Switch to a gradient boosting framework (e.g., LightGBM or CatBoost) that natively supports categorical features, or use Frequency Encoding instead of Target Encoding to reduce variance. Verify that all non-target features are preserved in the preprocessing pipeline and that no NaNs are introduced during encoding. Do not attempt to debug manual target encoding further until a robust baseline is re-established.\",\n\"hypothesis\":\"Manual target encoding for high-cardinality features introduced instability and information loss due to improper smoothing or handling of unseen categories, causing significant degradation compared to the native categorical support of the baseline model.\",\n\"rationale\":\"The raw ROC AUC (0.79) is valid but drastically below the provided baseline (0.93), yielding a normalized deviation of -137. While 'correct' is true, indicating valid output format, the performance drop suggests the encoding strategy is suboptimal for this dataset's distribution or implemented without sufficient regularization/smoothing. High-cardinality manual encoding is prone to overfitting noise or discarding signal, whereas the baseline likely leverages native tree-based categorical splitting.\"\n}",
+  "tokens": {
+    "input": 2271,
+    "cached_input": 0,
+    "output": 234,
+    "reasoning": 2563
+  },
+  "cost": 5068.0,
+  "error": null
+}

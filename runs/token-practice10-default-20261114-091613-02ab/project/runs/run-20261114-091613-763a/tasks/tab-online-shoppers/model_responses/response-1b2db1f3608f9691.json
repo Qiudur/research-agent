@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "11754682c7c5ced7c4ff1e878ebf2bf3e4adc8ba4b553fa70501b35720d1e8eb",
+  "response_id": "resp_e13aad07-e639-97b1-8ca0-9eb2e36b7569",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Apply class weight correction for imbalanced positive rate (15.5%)\",\n      \"rationale\": \"Dataset has only 15.5% positive samples; standard models bias toward majority class. Setting scale_pos_weight in LightGBM addresses this directly without feature changes.\",\n      \"estimate\": {\n        \"gain\": 0.02,\n        \"cost\": 600,\n        \"seconds\": 15\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Log-transform duration features to handle skewed distributions\",\n      \"rationale\": \"Duration columns (Administrative_Duration, Informational_Duration, etc.) typically have right-skewed values with heavy tails; log(1+x) transformation helps tree models learn splits more effectively.\",\n      \"estimate\": {\n        \"gain\": 0.015,\n        \"cost\": 550,\n        \"seconds\": 12\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Create interaction feature combining visitor type with page value\",\n      \"rationale\": \"Returning visitors with higher PageValues may indicate stronger purchase intent; explicit interaction can capture this non-linear relationship.\",\n      \"estimate\": {\n        \"gain\": 0.01,\n        \"cost\": 500,\n        \"seconds\": 10\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 1650,\n    \"seconds\": 37,\n    \"score\": 0.02\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"class_weight_tuning\",\n      \"amount\": 600\n    },\n    {\n      \"direction\": \"duration_transform\",\n      \"amount\": 550\n    },\n    {\n      \"direction\": \"feature_interaction\",\n      \"amount\": 500\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.04,\n      \"score\": 0.01\n    },\n    {\n      \"spent_ratio\": 0.1,\n      \"score\": 0.025\n    },\n    {\n      \"spent_ratio\": 0.2,\n      \"score\": 0.035\n    },\n    {\n      \"spent_ratio\": 0.4,\n      \"score\": 0.04\n    }\n  ]\n}",
+  "tokens": {
+    "input": 4044,
+    "cached_input": 0,
+    "output": 589,
+    "reasoning": 628
+  },
+  "cost": 5261.0,
+  "error": null
+}

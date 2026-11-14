@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "summarizer",
+  "purpose": "summarize",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "83b05b9318d6574b2b2a6f038d94645a14fd3fdf03dcfe5da328f1696613e60a",
+  "response_id": "resp_361f47bd-32ec-98ba-8fd3-0ecbf998e971",
+  "status": "completed",
+  "output_text": "{\n  \"drafts\": [\n    {\n      \"scope\": \"method\",\n      \"scenario\": \"speedup\",\n      \"triggers\": [\"repeated_recompute_window\"],\n      \"conditions\": \"sliding window or rolling calculations where elements leave and enter the window sequentially\",\n      \"action\": \"maintain a running sum accumulator by subtracting the leaving element and adding the new element instead of full recalculation\",\n      \"negative\": false,\n      \"node_ids\": [\"n0001\"]\n    }\n  ],\n  \"narrowings\": []\n}",
+  "tokens": {
+    "input": 647,
+    "cached_input": 0,
+    "output": 132,
+    "reasoning": 370
+  },
+  "cost": 1149.0,
+  "error": null
+}

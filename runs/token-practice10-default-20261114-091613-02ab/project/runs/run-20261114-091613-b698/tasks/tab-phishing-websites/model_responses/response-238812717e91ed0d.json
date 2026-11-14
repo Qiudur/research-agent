@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "diagnoser",
+  "purpose": "diagnose",
+  "node_id": "n0003",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "2d875cc26fd501968cecd5dc112be1cc069bdb752f92ff3b032fcd3966787e35",
+  "response_id": "resp_e5faa139-15f0-95a6-8dc4-4d498cccdfae",
+  "status": "completed",
+  "output_text": "{\n  \"hypothesis\": \"The fit_predict function returns constant/identical predictions for all test rows, indicating a code error where probability calculation is broken or predictions are not being properly generated\",\n  \"rationale\": \"Raw ROC AUC (0.9931) is very close to both baseline (0.99356) and ceiling (0.99357), resulting in large negative normalized dev score (~-41.38). More critically, spread=0.0 indicates all predicted probabilities are identical across test rows. With higher_is_better=true and raw score slightly below baseline, the model is performing worse than naive. A properly trained LightGBM on 6635 rows with 30 numeric features should produce varied probability outputs, not identical values.\",\n  \"advice\": \"Check fit_predict implementation for: (1) return statement errors returning single value instead of list, (2) prediction array broadcasting issue, (3) all-zero/all-one weights causing degenerate predictions, (4) missing actual model.fit() call or calling wrong model instance. Add debug logging showing number of unique prediction values returned.\"\n}",
+  "tokens": {
+    "input": 3544,
+    "cached_input": 0,
+    "output": 247,
+    "reasoning": 698
+  },
+  "cost": 4489.0,
+  "error": null
+}

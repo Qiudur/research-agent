@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "f44d14d7ed09c2db930d5492b9473e5ff9e5e960b67dd2e04eb7e2111c4c0aa4",
+  "response_id": "resp_cecf1b35-b4ce-9be4-9216-065134087c35",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Pre-allocate NumPy array using np.empty instead of list append + convert\",\n      \"rationale\": \"n0001 used nested loops appending to Python lists then converted to array - pre-allocation avoids dynamic resizing overhead\",\n      \"estimate\": {\n        \"gain\": 0.02,\n        \"cost\": 2800,\n        \"seconds\": 120\n      },\n      \"cites\": [\"vectorize_numpy\"]\n    },\n    {\n      \"hypothesis\": \"Compute squared distances then single sqrt pass vs per-element sqrt\",\n      \"rationale\": \"Vectorizing the entire sqrt operation after computing all squared distances may use optimized BLAS/LAPACK routines\",\n      \"estimate\": {\n        \"gain\": 0.015,\n        \"cost\": 2400,\n        \"seconds\": 90\n      },\n      \"cites\": [\"vectorize_numpy\"]\n    },\n    {\n      \"hypothesis\": \"Use explicit float32 dtypes if acceptable precision\",\n      \"rationale\": \"Smaller floats reduce memory bandwidth pressure; task tolerates floating-point variation within reasonable bounds\",\n      \"estimate\": {\n        \"gain\": 0.01,\n        \"cost\": 2200,\n        \"seconds\": 80\n      },\n      \"cites\": [\"vectorize_numpy\"]\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 7400,\n    \"seconds\": 290,\n    \"score\": 0.625\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"vectorize_numpy\",\n      \"amount\": 7000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.37,\n      \"score\": 0.585\n    },\n    {\n      \"spent_ratio\": 0.55,\n      \"score\": 0.605\n    },\n    {\n      \"spent_ratio\": 0.71,\n      \"score\": 0.625\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1688,
+    "cached_input": 0,
+    "output": 510,
+    "reasoning": 708
+  },
+  "cost": 2906.0,
+  "error": null
+}

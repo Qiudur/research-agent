@@ -1,0 +1,125 @@
+{
+  "schema": "a_replay_context/1",
+  "created_ts": "2026-11-14T09:38:10.239Z",
+  "run_id": "run-20261114-091613-b698",
+  "task_id": "tab-mushroom-edibility",
+  "manifest_fields": {
+    "run_id": "run-20261114-091613-b698",
+    "phase": "dev",
+    "config": "default_lib",
+    "rep": 2,
+    "bank_version": "bank-v1",
+    "tasks": [
+      "spd-distance-matrix",
+      "spd-rolling-mean",
+      "spd-max-drawdown",
+      "spd-edit-distance",
+      "spd-membership-filter",
+      "tab-adult-income",
+      "tab-mushroom-edibility",
+      "tab-online-shoppers",
+      "tab-phishing-websites",
+      "tab-german-credit"
+    ],
+    "library": {
+      "root": "runs/run-20261114-091613-b698/library",
+      "start_version": "lib-0",
+      "frozen": false
+    },
+    "agent_config": {
+      "path": "config/agent_token_pilot_v2.json",
+      "sha256": "f0ba329f64b0592e4e90fe1fb0968611ccd0a34a40b27c1fce9e1e7a139c367b"
+    },
+    "prices": {
+      "path": "config/prices_real_token_test.json",
+      "sha256": "69ce9eb9157c86bd20e786b408b349ab0869bab9e67ee4243153f5764572e90d"
+    },
+    "hard_caps": {
+      "budget_ratio": 0.9
+    },
+    "code_commit": "482f3efd6e4d3134268a10bec0f75d2928d8e341",
+    "model": "qwen3.5-27b"
+  },
+  "library_root": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/library",
+  "model": "qwen3.5-27b",
+  "max_output_tokens": 2048,
+  "sources": {
+    "agent_config": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/agent_token_pilot_v2.json",
+      "sha256": "f0ba329f64b0592e4e90fe1fb0968611ccd0a34a40b27c1fce9e1e7a139c367b"
+    },
+    "baseline": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/tab-mushroom-edibility/nodes/n0000/score.json",
+      "sha256": "854029ed58ed56d2da2a1110307de07bac9ab94ed59a1ff7eca87bb9030bc549"
+    },
+    "hard_caps": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/hard_caps.json",
+      "sha256": "58a21d156dfd99e3790ba33334d4e1c8e361ef3fc03a2d440f2c1042ee500958"
+    },
+    "opening_plan": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/tab-mushroom-edibility/opening_plan.json",
+      "sha256": "005f8dde23554f9a01aeeb873ca9c367518c0a35dd55adb64657ca258fbad1e2"
+    },
+    "prices": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prices_real_token_test.json",
+      "sha256": "69ce9eb9157c86bd20e786b408b349ab0869bab9e67ee4243153f5764572e90d"
+    },
+    "prompt_diagnoser": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prompts/diagnoser_token_pilot_v2.md",
+      "sha256": "706ee4a5d327853d5f0f037077b7fafa61fda0f3794fad9b5e44a148751756f1"
+    },
+    "prompt_executor": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prompts/executor_token_pilot_v2.md",
+      "sha256": "4b431d5e24dfd24a9bf692b9b44be4fe748ba5f7f95efd78343b2f03f9465c17"
+    },
+    "prompt_planner": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prompts/planner_token_pilot_v2.md",
+      "sha256": "b15dd06037c1dcdfe7b20bb7df8463075130fb1a91e6868aa80a531a6b3172a0"
+    },
+    "prompt_summarizer": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/prompts/summarizer.md",
+      "sha256": "7a6ea00623497d61efc014c24fee1de19ce3131fa912883b4f0bc768854358de"
+    },
+    "test_controls": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-b698/tasks/tab-mushroom-edibility/test_controls.json",
+      "sha256": "349e77e16423106d144d7cbe6710034af0a0a0888ebad0347031c007f5dbc1e2"
+    },
+    "triggers": {
+      "path": "/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/config/triggers.json",
+      "sha256": "8bc50d1fa6380a68b7ef89fca4d420eae1b17d7651ef63e0b822435befd3b147"
+    }
+  },
+  "tree_sha256": "6025dc9b66cdf13d8cd93f0af620746eecc10a5283bb6546ed90c516ee2be25b",
+  "nodes": {
+    "n0000": {
+      "library_version": "lib-9",
+      "library_snapshot_sha256": "f5c6656f37915d5b0a0477705ee92ba927cb0669c4e0451c42088575bac44170",
+      "solution_sha256": "9b4d8c756f58e2cc8079159f27c0dcfabf225a383f9da83d0802254da725c4e7",
+      "score_sha256": "854029ed58ed56d2da2a1110307de07bac9ab94ed59a1ff7eca87bb9030bc549"
+    },
+    "n0001": {
+      "library_version": "lib-9",
+      "library_snapshot_sha256": "f5c6656f37915d5b0a0477705ee92ba927cb0669c4e0451c42088575bac44170",
+      "solution_sha256": "1ab5957b6b505688375a7d9fe55e6504984d6d58258cb7d79f78ff5469c7b269",
+      "score_sha256": "7d65a5eca3f70f539f77788f1ca4ad168e995bc4d590eb329bf5e7478d251f33"
+    },
+    "n0002": {
+      "library_version": "lib-9",
+      "library_snapshot_sha256": "f5c6656f37915d5b0a0477705ee92ba927cb0669c4e0451c42088575bac44170",
+      "solution_sha256": "7542e709bcf1d601858fcbbbaae6d459b913786e5d6fd4fe5adda20e2d41d276",
+      "score_sha256": "56a33674c4cae1380726294d29d8a9eea027b3db0889918f41e35a4616a22417"
+    },
+    "n0003": {
+      "library_version": "lib-9",
+      "library_snapshot_sha256": "f5c6656f37915d5b0a0477705ee92ba927cb0669c4e0451c42088575bac44170",
+      "solution_sha256": "eb2d77c8de1d2b1aafa4a735d14395dbc1ecedde2b46af31bb36f6226ab8fe6a",
+      "score_sha256": "5ac6fe314264a90573d51eb37bb7aefa217881d3bc8c5eadfad46c3034c96dbf"
+    },
+    "n0004": {
+      "library_version": "lib-9",
+      "library_snapshot_sha256": "f5c6656f37915d5b0a0477705ee92ba927cb0669c4e0451c42088575bac44170",
+      "solution_sha256": "666280754d4c96ec83ae11b6908ecd9373c600fd47eebd9cd12e141527e630f6",
+      "score_sha256": "6cf8150b970c56a008124c8801390ef838d0b1349cc9c4814769e86267ced8c1"
+    }
+  }
+}

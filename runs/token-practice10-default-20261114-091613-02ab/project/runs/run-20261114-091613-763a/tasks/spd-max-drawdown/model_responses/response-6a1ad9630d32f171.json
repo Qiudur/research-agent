@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "summarizer",
+  "purpose": "summarize",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "33ba1cab3bcb6172a876236582724dbbdc9029c6520d0c2df52fc97ce4d5c69b",
+  "response_id": "resp_e5931935-7a24-96e2-997a-a3860686e202",
+  "status": "completed",
+  "output_text": "```json\n{\n  \"drafts\": [\n    {\n      \"scope\": \"domain\",\n      \"scenario\": \"speedup\",\n      \"triggers\": [\"maximum drawdown\", \"linear time\"],\n      \"conditions\": \"implement single-pass peak tracking algorithm for nested loops\",\n      \"action\": \"use linear-time maximum drawdown algorithm with O(N) time complexity\",\n      \"negative\": false,\n      \"node_ids\": [\"n0001\"]\n    },\n    {\n      \"scope\": \"method\",\n      \"scenario\": \"speedup\",\n      \"triggers\": [\"builtin function call\", \"loop optimization\"],\n      \"conditions\": \"replace max() builtin with explicit conditional checks in loops\",\n      \"action\": \"avoid O(1) overhead of max() calls during iteration\",\n      \"negative\": false,\n      \"node_ids\": [\"n0003\"]\n    }\n  ],\n  \"narrowings\": []\n}\n```",
+  "tokens": {
+    "input": 779,
+    "cached_input": 0,
+    "output": 217,
+    "reasoning": 614
+  },
+  "cost": 1610.0,
+  "error": null
+}

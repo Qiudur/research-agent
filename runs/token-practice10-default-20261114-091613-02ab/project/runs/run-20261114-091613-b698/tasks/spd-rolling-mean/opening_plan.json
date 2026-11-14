@@ -1,0 +1,46 @@
+{
+  "schema": "opening_plan/1",
+  "run_id": "run-20261114-091613-b698",
+  "task_id": "spd-rolling-mean",
+  "predicted": {
+    "cost": 12000.0,
+    "seconds": 190.0,
+    "score": 0.85
+  },
+  "expected_progress": [
+    {
+      "spent_ratio": 0.1,
+      "score": 0.5
+    },
+    {
+      "spent_ratio": 0.2,
+      "score": 0.75
+    },
+    {
+      "spent_ratio": 0.3,
+      "score": 0.85
+    },
+    {
+      "spent_ratio": 0.5,
+      "score": 0.92
+    },
+    {
+      "spent_ratio": 0.9,
+      "score": 0.98
+    }
+  ],
+  "budget_allocation": [
+    {
+      "direction": "accumulator_implementation",
+      "amount": 4000
+    },
+    {
+      "direction": "prefix_sum_fallback",
+      "amount": 4000
+    },
+    {
+      "direction": "edge_case_optimizations",
+      "amount": 4000
+    }
+  ]
+}

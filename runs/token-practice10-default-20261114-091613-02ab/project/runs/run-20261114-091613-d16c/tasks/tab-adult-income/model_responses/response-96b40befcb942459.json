@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "diagnoser",
+  "purpose": "diagnose",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "053d59650cce4825d4023b72979e9ecb1644722fd0e1ea44796fa982e2b1b87e",
+  "response_id": "resp_e952001c-5efa-9a7b-b86a-3258f9d8e51d",
+  "status": "completed",
+  "output_text": "{\n  \"hypothesis\": \"Target encoding overfit training data causing significant generalization gap on hidden test rows; raw ROC AUC of 0.89 is substantially below baseline 0.93\",\n  \"rationale\": \"Normalized dev score -38.9 is mathematically consistent with raw=0.89, baseline=0.93, ceiling=0.931 using (raw-baseline)/(ceiling-baseline); model performs worse than baseline suggesting target encoding leaked train-specific signals that don't transfer to hidden test distribution; only 2 attempts but triggered by abnormal_score indicating performance drop concern; no runtime errors or format issues (correct=true, cheat_flags empty)\",\n  \"advice\": \"Replace target encoding with simpler categorical handling (one-hot encoding for low cardinality columns only, frequency encoding or omit high-cardinality categories); add L2 regularization to LightGBM; verify all probability outputs are finite values in [0,1]; if scores remain near 0.89 after these changes, the baseline may require careful examination of whether the evaluation uses different feature distributions\"\n}",
+  "tokens": {
+    "input": 2273,
+    "cached_input": 0,
+    "output": 237,
+    "reasoning": 784
+  },
+  "cost": 3294.0,
+  "error": null
+}

@@ -1,0 +1,21 @@
+--- parent/solution.py
++++ solution.py
+@@ -8,15 +8,15 @@
+         return []
+     
+     # Convert to numpy array with shape (n, 2)
+-    arr = np.array(points)
++    arr = np.asarray(points, dtype=np.float64)
+     
+     # Use broadcasting to compute all pairwise differences at once
+     # diff shape: (n, n, 2) - each element is [dx, dy] for a pair
+-    diff = arr[:, np.newaxis, :] - arr[np.newaxis, :, :]
++    diff = arr[:, None, :] - arr[None, :, :]
+     
+     # Compute Euclidean distances from the differences
+     # sum over last axis gives squared distance per pair
+-    dist = np.sqrt(np.sum(diff ** 2, axis=-1))
++    dist = np.sqrt(np.sum(diff ** 2, axis=2))
+     
+     # Convert back to list of lists as required
+     return dist.tolist()

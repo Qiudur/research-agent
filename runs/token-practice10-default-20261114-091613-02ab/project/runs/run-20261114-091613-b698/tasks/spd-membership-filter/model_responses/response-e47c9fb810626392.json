@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0004",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "6033aebd4a78ad6e5e285463ce50ec177d7027cb95799593e09d6c7361396896",
+  "response_id": "resp_ea9ed5b2-1e6b-9c3b-a971-98798da75229",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"from __future__ import annotations\\n\\ndef membership_filter(values: list[int], allowed: list[int]) -> list[int]:\\n    s = set(allowed)\\n    return [value for value in values if value in s]\",\n  \"notes\": \"Converts allowed list to set once upfront, binds to local variable s. Membership check 'v in s' is O(1) vs O(n) for list scanning. Preserves original order and duplicate semantics.\"\n}",
+  "tokens": {
+    "input": 742,
+    "cached_input": 0,
+    "output": 110,
+    "reasoning": 348
+  },
+  "cost": 1200.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0003",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "236c3ac74124d5d929d0df13f81a08fc65a6c971f0384b58755ec47e24302d43",
+  "response_id": "resp_5fac61a0-5aa8-929b-9d60-b95d833bfc91",
+  "status": "completed",
+  "output_text": "```json\n{\n  \"code\": \"import numpy as np\\n\\n\\ndef distance_matrix(points: list[tuple[float, float]]) -> list[list[float]]:\\n    \\\"\\\"\\\"Compute pairwise Euclidean distances using NumPy broadcasting.\\\"\\\"\\\"\\n    n = len(points)\\n    if n == 0:\\n        return []\\n    \\n    # Convert to numpy array with shape (n, 2)\\n    arr = np.asarray(points, dtype=np.float64)\\n    \\n    # Use broadcasting to compute all pairwise differences at once\\n    # diff shape: (n, n, 2) - each element is [dx, dy] for a pair\\n    diff = arr[:, None, :] - arr[None, :, :]\\n    \\n    # Compute Euclidean distances from the differences\\n    # sum over last axis gives squared distance per pair\\n    dist = np.sqrt(np.sum(diff ** 2, axis=2))\\n    \\n    # Convert back to list of lists as required\\n    return dist.tolist()\\n\",\n  \"notes\": \"Cleaned up the broadcasting implementation by removing unnecessary intermediate variables and simplifying indexing syntax. Using np.asarray with explicit dtype for consistency. The np.newaxis vs None equivalence means no functional change but slightly cleaner code. Removed any symmetry exploits since the hypothesis suggests such optimizations may introduce overhead that negates gains.\"\n}\n```",
+  "tokens": {
+    "input": 1086,
+    "cached_input": 0,
+    "output": 300,
+    "reasoning": 1290
+  },
+  "cost": 2676.0,
+  "error": null
+}

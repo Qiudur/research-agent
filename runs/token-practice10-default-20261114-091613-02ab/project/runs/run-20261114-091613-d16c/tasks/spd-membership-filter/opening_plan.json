@@ -1,0 +1,38 @@
+{
+  "schema": "opening_plan/1",
+  "run_id": "run-20261114-091613-d16c",
+  "task_id": "spd-membership-filter",
+  "predicted": {
+    "cost": 2100.0,
+    "seconds": 120.0,
+    "score": 0.7
+  },
+  "expected_progress": [
+    {
+      "spent_ratio": 0.05,
+      "score": 0.65
+    },
+    {
+      "spent_ratio": 0.1,
+      "score": 0.75
+    },
+    {
+      "spent_ratio": 0.15,
+      "score": 0.8
+    }
+  ],
+  "budget_allocation": [
+    {
+      "direction": "Hypothesis 1 - Set conversion",
+      "amount": 800
+    },
+    {
+      "direction": "Hypothesis 2 - Empty allowed optimization",
+      "amount": 600
+    },
+    {
+      "direction": "Hypothesis 3 - Hybrid strategy",
+      "amount": 700
+    }
+  ]
+}

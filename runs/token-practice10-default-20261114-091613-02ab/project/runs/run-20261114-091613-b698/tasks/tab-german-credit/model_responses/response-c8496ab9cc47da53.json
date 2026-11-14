@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "af6af90e2e799c7671f9ae99fe9fcc085a54b62761e7eb7a0074b9902907af9f",
+  "response_id": "resp_c6015573-1f9e-9bda-aa9f-8529d72d233b",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Implement LightGBM with label encoding for all categorical features.\",\n      \"rationale\": \"Default tree-based model with minimal preprocessing should surpass baseline by capturing non-linear patterns.\",\n      \"estimate\": {\n        \"gain\": 0.1,\n        \"cost\": 700,\n        \"seconds\": 10\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Apply one-hot encoding to low-cardinality categorical features (cardinality <10) and remove high-cardinality ones.\",\n      \"rationale\": \"Reduces noise from rare categories while preserving informative low-cardinality signals.\",\n      \"estimate\": {\n        \"gain\": 0.15,\n        \"cost\": 900,\n        \"seconds\": 15\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 1600,\n    \"score\": 0.25,\n    \"seconds\": 25\n  },\n  \"budget_allocation\": [\n    {\"direction\": \"model_dev\", \"amount\": 1200},\n    {\"direction\": \"experiment\", \"amount\": 400}\n  ],\n  \"expected_progress\": [\n    {\"spent_ratio\": 0.04, \"score\": 0.1},\n    {\"spent_ratio\": 0.08, \"score\": 0.25}\n  ]\n}",
+  "tokens": {
+    "input": 4061,
+    "cached_input": 0,
+    "output": 348,
+    "reasoning": 1584
+  },
+  "cost": 5993.0,
+  "error": null
+}

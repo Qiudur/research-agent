@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "review",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "e74ecf09c0151b4838ffd75ef254502d4850d21d122a2c1922d234a4a5866eb1",
+  "response_id": "resp_fe174495-df60-944b-ab80-8522d5dd16c3",
+  "status": "completed",
+  "output_text": "{\n  \"decision\": \"continue\",\n  \"budget_moves\": [\n    {\n      \"from\": \"hypothesis_1_set_conversion\",\n      \"to\": \"new_hypotheses_pool\",\n      \"amount\": 3000\n    }\n  ],\n  \"note\": \"Baseline set conversion accepted at 0.98, several micro-optimizations rejected despite >1.0 scores suggesting potential implementation bugs worth debugging. Plateau trigger but 22k remaining allows continued exploration of similar approaches before fundamental switch.\"\n}",
+  "tokens": {
+    "input": 1381,
+    "cached_input": 0,
+    "output": 122,
+    "reasoning": 704
+  },
+  "cost": 2207.0,
+  "error": null
+}

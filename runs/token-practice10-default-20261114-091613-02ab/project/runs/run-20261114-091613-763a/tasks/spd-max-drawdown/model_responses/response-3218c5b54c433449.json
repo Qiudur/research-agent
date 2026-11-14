@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "e6b217520523c2cc7bf335c05cee0f9d4a07aa8a61154738362728210030ff1d",
+  "response_id": "resp_98bc7b42-7ebd-9f3e-9f8e-55bf8e69c635",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Implement linear-time maximum drawdown algorithm using single-pass peak tracking.\",\n      \"rationale\": \"Current O(n²) nested loops are inefficient. Tracking running peak and computing drawdown in O(n) eliminates redundant comparisons, critical for benchmark size 1800.\",\n      \"estimate\": {\n        \"gain\": 0.85,\n        \"cost\": 500,\n        \"seconds\": 0.5\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 500,\n    \"seconds\": 0.5,\n    \"score\": 0.8512\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"algorithm_optimization\",\n      \"amount\": 500\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.0,\n      \"score\": 0.0012188786936198394\n    },\n    {\n      \"spent_ratio\": 0.0125,\n      \"score\": 0.8512\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1358,
+    "cached_input": 0,
+    "output": 295,
+    "reasoning": 3332
+  },
+  "cost": 4985.0,
+  "error": null
+}

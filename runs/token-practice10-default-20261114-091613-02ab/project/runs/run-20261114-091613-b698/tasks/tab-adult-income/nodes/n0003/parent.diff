@@ -1,0 +1,17 @@
+--- parent/solution.py
++++ solution.py
+@@ -11,6 +11,14 @@
+     train = pd.read_csv(train_csv)
+     y = train.pop("y").astype(int)
+     test = pd.DataFrame(test_rows, columns=train.columns)
++    
++    # Replace empty strings with 'Unknown' for robust missing value handling
++    for col in train.columns:
++        if train[col].dtype == 'object':
++            train[col] = train[col].replace('', 'Unknown')
++    for col in test.columns:
++        if test[col].dtype == 'object':
++            test[col] = test[col].replace('', 'Unknown')
+     
+     # Compute target encoding statistics from TRAIN ONLY
+     global_mean = float(y.mean())

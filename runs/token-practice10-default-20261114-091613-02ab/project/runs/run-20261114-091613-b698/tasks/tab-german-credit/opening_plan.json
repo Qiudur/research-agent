@@ -1,0 +1,30 @@
+{
+  "schema": "opening_plan/1",
+  "run_id": "run-20261114-091613-b698",
+  "task_id": "tab-german-credit",
+  "predicted": {
+    "cost": 1600.0,
+    "seconds": 25.0,
+    "score": 0.25
+  },
+  "expected_progress": [
+    {
+      "spent_ratio": 0.04,
+      "score": 0.1
+    },
+    {
+      "spent_ratio": 0.08,
+      "score": 0.25
+    }
+  ],
+  "budget_allocation": [
+    {
+      "direction": "model_dev",
+      "amount": 1200
+    },
+    {
+      "direction": "experiment",
+      "amount": 400
+    }
+  ]
+}

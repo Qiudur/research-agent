@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "af6af90e2e799c7671f9ae99fe9fcc085a54b62761e7eb7a0074b9902907af9f",
+  "response_id": "resp_03d3766b-9731-9041-9f5b-1316687f8fbc",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Optimize LightGBM hyperparameters (max_depth=5, learning_rate=0.05, num_leaves=15) via 5-fold CV\",\n      \"rationale\": \"Gradient boosting typically outperforms linear baselines on tabular data with interactions, even for small samples. Tuning mitigates overfitting risks.\",\n      \"estimate\": {\n        \"gain\": 0.05,\n        \"cost\": 500,\n        \"seconds\": 30\n      },\n      \"cites\": [\"lgbm_hyperopt\"]\n    },\n    {\n      \"hypothesis\": \"Apply k-fold smoothed target encoding to categorical features (checking_status, credit_history, etc.)\",\n      \"rationale\": \"Reduces category noise while preserving signal; smoothing prevents validation leakage during encoding.\",\n      \"estimate\": {\n        \"gain\": 0.03,\n        \"cost\": 300,\n        \"seconds\": 20\n      },\n      \"cites\": [\"target_encoding_kfold\"]\n    },\n    {\n      \"hypothesis\": \"Add degree-2 polynomial features for credit_amount, duration_months, and age with regularization\",\n      \"rationale\": \"Non-linear credit risk patterns may exist between numerical predictors and default probability.\",\n      \"estimate\": {\n        \"gain\": 0.02,\n        \"cost\": 400,\n        \"seconds\": 25\n      },\n      \"cites\": [\"poly_features_reg\"]\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 1200,\n    \"seconds\": 75,\n    \"score\": 0.10\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"model_optimization\",\n      \"amount\": 500\n    },\n    {\n      \"direction\": \"feature_engineering\",\n      \"amount\": 300\n    },\n    {\n      \"direction\": \"interaction_modeling\",\n      \"amount\": 400\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.5,\n      \"score\": 0.06\n    },\n    {\n      \"spent_ratio\": 1.0,\n      \"score\": 0.10\n    }\n  ]\n}",
+  "tokens": {
+    "input": 4061,
+    "cached_input": 0,
+    "output": 548,
+    "reasoning": 3391
+  },
+  "cost": 8000.0,
+  "error": null
+}

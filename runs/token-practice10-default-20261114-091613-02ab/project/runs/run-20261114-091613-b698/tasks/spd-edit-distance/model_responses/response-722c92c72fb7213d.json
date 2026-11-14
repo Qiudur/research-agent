@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "review",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "b25b1f75ec5b150c11d54866b3ef53af7bf4d2b5e2df4cc2bcfcb92358866003",
+  "response_id": "resp_f8c1d4ff-6c27-95ec-a4b8-b9b440d3835e",
+  "status": "completed",
+  "output_text": "{\"decision\":\"continue\",\"budget_moves\":[{\"from\":\"early_termination\",\"to\":\"exp-0005\",\"amount\":500.0},{\"from\":\"exp-0002\",\"to\":\"exp-0005\",\"amount\":1000.0}],\"note\":\"触发 behind_schedule 需复盘。虽近期 4 个节点均被 reject，但 n0004(0.00905) 仍高于 best_score(0.00784)，表明部分改进有效。问题可能出在验证逻辑而非算法本身。继续聚焦空间/内存优化方向，集中预算于 exp-0005 探索更激进的两行滚动 + 提前终止组合。若再连续 2 次 reject 则 switch 到 JIT/Numba 方案。\"}",
+  "tokens": {
+    "input": 1438,
+    "cached_input": 0,
+    "output": 176,
+    "reasoning": 662
+  },
+  "cost": 2276.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0004",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "e3cac646208e46f5796c27c0e1463c2bf316b8cbd87b16e669a3c16c23c53f9d",
+  "response_id": "resp_8ccf8b6f-f524-947a-8875-9467fec4c4b6",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"from __future__ import annotations\\n\\ntry:\\n    from Levenshtein import distance as _levenshtein_dist\\nexcept ImportError:\\n    _levenshtein_dist = None\\n\\n\\ndef edit_distance(a: str, b: str) -> int:\\n    if _levenshtein_dist is not None:\\n        return _levenshtein_dist(a, b)\\n    \\n    # Fallback: original DP implementation\\n    previous = list(range(len(b) + 1))\\n    for i, char_a in enumerate(a, 1):\\n        current = [i]\\n        for j, char_b in enumerate(b, 1):\\n            current.append(min(current[-1] + 1,\\n                              previous[j] + 1,\\n                              previous[j - 1] + (char_a != char_b)))\\n        previous = current\\n    return previous[-1]\",\n  \"notes\": \"Attempted to import python-Levenshtein library for C-optimized distance calculation. Added fallback to pure Python DP implementation if library unavailable. Preserves exact signature and behavior matching original.py.\"\n}",
+  "tokens": {
+    "input": 970,
+    "cached_input": 0,
+    "output": 252,
+    "reasoning": 1562
+  },
+  "cost": 2784.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "395b0ae14c3a5998026d2c0d2e14f4946db3ec0b1b983bed14a5c36dd0765901",
+  "response_id": "resp_146a4a91-c4a5-9066-97b2-0f0d34805d48",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"LightGBM with optimized hyperparameters from 5-fold CV.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    test = pd.DataFrame(test_rows, columns=train.columns)\\n    for name in train.columns:\\n        if pd.api.types.is_numeric_dtype(train[name]):\\n            test[name] = pd.to_numeric(test[name])\\n        else:\\n            categories = pd.Categorical(pd.concat([train[name], test[name]], ignore_index=True)).categories\\n            train[name] = pd.Categorical(train[name], categories=categories)\\n            test[name] = pd.Categorical(test[name], categories=categories)\\n    model = LGBMClassifier(\\n        random_state=20261114,\\n        n_jobs=1,\\n        verbosity=-1,\\n        max_depth=5,\\n        learning_rate=0.05,\\n        num_leaves=15,\\n        min_child_samples=20\\n    )\\n    model.fit(train, y)\\n    return model.predict_proba(test)[:, 1].tolist()\",\n  \"notes\": \"Applied specified hyperparameters (max_depth=5, learning_rate=0.05, num_leaves=15). Added min_child_samples=20 to reduce overfitting on small sample (600 rows). Model trained on full training data; final prediction uses all data for best generalization.\"\n}",
+  "tokens": {
+    "input": 3772,
+    "cached_input": 0,
+    "output": 371,
+    "reasoning": 666
+  },
+  "cost": 4809.0,
+  "error": null
+}

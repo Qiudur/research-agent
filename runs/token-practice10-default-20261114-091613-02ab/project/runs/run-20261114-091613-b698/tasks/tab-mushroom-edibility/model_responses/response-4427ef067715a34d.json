@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "5887ff6a9e7bcea701612ccbcf302a03961622e656ff388cc8c5234236dd928c",
+  "response_id": "resp_4702d103-317f-96f8-bbba-34c9db22d5c4",
+  "status": "completed",
+  "output_text": "```json\n{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Implement proper missing value handling by treating missing as explicit category for all features\",\n      \"rationale\": \"Profile shows 'missing_heavy' characteristic and sample data contains empty strings in stalk_root field. Missing patterns may carry signal.\",\n      \"estimate\": {\n        \"gain\": 0.12,\n        \"cost\": 2200,\n        \"seconds\": 35\n      },\n      \"cites\": [\"profile_summary.features\"]\n    },\n    {\n      \"hypothesis\": \"Use LightGBM classifier with minimal tuning on categorical features\",\n      \"rationale\": \"Tree ensembles handle mixed data types and missing values natively. Standard approach for tabular with 4 categorical predictors.\",\n      \"estimate\": {\n        \"gain\": 0.18,\n        \"cost\": 2800,\n        \"seconds\": 50\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Combine missing treatment with interaction terms between cap_color and habitat\",\n      \"rationale\": \"Biologically, color-habitat combinations may have synergistic effects on edibility beyond main effects alone.\",\n      \"estimate\": {\n        \"gain\": 0.06,\n        \"cost\": 1800,\n        \"seconds\": 25\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 6800,\n    \"score\": 0.18,\n    \"seconds\": 110\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"model_development\",\n      \"amount\": 5000\n    },\n    {\n      \"direction\": \"feature_engineering\",\n      \"amount\": 1000\n    },\n    {\n      \"direction\": \"reserved_next_call\",\n      \"amount\": 12000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.15,\n      \"score\": 0.10\n    },\n    {\n      \"spent_ratio\": 0.30,\n      \"score\": 0.16\n    },\n    {\n      \"spent_ratio\": 0.50,\n      \"score\": 0.22\n    }\n  ]\n}\n```",
+  "tokens": {
+    "input": 3846,
+    "cached_input": 0,
+    "output": 559,
+    "reasoning": 639
+  },
+  "cost": 5044.0,
+  "error": null
+}

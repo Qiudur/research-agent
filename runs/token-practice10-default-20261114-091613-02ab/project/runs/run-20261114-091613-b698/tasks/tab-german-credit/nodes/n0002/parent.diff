@@ -1,0 +1,56 @@
+--- parent/solution.py
++++ solution.py
+@@ -1,9 +1,10 @@
+-"""LightGBM with one-hot encoding for low-cardinality categoricals."""
++"""LightGBM with label encoding for all categorical features."""
+ 
+ from __future__ import annotations
+ 
+ import pandas as pd
+ from lightgbm import LGBMClassifier
++from sklearn.preprocessing import LabelEncoder
+ 
+ 
+ def fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:
+@@ -26,30 +27,25 @@
+     X_train_num = train[numeric_cols].copy()
+     X_test_num = test[numeric_cols].copy()
+     
+-    # Process categorical features based on cardinality
++    # Process categorical features with label encoding
+     X_train_cat_list = []
+     X_test_cat_list = []
+     
+     for col in categorical_cols:
+-        # Ensure string type for categoricals
++        le = LabelEncoder()
+         train_col = train[col].astype(str)
+         test_col = test[col].astype(str)
+         
+-        card = train_col.nunique()
++        # Fit on train, transform both
++        train_encoded = le.fit_transform(train_col)
+         
+-        if card < 10:  # Low-cardinality: one-hot encode
+-            dummies_train = pd.get_dummies(train_col, prefix=col, dtype=int)
+-            dummies_test = pd.get_dummies(test_col, prefix=col, dtype=int)
+-            
+-            # Align test dummies with train (add missing cols as zeros)
+-            for c in dummies_train.columns:
+-                if c not in dummies_test.columns:
+-                    dummies_test[c] = 0
+-            dummies_test = dummies_test[dummies_train.columns]
+-            
+-            X_train_cat_list.append(dummies_train)
+-            X_test_cat_list.append(dummies_test)
+-        # High-cardinality: drop silently
++        # Transform test, assigning -1 for unseen categories
++        test_encoded = test_col.apply(
++            lambda x: le.transform([x])[0] if x in le.classes_ else -1
++        )
++        
++        X_train_cat_list.append(pd.Series(train_encoded, name=col))
++        X_test_cat_list.append(pd.Series(test_encoded, name=col))
+     
+     # Combine features
+     X_train = X_train_num.copy()

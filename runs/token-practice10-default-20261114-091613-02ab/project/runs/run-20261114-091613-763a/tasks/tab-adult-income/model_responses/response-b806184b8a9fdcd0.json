@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "ab66e4fedc7392e4929c7023aef6c4dd96ea510bc760a85f4c490f6cb7b0804c",
+  "response_id": "resp_692b2fb3-8ab0-9835-b1f5-93c50b878ff7",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"LightGBM baseline with label encoding and default hyperparameters\",\n      \"rationale\": \"Establishes a working model that handles mixed data types efficiently; label encoding reduces dimensionality for tree learners compared to one-hot.\",\n      \"estimate\": {\n        \"gain\": 0.5,\n        \"cost\": 3000,\n        \"seconds\": 60\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Target encoding for high-cardinality categorical features\",\n      \"rationale\": \"Addresses the 'high_cardinality_categorical' feature tag by summarizing category targets, preventing sparse matrix explosion and capturing non-linear signals.\",\n      \"estimate\": {\n        \"gain\": 0.15,\n        \"cost\": 3000,\n        \"seconds\": 60\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 6000,\n    \"seconds\": 120,\n    \"score\": 0.65\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"model_training\",\n      \"amount\": 6000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.075,\n      \"score\": 0.5\n    },\n    {\n      \"spent_ratio\": 0.15,\n      \"score\": 0.65\n    }\n  ]\n}",
+  "tokens": {
+    "input": 2840,
+    "cached_input": 0,
+    "output": 364,
+    "reasoning": 4493
+  },
+  "cost": 7697.0,
+  "error": null
+}

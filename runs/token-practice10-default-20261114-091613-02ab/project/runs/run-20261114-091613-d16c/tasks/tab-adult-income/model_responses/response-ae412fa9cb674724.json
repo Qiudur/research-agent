@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "fix",
+  "node_id": "n0001",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "3c6731aec08bd045c55dafa7ce2d8055573cee7ec8577a9ea33463edcf72b158",
+  "response_id": "resp_0ceeb23c-0310-955b-8e91-c2738bcd779c",
+  "status": "completed",
+  "output_text": "```json\n{\n  \"code\": \"\\\"\\\"\\\"LightGBM with target encoding for high-cardinality categoricals.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    \\\"\\\"\\\"Predict income > $50K using LightGBM with target encoding.\\\"\\\"\\\"\\n    \\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(int)\\n    test = pd.DataFrame(test_rows)\\n    \\n    # Align numeric columns\\n    for name in train.columns:\\n        if pd.api.types.is_numeric_dtype(train[name]):\\n            test[name] = pd.to_numeric(test.get(name, \\\"\\\"), errors=\\\"coerce\\\").astype(float)\\n        else:\\n            train[name] = train[name].astype(str)\\n            test[name] = test.get(name, \\\"\\\").astype(str)\\n    \\n    # High cardinality categorical columns\\n    high_card_cols = [\\\"native_country\\\", \\\"occupation\\\", \\\"workclass\\\"]\\n    high_card_cols = [c for c in high_card_cols if c in train.columns and train[c].nunique() >= 5]\\n    \\n    # Global mean for smoothing\\n    global_mean = float(y.mean())\\n    \\n    def encode_column(df, col, stats=None):\\n        \\\"\\\"\\\"Target-encode a categorical column with Laplace smoothing.\\\"\\\"\\\"\\n        if stats is None:\\n            agg = df.groupby(col)[\\\"_target\\\"].agg([\\\"sum\\\", \\\"count\\\"]).to_dict(\\\"index\\\")\\n            result = {}\\n            for cat in df[col].unique():\\n                s = agg[cat][\\\"sum\\\"] if cat in agg else 0\\n                c = agg[cat][\\\"count\\\"] if cat in agg else 0\\n                result[cat] = (s + global_mean * 30) / (c + 30)\\n            return result\\n        else:\\n            return {cat: v for cat, v in stats.items()}\\n    \\n    # Compute encoders from training data\\n    train_temp = train.copy()\\n    train_temp[\\\"_target\\\"] = y\\n    encoders = {}\\n    for col in high_card_cols:\\n        encoders[col] = encode_column(train_temp, col)\\n    del train_temp[\\\"_target\\\"]\\n    \\n    # Apply encoding to train and test\\n    X_train = train.copy()\\n    X_test = test.copy()\\n    for col, encoder in encoders.items():\\n        X_train[f\\\"{col}_enc\\\"] = X_train[col].map(encoder).fillna(global_mean)\\n        X_test[f\\\"{col}_enc\\\"] = X_test[col].map(encoder).fillna(global_mean)\\n    \\n    # Prepare features\\n    num_cols = [c for c in X_train.columns if pd.api.types.is_numeric_dtype(X_train[c])]\\n    enc_cols = [c for c in num_cols if c.endswith(\\\"_enc\\\")]\\n    feature_cols = [c for c in num_cols if not c.endswith(\\\"_enc\\\")] + enc_cols\\n    \\n    X_train_f = X_train[feature_cols].fillna(0)\\n    X_test_f = X_test[feature_cols].fillna(0)\\n    \\n    # Fit LightGBM and predict\\n    model = LGBMClassifier(random_state=20261114, n_jobs=1, verbosity=-1)\\n    model.fit(X_train_f, y)\\n    return model.predict_proba(X_test_f)[:, 1].tolist()\\n\",\n  \"notes\": \"Fixed previous error: moved y.pop() to top so target encoding has access to y via temp column. Uses smoothed target encoding (alpha=30) for high-cardinality categoricals. Fallback to global_mean for unseen test categories prevents NaN outputs.\"\n}\n```",
+  "tokens": {
+    "input": 3290,
+    "cached_input": 0,
+    "output": 872,
+    "reasoning": 2280
+  },
+  "cost": 6442.0,
+  "error": null
+}

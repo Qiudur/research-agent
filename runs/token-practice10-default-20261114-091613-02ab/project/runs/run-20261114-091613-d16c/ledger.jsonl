@@ -1,0 +1,2 @@
+{"schema":"ledger/1","seq":1,"ts":"2026-11-14T09:16:13.716Z","run_id":"run-20261114-091613-d16c","task_id":null,"node_id":null,"kind":"run_start"}
+{"schema":"ledger/1","seq":2,"ts":"2026-11-14T09:48:39.463Z","run_id":"run-20261114-091613-d16c","task_id":null,"node_id":null,"kind":"run_end","total_cost":231116.0}

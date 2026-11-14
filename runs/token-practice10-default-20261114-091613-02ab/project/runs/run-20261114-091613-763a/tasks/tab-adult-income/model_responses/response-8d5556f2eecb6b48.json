@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "6dcb0076799fc01df06484babffe6ab6230ac435de44f237bf9422b2e1dba2c2",
+  "response_id": "resp_b3a74c69-708f-9a67-9ac1-f631dabc7549",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Implement minimal scikit-learn pipeline with robust categorical handling (handle_unknown='ignore') and logistic regression to bypass LightGBM configuration failures.\",\n      \"rationale\": \"Previous LightGBM attempts returned 0.0 and -137, suggesting pipeline breakdown (shape mismatch, NaN propagation, or encoder leakage). A simpler Linear model with explicit sklearn transformers reduces failure surface and validates if the fit_predict contract is met.\",\n      \"estimate\": {\n        \"gain\": 0.4,\n        \"cost\": 3500.0,\n        \"seconds\": 45.0\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Submit constant probability vector equal to training positive rate to verify evaluator does not reject uniform predictions.\",\n      \"rationale\": \"A score of 0.0 often indicates silent rejection or format error rather than poor model performance. Confirming if a constant predictor yields a finite (even if low) normalized score proves the evaluation harness is accessible and output shape is correct.\",\n      \"estimate\": {\n        \"gain\": 0.1,\n        \"cost\": 1500.0,\n        \"seconds\": 15.0\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 5000.0,\n    \"seconds\": 60.0,\n    \"score\": 0.3\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"debug_experiment\",\n      \"amount\": 3500.0\n    },\n    {\n      \"direction\": \"sanity_check\",\n      \"amount\": 1500.0\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.70,\n      \"score\": 0.1\n    },\n    {\n      \"spent_ratio\": 0.73,\n      \"score\": 0.3\n    }\n  ]\n}",
+  "tokens": {
+    "input": 3005,
+    "cached_input": 0,
+    "output": 474,
+    "reasoning": 3892
+  },
+  "cost": 7371.0,
+  "error": null
+}

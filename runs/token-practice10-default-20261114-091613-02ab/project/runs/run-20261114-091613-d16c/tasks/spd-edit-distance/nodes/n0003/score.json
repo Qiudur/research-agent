@@ -1,0 +1,20 @@
+{
+  "schema": "score/1",
+  "ok": false,
+  "split": "dev",
+  "score": null,
+  "raw": null,
+  "spread": 0.0,
+  "correct": false,
+  "cheat_flags": [],
+  "error": {
+    "kind": "exception",
+    "message": "'bool' object has no attribute 'astype'",
+    "trace_tail": "Traceback (most recent call last):\n  File \"/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/harness_worker.py\", line 304, in main\n    payload = {\"ok\": True, **_speed(args.task_kind, candidate, original,\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/harness_worker.py\", line 242, in _speed\n    if not _equal(kind, candidate(*case), original(*case)):\n                        ^^^^^^^^^^^^^^^^\n  File \"/Users/qiudur/Documents/ChatGPT/hobox/research-agent-team-yi/runs/token-practice10-default-20261114-091613-02ab/project/runs/run-20261114-091613-d16c/tasks/spd-edit-distance/nodes/n0003/solution.py\", line 28, in edit_distance\n    cost_row = (char_a != b).astype(np.int32)\n               ^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'bool' object has no attribute 'astype'\n"
+  },
+  "seconds": {
+    "run": 0.06854729101178236,
+    "queue": 1.662501017563045e-05
+  },
+  "seed": 2921678452401606109
+}

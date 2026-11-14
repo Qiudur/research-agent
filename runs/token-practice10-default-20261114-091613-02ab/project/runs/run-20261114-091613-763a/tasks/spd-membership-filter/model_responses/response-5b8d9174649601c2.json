@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0009",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "5bf4e4a174e13520ff3a5a5c270f5ced3a6274d9ef178a34d860356f49b43dff",
+  "response_id": "resp_4526eadf-34b4-9c5a-8cd1-0134292ccbb2",
+  "status": "completed",
+  "output_text": "{\n\"code\":\"from __future__ import annotations\\n\\ndef membership_filter(values: list[int], allowed: list[int]) -> list[int]:\\n    allowed_set = set(allowed)\\n    return [value for value in values if value in allowed_set]\",\n\"notes\":\"Hypothesis verified: Testing with values=[1,1,2] and allowed=[1,1] returns [1,1]. The set conversion removes duplicates from allowed but preserves duplicates from values (which is the correct behavior per task spec). This is faster than O(n) list membership check - O(1) per lookup. Both original and optimized versions behave identically for this edge case.\"\n}",
+  "tokens": {
+    "input": 738,
+    "cached_input": 0,
+    "output": 146,
+    "reasoning": 686
+  },
+  "cost": 1570.0,
+  "error": null
+}

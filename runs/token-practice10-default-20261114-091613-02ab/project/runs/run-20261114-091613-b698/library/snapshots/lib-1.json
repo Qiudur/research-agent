@@ -1,0 +1,41 @@
+{
+  "entries": [
+    {
+      "action": "use scipy.spatial.distance.cdist with euclidean metric as replacement for manual nested loop calculation",
+      "conditions": "distance matrix computation requiring euclidean metric with input convertible to numpy arrays",
+      "created_version": "lib-1",
+      "credibility": 0.5,
+      "effect": {
+        "mean_cost": 0.0,
+        "mean_gain": 0.0,
+        "uses": 0,
+        "wins": 0
+      },
+      "id": "exp-0001",
+      "kind": "experience",
+      "negative": false,
+      "scenario": "speedup",
+      "schema": "entry/1",
+      "scope": "method",
+      "sources": [
+        {
+          "node_ids": [
+            "n0006"
+          ],
+          "run_id": "run-20261114-091613-b698",
+          "task_id": "spd-distance-matrix"
+        }
+      ],
+      "status": "active",
+      "triggers": [
+        "nested_python_loop"
+      ],
+      "updated_version": "lib-1"
+    }
+  ],
+  "metadata": {
+    "demoted_losses": {}
+  },
+  "schema": "library/1",
+  "version": "lib-1"
+}

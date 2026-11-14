@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "7f121ff9e8e26e17ad1fabac47abf396d8d10bcc352dc5a376ef48f777e80400",
+  "response_id": "resp_458823ff-e8e1-9729-afc6-881d6385a620",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Replace O(n²) nested loops with O(n) running peak tracking algorithm\",\n      \"rationale\": \"Current implementation compares every pair of indices. Standard optimization tracks running maximum peak, computing drawdown in single pass - reduces complexity from quadratic to linear\",\n      \"estimate\": {\n        \"gain\": 0.5,\n        \"cost\": 400,\n        \"seconds\": 3\n      },\n      \"cites\": [\"exp-0002\"]\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 400,\n    \"seconds\": 3,\n    \"score\": 0.501\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"optimize-algorithm\",\n      \"amount\": 400\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.01,\n      \"score\": 0.5\n    },\n    {\n      \"spent_ratio\": 0.1,\n      \"score\": 0.7\n    },\n    {\n      \"spent_ratio\": 0.2,\n      \"score\": 0.85\n    },\n    {\n      \"spent_ratio\": 0.9,\n      \"score\": 0.98\n    }\n  ]\n}",
+  "tokens": {
+    "input": 1468,
+    "cached_input": 0,
+    "output": 323,
+    "reasoning": 697
+  },
+  "cost": 2488.0,
+  "error": null
+}

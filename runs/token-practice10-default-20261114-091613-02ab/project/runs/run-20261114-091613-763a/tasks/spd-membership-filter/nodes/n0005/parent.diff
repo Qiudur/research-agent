@@ -1,0 +1,10 @@
+--- parent/solution.py
++++ solution.py
+@@ -1,5 +1,5 @@
+ from __future__ import annotations
+ 
+ def membership_filter(values: list[int], allowed: list[int]) -> list[int]:
+-    allowed_set = set(allowed)
+-    return [value for value in values if value in allowed_set]
++    allowed_frozenset = frozenset(allowed)
++    return [value for value in values if value in allowed_frozenset]

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "293e2917afcc812f23128f371ef35037f5adb88b00135f1148eddf6bb365cdf5",
+  "response_id": "resp_ff96143a-b95a-91c3-be7a-e94692456d69",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Apply stronger regularization to LightGBM to mitigate overfitting on 600-row dataset.\",\n      \"rationale\": \"Small sample size increases variance; default hyperparameters likely overfit. Reducing tree complexity and feature sampling improves generalization.\",\n      \"estimate\": {\n        \"gain\": 0.04,\n        \"cost\": 6000,\n        \"seconds\": 90\n      },\n      \"cites\": [\n        \"tree-model-tuning\",\n        \"small-data-strategy\"\n      ]\n    },\n    {\n      \"hypothesis\": \"Implement k-fold cross-validation for feature selection and hyperparameter search.\",\n      \"rationale\": \"Single train-test split is unstable for N=600. CV reduces variance in performance estimation and guides better parameter choices.\",\n      \"estimate\": {\n        \"gain\": 0.03,\n        \"cost\": 8000,\n        \"seconds\": 120\n      },\n      \"cites\": [\n        \"cv-methodology\",\n        \"hyperparameter-search\"\n      ]\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 6000,\n    \"seconds\": 90,\n    \"score\": 0.669\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"experiment\",\n      \"amount\": 6000\n    },\n    {\n      \"direction\": \"review\",\n      \"amount\": 2000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.5,\n      \"score\": 0.635\n    },\n    {\n      \"spent_ratio\": 0.65,\n      \"score\": 0.669\n    }\n  ]\n}",
+  "tokens": {
+    "input": 4236,
+    "cached_input": 0,
+    "output": 435,
+    "reasoning": 3689
+  },
+  "cost": 8360.0,
+  "error": null
+}

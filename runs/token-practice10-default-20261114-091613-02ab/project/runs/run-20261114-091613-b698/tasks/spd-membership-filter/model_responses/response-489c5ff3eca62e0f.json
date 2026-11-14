@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0006",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "f2df1aebbdd035e260df7e6a578bd5440bc824fd60fa045d06ef24acc869c50c",
+  "response_id": "resp_bc148b3f-8b6b-9304-8705-68f71476d511",
+  "status": "completed",
+  "output_text": "{\"code\":\"from __future__ import annotations\\n\\ndef membership_filter(values: list[int], allowed: list[int]) -> list[int]:\\n    allowed_set = set(allowed)\\n    contains = allowed_set.__contains__\\n    return [value for value in values if contains(value)]\",\"notes\":\"Cached the __contains__ method as a local variable to avoid repeated attribute access overhead in the tight loop. This preserves original behavior while optimizing for speed.\"}",
+  "tokens": {
+    "input": 739,
+    "cached_input": 0,
+    "output": 99,
+    "reasoning": 365
+  },
+  "cost": 1203.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "5f6d4aef0cfa77ddb0d145b97c7eb2052af668c71e9edbf46752211cc835e8aa",
+  "response_id": "resp_767830fc-dfdb-9e3a-a754-dc8d69ae74b9",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Target encoding implementation for high-cardinality categorical features.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport pandas as pd\\nfrom lightgbm import LGBMClassifier\\n\\n\\ndef fit_predict(train_csv: str, test_rows: list[dict[str, str]]) -> list[float]:\\n    train = pd.read_csv(train_csv)\\n    y = train.pop(\\\"y\\\").astype(float)\\n    train_idx = train.index.copy()\\n    test = pd.DataFrame(test_rows, columns=train.columns)\\n    \\n    # Handle numeric conversion for existing numeric columns in test\\n    for name in train.columns:\\n        if pd.api.types.is_numeric_dtype(train[name]):\\n            test[name] = pd.to_numeric(test[name])\\n        else:\\n            # Categorical columns - convert to string for consistent encoding\\n            train[name] = train[name].astype(str)\\n            test[name] = test[name].astype(str)\\n    \\n    # Target encoding for categorical (now string) columns\\n    global_mean = y.mean()\\n    m = 20  # Additive smoothing parameter\\n    \\n    target_values = y.values\\n    for col in train.columns:\\n        train_cats = train[col].values\\n        test_cats = test[col].values\\n        \\n        # Compute category statistics from training data only\\n        uniq, counts = pd.unique(train_cats), None\\n        uniq = pd.unique(train_cats)\\n        \\n        # Get mean target per category\\n        group_means = {}\\n        for cat in uniq:\\n            mask = train_cats == cat\\n            if mask.any():\\n                group_means[cat] = target_values[mask].mean()\\n        \\n        # Build smoothed encoding map: (n*mean + m*global) / (n+m)\\n        enc_map = {}\\n        for cat in uniq:\\n            cat_mean = group_means.get(cat, global_mean)\\n            cat_count = sum(train_cats == cat)\\n            enc_map[cat] = (cat_count * cat_mean + m * global_mean) / (cat_count + m)\\n        \\n        # Apply encoding to both datasets\\n        train[col] = [enc_map.get(c, global_mean) for c in train_cats]\\n        test[col] = [enc_map.get(c, global_mean) for c in test_cats]\\n    \\n    # Train LightGBM on encoded features\\n    model = LGBMClassifier(random_state=20261114, n_jobs=1, verbosity=-1)\\n    model.fit(train, y)\\n    return model.predict_proba(test)[:, 1].tolist()\\n\",\n  \"notes\": \"Implemented target encoding with additive smoothing (m=20) for all categorical columns. Each category is replaced by the smoothed mean of the target variable. Statistics computed from training data only to prevent data leakage. Unknown categories in test data receive the global mean. Preserves original function signature and behavior.\"\n}",
+  "tokens": {
+    "input": 2522,
+    "cached_input": 0,
+    "output": 643,
+    "reasoning": 3005
+  },
+  "cost": 6170.0,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0002",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "a53de0adb52cfab0123287027955830b80ac4b5a7ed7ba77a18369cc90b39f30",
+  "response_id": "resp_c5ea54ab-4372-9d1c-8ae9-50a47e89a658",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"import numpy as np\\n\\n\\ndef distance_matrix(points: list[tuple[float, float]]) -> list[list[float]]:\\n    \\\"\\\"\\\"Compute pairwise Euclidean distances exploiting symmetry.\\\"\\\"\\\"\\n    n = len(points)\\n    if n == 0:\\n        return []\\n    \\n    # Convert to numpy array with shape (n, 2)\\n    arr = np.array(points)\\n    \\n    # Initialize result array\\n    dist = np.zeros((n, n))\\n    \\n    # Only compute upper triangle (including diagonal) - exploits d[i,j] == d[j,i]\\n    for i in range(n):\\n        for j in range(i, n):\\n            dx = arr[i, 0] - arr[j, 0]\\n            dy = arr[i, 1] - arr[j, 1]\\n            d = np.sqrt(dx * dx + dy * dy)\\n            dist[i, j] = d\\n            dist[j, i] = d  # Exploit symmetry\\n    \\n    # Convert back to list of lists as required\\n    return dist.tolist()\\n\",\n  \"notes\": \"Implemented symmetry exploitation by computing only upper triangle (n*(n+1)/2 pairs) and copying to lower triangle. Reduces sqrt computations by ~50% compared to full matrix calculation. Uses hybrid approach: numpy array for indexing efficiency with explicit python loops for triangle iteration.\"\n}",
+  "tokens": {
+    "input": 1028,
+    "cached_input": 0,
+    "output": 317,
+    "reasoning": 1368
+  },
+  "cost": 2713.0,
+  "error": null
+}

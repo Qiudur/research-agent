@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "executor",
+  "purpose": "code",
+  "node_id": "n0003",
+  "model": "qwen3.5-27b",
+  "prompt_hash": "56e8b0e5b9d2cafa5ef196ee5771e965993d9878fb0b2b355eb8958988065c6b",
+  "response_id": "resp_77d1ac5f-eece-9ce0-981b-ed8c2bd3dbd5",
+  "status": "completed",
+  "output_text": "{\n  \"code\": \"\\\"\\\"\\\"Linear-time maximum-drawdown implementation using single-pass peak tracking.\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\n\\ndef max_drawdown(prices: list[float]) -> float:\\n    \\\"\\\"\\\"Calculate the maximum chronological peak-to-trough percentage.\\n    \\n    Uses O(n) single-pass algorithm tracking running peak.\\n    Returns 0.0 for empty lists or non-decreasing sequences.\\n    \\\"\\\"\\\"\\n    if len(prices) < 2:\\n        return 0.0\\n    \\n    largest = 0.0\\n    peak = prices[0]\\n    \\n    for price in prices:\\n        if price > peak:\\n            peak = price\\n        else:\\n            drawdown = (peak - price) / peak\\n            if drawdown > largest:\\n                largest = drawdown\\n    \\n    return largest\",\n  \"notes\": \"Replaced max() builtin call with explicit if comparison inside the loop to reduce function call overhead in tight iteration.\"\n}",
+  "tokens": {
+    "input": 940,
+    "cached_input": 0,
+    "output": 231,
+    "reasoning": 215
+  },
+  "cost": 1386.0,
+  "error": null
+}

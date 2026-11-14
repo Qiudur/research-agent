@@ -1,0 +1,14 @@
+--- parent/solution.py
++++ solution.py
+@@ -0,0 +1,11 @@
++"""Quadratic, direct maximum-drawdown implementation."""
++
++from __future__ import annotations
++
++
++def max_drawdown(prices: list[float]) -> float:
++    largest = 0.0
++    for buy_index, peak in enumerate(prices):
++        for trough in prices[buy_index + 1:]:
++            largest = max(largest, (peak - trough) / peak)
++    return largest

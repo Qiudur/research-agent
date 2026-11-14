@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "review",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "f08e168d64e8c42a3ce554422ea19941df596d2fca40408cf320109ce5307b4a",
+  "response_id": "resp_7281d9b9-91c1-9c1b-9452-64072633b83b",
+  "status": "completed",
+  "output_text": "{\n  \"decision\": \"reallocate\",\n  \"budget_moves\": [\n    {\n      \"from\": \"micro-optimize current implementation\",\n      \"to\": \"reserve for vectorization attempt\",\n      \"amount\": 4000\n    },\n    {\n      \"from\": \"contingency buffer\",\n      \"to\": \"reserve for vectorization attempt\",\n      \"amount\": 3000\n    }\n  ],\n  \"note\": \"Progress significantly behind schedule with only 0.009 score after 25k tokens. Pure Python optimizations exhausted. Reallocating 7000 tokens to vectorization attempts as primary remaining avenue—numpy/scipy or SIMD-like approaches could deliver orders of magnitude improvement over nested loops.\"\n}",
+  "tokens": {
+    "input": 1496,
+    "cached_input": 0,
+    "output": 171,
+    "reasoning": 551
+  },
+  "cost": 2218.0,
+  "error": null
+}

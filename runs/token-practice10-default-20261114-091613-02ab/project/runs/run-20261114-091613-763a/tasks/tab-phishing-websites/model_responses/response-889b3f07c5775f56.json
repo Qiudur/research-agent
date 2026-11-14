@@ -1,0 +1,19 @@
+{
+  "schema": "model_response_audit/1",
+  "role": "planner",
+  "purpose": "plan",
+  "node_id": null,
+  "model": "qwen3.5-27b",
+  "prompt_hash": "ff272dfb4e0a5b01e5f86e94cade2ed355c5aba87e40db670f1022753af96b22",
+  "response_id": "resp_9b16158f-7cb6-9923-9a3b-517b2f792cf8",
+  "status": "completed",
+  "output_text": "{\n  \"hypotheses\": [\n    {\n      \"hypothesis\": \"Train LightGBM classifier with default settings on all 30 features\",\n      \"rationale\": \"LightGBM typically performs well on tabular data with numeric/categorical features; serves as strong baseline model before optimization\",\n      \"estimate\": {\n        \"gain\": 0.05,\n        \"cost\": 2500,\n        \"seconds\": 120\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Test XGBoost with gradient boosting hyperparameters tuned via cross-validation\",\n      \"rationale\": \"XGBoost is another high-performance option; comparing two boosters helps identify algorithmic preference early\",\n      \"estimate\": {\n        \"gain\": 0.04,\n        \"cost\": 3000,\n        \"seconds\": 150\n      },\n      \"cites\": []\n    },\n    {\n      \"hypothesis\": \"Apply simple feature importance analysis and try removing low-variance features\",\n      \"rationale\": \"Dataset has 30 features but many may be redundant; dimensionality reduction could help generalization with negligible compute cost\",\n      \"estimate\": {\n        \"gain\": 0.02,\n        \"cost\": 1500,\n        \"seconds\": 60\n      },\n      \"cites\": []\n    }\n  ],\n  \"predicted\": {\n    \"cost\": 7000,\n    \"score\": 0.05,\n    \"seconds\": 330\n  },\n  \"budget_allocation\": [\n    {\n      \"direction\": \"model_baseline\",\n      \"amount\": 4000\n    },\n    {\n      \"direction\": \"feature_exploration\",\n      \"amount\": 2000\n    },\n    {\n      \"direction\": \"reserve\",\n      \"amount\": 1000\n    }\n  ],\n  \"expected_progress\": [\n    {\n      \"spent_ratio\": 0.05,\n      \"score\": 0.01\n    },\n    {\n      \"spent_ratio\": 0.10,\n      \"score\": 0.03\n    },\n    {\n      \"spent_ratio\": 0.20,\n      \"score\": 0.07\n    },\n    {\n      \"spent_ratio\": 0.30,\n      \"score\": 0.10\n    }\n  ]\n}",
+  "tokens": {
+    "input": 4081,
+    "cached_input": 0,
+    "output": 578,
+    "reasoning": 551
+  },
+  "cost": 5210.0,
+  "error": null
+}
