@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import html
+import json
 import re
 import subprocess
 from collections import Counter
@@ -119,12 +120,45 @@ def category(path: str) -> str:
     return "运行与配置"
 
 
+def calibration_evidence(repo: Path) -> str:
+    """Summarize only a frozen bank backed by both committed dev reports."""
+    try:
+        bank = json.loads(committed_text(repo, "tasks/bank.json"))
+    except (ValueError, TypeError):
+        return ""
+    tasks = bank.get("tasks")
+    if bank.get("frozen") is not True or not isinstance(tasks, list) or not tasks:
+        return ""
+    documents = [committed_text(repo, path) for path in
+                 ("docs/提速朴素成本校准.md", "docs/表格朴素成本校准.md")]
+    counts = []
+    for document in documents:
+        result = re.search(r"(?:总计|合计) *([0-9]+) *次尝试：([0-9]+) *次正常收尾、([0-9]+) *次提前错误", document)
+        tokens = re.search(r"(?:实耗|消耗) *[*]{0,2} *([0-9,]+) *token", document)
+        if (result is None or tokens is None
+                or re.search(r"holdout *尝试(?:为)? *0", document) is None):
+            return ""
+        counts.append((*map(int, result.groups()),
+                       int(tokens.group(1).replace(",", ""))))
+    attempts, completed, incomplete, total_tokens = map(sum, zip(*counts))
+    if (attempts != len(tasks) * 3 or completed + incomplete != attempts
+            or f"{attempts}/{attempts} 次尝试" not in documents[1]
+            or "ready=true" not in documents[1]):
+        return ""
+    audit = re.search(r"runs/naive-cost-audit-[A-Za-z0-9_-]+/", documents[1])
+    audit_path = audit.group() + "audit.json" if audit else "私有 runs/ 审计记录"
+    return (f"{bank.get('version', '题库')} 已冻结：{len(tasks)} 题、{attempts} 次 dev 尝试，"
+            f"{completed} 次正常完成、{incomplete} 次提前停止，四桶合计 {total_tokens:,} token；"
+            f"校准 holdout 0。完整审计：{audit_path}。不是现金价格或正式考试成绩。")
+
+
 def evidence(repo: Path) -> dict[str, str]:
     readme = committed_text(repo, "README.md")
     concurrency = committed_text(repo, "docs/真实模型并发基准.md")
     study = section(committed_text(repo, "docs/真实模型自研究试验.md"), "第二轮：逐题证据提案")
     transfer = committed_text(repo, "docs/真实模型迁移复评.md")
     decisions = committed_text(repo, "docs/项目交付与决策.md")
+    calibration = calibration_evidence(repo)
 
     test_match = re.search(r"主测试\s*(\d+)\s*项、技能层\s*(\d+)\s*项、看板\s*(\d+)\s*项", readme)
     tests = sum(map(int, test_match.groups())) if test_match else None
@@ -162,11 +196,12 @@ def evidence(repo: Path) -> dict[str, str]:
 
     current_limits = first_paragraph(section(readme, "当前限制"))
     limit_sentences = [part.strip() for part in re.split(r"(?<=。)", current_limits) if part.strip()]
-    priority = [part for part in limit_sentences if "正式货币" in part or "正式自研究" in part]
+    priority = [part for part in limit_sentences
+                if "bank-v1" in part or "正式货币" in part or "正式自研究" in part]
     current_limits = "".join(priority[:2] or limit_sentences[:2])
-    next_steps = [excerpt(item, 120) for item in number_list(
-        section(decisions, "尚待外部输入与正式验收"), 3
-    )]
+    next_source = (section(readme, "冻结后下一步") if calibration else
+                   section(decisions, "尚待外部输入与正式验收"))
+    next_steps = [excerpt(item, 120) for item in number_list(next_source, 3)]
     project_intro = next(
         (plain(block) for block in readme.split("\n\n") if block.startswith("这是按《分工文档》")),
         first_paragraph(readme),
@@ -174,7 +209,9 @@ def evidence(repo: Path) -> dict[str, str]:
     formal_pending = "正式四线比较尚未执行" in readme or "正式验证" in current_limits
     return {
         "intro": project_intro,
-        "status": "DEV / TEST ONLY · 正式四线比较未执行" if formal_pending else "阶段状态请以 README 为准",
+        "status": ("题库已冻结 · 正式四线待运行" if calibration and formal_pending else
+                   "DEV / TEST ONLY · 正式四线比较未执行" if formal_pending else
+                   "阶段状态请以 README 为准"),
         "tasks": task_count,
         "tests": str(tests) if tests is not None else "待核对",
         "parallel": fmt(parallel, 3),
@@ -185,6 +222,7 @@ def evidence(repo: Path) -> dict[str, str]:
         "transfer_score": delta(transfer_score),
         "transfer_tokens": delta(transfer_tokens, percent=True),
         "limits": current_limits or "请查看 README 的当前限制。",
+        "calibration": calibration,
         "next_steps": next_steps,
     }
 
@@ -267,6 +305,7 @@ HTML = Template("""<!doctype html>
       <article class="card"><div class="label">第二轮自动自研究</div><span class="metric">$study_tokens</span><p>候选每遍 token 相对默认版变化；平均归一化分数变化 $study_score。质量未持平，候选未推广。</p><p class="small"><a href="真实模型自研究试验.md">查看自研究记录 ↗</a></p></article>
       <article class="card"><div class="label">跨题迁移复评</div><span class="metric amber">$transfer_score</span><p>归一化分数变化，但每遍 token 变化 $transfer_tokens；结果仍属于 dev，不能证明正式准入。</p><p class="small"><a href="真实模型迁移复评.md">查看迁移记录 ↗</a></p></article>
     </div>
+    $calibration_notice
     <p class="notice">TEST 单位对应报告的 token 用量，不代表现金成本。正式验证、考试及四线效果仍待完成。</p>
   </div><div class="footer"><span>数值从仓库已提交证据文档提取</span><span>03 / 05</span></div></section>
   <section class="slide" id="changes"><div class="inner">
@@ -306,6 +345,12 @@ def build(repo: Path, head: str, commits: list[tuple[str, str, str]], files: lis
         for sha, date, subject in commits[:10]
     ) or "<li><strong>本轮没有新增提交</strong></li>"
     next_html = "".join(f"<li>{safe(item)}</li>" for item in facts["next_steps"])
+    calibration_html = (
+        '<p class="notice">' + safe(facts["calibration"])
+        + ' <a href="提速朴素成本校准.md">提速明细 ↗</a>'
+        + ' · <a href="表格朴素成本校准.md">表格明细 ↗</a></p>'
+        if facts["calibration"] else ""
+    )
     total = len(source_commits(repo, "HEAD"))
     updated = datetime.now(ZoneInfo("Asia/Shanghai")).strftime("%Y-%m-%d %H:%M UTC+08:00")
     return HTML.substitute(
@@ -316,6 +361,7 @@ def build(repo: Path, head: str, commits: list[tuple[str, str, str]], files: lis
         study_score=safe(facts["study_score"]), study_tokens=safe(facts["study_tokens"]),
         transfer_score=safe(facts["transfer_score"]), transfer_tokens=safe(facts["transfer_tokens"]),
         limits=safe(facts["limits"]), next_items=next_html,
+        calibration_notice=calibration_html,
         period_commits=len(commits), file_count=len(files), period_label=safe(label),
         categories=category_html, files=file_html, commit_items=commit_html,
     )
