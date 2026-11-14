@@ -8,6 +8,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
+from evaluation.compare import compare_configurations
 from scripts.audit_formal_outputs import audit_formal_outputs
 
 
@@ -31,7 +32,8 @@ def digest(path: Path) -> str:
 
 
 class FormalOutputAuditTests(unittest.TestCase):
-    def fixture(self, root: Path, *, admitted: bool = True) -> tuple[Path, Path, dict]:
+    def fixture(self, root: Path, *, admitted: bool = True,
+                second_candidate: bool = False) -> tuple[Path, Path, dict]:
         root = root.resolve()
         tasks = {tier: [f"spd-{tier}-{number}" for number in range(count)]
                  for tier, count in (("practice", 10), ("validation", 4), ("exam", 10))}
@@ -61,6 +63,7 @@ class FormalOutputAuditTests(unittest.TestCase):
 
         default = candidate("default")
         tuned = candidate("tuned")
+        tuned2 = candidate("tuned2") if second_candidate else None
         naive = candidate("naive")
         configs = {"default": default, "default_lib": default,
                    "tuned_lib": tuned, "naive": naive}
@@ -101,6 +104,8 @@ class FormalOutputAuditTests(unittest.TestCase):
                 write_jsonl(task_dir / "ledger.jsonl", rows)
                 write_json(task_dir / "holdout_attempt.json",
                            {"schema": "holdout_attempt/1"})
+                write_json(task_dir / "holdout_score.json",
+                           {"schema": "score/1", "split": "holdout", "score": score})
                 task_reports.append({
                     "schema": "task_report/1", "run_id": run_id,
                     "task_id": task_id, "currency": "TOKENS",
@@ -110,7 +115,8 @@ class FormalOutputAuditTests(unittest.TestCase):
                                      for role in ROLES},
                     "evidence": {"task_end_seq": 4, "stop_seq": 3,
                                  "model_call_seqs": [2],
-                                 "ledger_path": str(task_dir / "ledger.jsonl")},
+                                 "ledger_path": str(task_dir / "ledger.jsonl"),
+                                 "holdout_path": str(task_dir / "holdout_score.json")},
                 })
             total = float(unit * len(ids))
             write_jsonl(run / "ledger.jsonl", [
@@ -131,13 +137,19 @@ class FormalOutputAuditTests(unittest.TestCase):
         evaluations = {}
         flat_reports = []
         task_cost = 0.0
-        for name, descriptor in (("default", default), ("auto-01", tuned)):
+        candidates = [("default", default), ("auto-01", tuned)]
+        if tuned2 is not None:
+            candidates.append(("auto-02", tuned2))
+        for name, descriptor in candidates:
+            if name == "auto-02":
+                configs["tuned_lib"] = descriptor
             reports = []
             attempts = []
             for rep in (1, 2, 3):
+                candidate_score = -1.0 if name == "auto-02" else 0.0
                 report, run = make_run("self_research",
                                        "default_lib" if name == "default" else "tuned_lib",
-                                       rep, tasks["practice"])
+                                       rep, tasks["practice"], score=candidate_score)
                 reports.append(report)
                 flat_reports.append(report)
                 task_cost += report["total_cost"]
@@ -146,50 +158,70 @@ class FormalOutputAuditTests(unittest.TestCase):
                                  "config_sha256": descriptor["config"]["sha256"],
                                  "prompt_sha256": {role: descriptor["prompts"][role]["sha256"]
                                                    for role in ROLES},
-                                 "total_cost": report["total_cost"]})
+                                 "total_cost": report["total_cost"],
+                                 "mean_score": candidate_score})
             evaluations[name] = {"candidates": {name: descriptor},
                                  "attempts": attempts, "reports": reports}
+        configs["tuned_lib"] = tuned
         proposal = study_dir / "proposal_ledger.jsonl"
-        proposal_data = {"settings": {"plateau_nodes": 4},
-                         "prompt_append": {role: "" for role in ROLES},
-                         "rationale": "Use measured practice evidence."}
-        proposal_hash = hashlib.sha256(json.dumps({
-            key: proposal_data[key] for key in ("settings", "prompt_append")},
-            ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
-        write_json(study_dir / "proposal_responses/response-0000000000000001.json", {
-            "schema": "model_response_audit/1", "role": "planner", "purpose": "plan",
-            "model": MODEL, "prompt_hash": "c" * 64,
-            "output_text": json.dumps(proposal_data),
-            "tokens": {"input": 7, "cached_input": 0, "output": 0, "reasoning": 0},
-            "cost": 7.0,
-        })
-        write_jsonl(proposal, [{"schema": "proposal_ledger/1", "seq": 1,
-                                "round": 1, "tokens": {"input": 7, "cached_input": 0,
-                                                       "output": 0, "reasoning": 0},
-                                "cost": 7.0, "price_sha256": price_sha,
-                                "source_prompt_sha256": "b" * 64,
-                                "model": MODEL, "role": "planner", "purpose": "plan",
-                                "prompt_hash": "c" * 64}])
+        proposal_rows = []
+        proposal_attempts = []
+        for seq, name in enumerate([name for name, _ in candidates if name != "default"], 1):
+            proposal_data = {"settings": {"plateau_nodes": 3 + seq},
+                             "prompt_append": {role: "" for role in ROLES},
+                             "rationale": "Use measured practice evidence."}
+            proposal_hash = hashlib.sha256(json.dumps({
+                key: proposal_data[key] for key in ("settings", "prompt_append")},
+                ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
+            prompt_hash = ("c" if seq == 1 else "d") * 64
+            tokens = {"input": 7, "cached_input": 0, "output": 0, "reasoning": 0}
+            write_json(study_dir / f"proposal_responses/response-{seq:016d}.json", {
+                "schema": "model_response_audit/1", "role": "planner", "purpose": "plan",
+                "model": MODEL, "prompt_hash": prompt_hash,
+                "output_text": json.dumps(proposal_data),
+                "tokens": tokens, "cost": 7.0,
+            })
+            proposal_rows.append({"schema": "proposal_ledger/1", "seq": seq,
+                                  "round": seq, "tokens": tokens,
+                                  "cost": 7.0, "price_sha256": price_sha,
+                                  "source_prompt_sha256": "b" * 64,
+                                  "model": MODEL, "role": "planner", "purpose": "plan",
+                                  "prompt_hash": prompt_hash})
+            proposal_attempts.append({"round": seq, "ledger_seq": seq,
+                                      "status": "evaluated", "candidate": name,
+                                      "cost": 7.0, "proposal_sha256": proposal_hash})
+        write_jsonl(proposal, proposal_rows)
         write_json(study_dir / "auto_plan.json", {
             "schema": "auto_self_research_plan/1", "label": "FORMAL",
-            "rounds": 1, "max_output_tokens": 2048,
+            "rounds": len(proposal_rows), "max_output_tokens": 2048,
             "practice_tasks": tasks["practice"], "price_sha256": price_sha,
             "source_prompt_sha256": "b" * 64, "default_files": default,
         })
+        ranking = [
+            {"candidate": name,
+             "mean_score": -1.0 if name == "auto-02" else 0.0,
+             "mean_task_cost": 100.0,
+             "proposal_cost": cost, "research_cost": 300.0 + cost,
+             "score_per_currency": 0.0,
+             "run_ids": [row["run_id"] for row in evaluations[name]["attempts"]]}
+            for name, cost in [("default", 0.0),
+                               *[(name, 7.0) for name, _ in candidates if name != "default"]]
+        ]
         write_json(study_dir / "auto_self_research_report.json", {
             "schema": "auto_self_research/1", "label": "FORMAL",
             "currency": "TOKENS", "practice_tasks": tasks["practice"],
             "proposal_ledger_path": str(proposal),
             "proposal_ledger_sha256": digest(proposal),
-            "proposal_attempts": [{"round": 1, "ledger_seq": 1,
-                                   "status": "evaluated", "candidate": "auto-01",
-                                   "cost": 7.0, "proposal_sha256": proposal_hash}],
+            "proposal_attempts": proposal_attempts,
             "evaluations": evaluations, "reports": flat_reports,
-            "selection": {"candidate": "auto-01",
+            "ranking": ranking, "overall_best_on_practice": "default",
+            "selection": {**ranking[1], "beats_default_on_practice": False,
+                          "candidate": "auto-01",
                           "config_path": tuned["config"]["path"],
                           "config_sha256": tuned["config"]["sha256"]},
-            "total_task_cost": task_cost, "total_proposal_cost": 7.0,
-            "total_research_cost": task_cost + 7.0,
+            "total_task_cost": task_cost,
+            "total_proposal_cost": 7.0 * len(proposal_rows),
+            "total_research_cost": task_cost + 7.0 * len(proposal_rows),
         })
 
         batch_dir = root / "runs/batch"
@@ -230,6 +262,8 @@ class FormalOutputAuditTests(unittest.TestCase):
                 "schema": f"{tier}_attempt/1", "bank_version": "bank-v1",
                 "code_commit": COMMIT, "batch_dir": str(batch_dir),
             })
+        comparison = compare_configurations(reports["validation"],
+                                            baseline="default_lib", candidate="tuned_lib")
         write_json(batch_dir / "batch_report.json", {
             "schema": "batch_report/1", "label": "FORMAL",
             "bank_version": "bank-v1", "runs": rows, "reports": reports,
@@ -237,7 +271,8 @@ class FormalOutputAuditTests(unittest.TestCase):
                           "claim": "admitted" if admitted else "rejected",
                           "baseline": "default_lib", "candidate": "tuned_lib",
                           "score_not_lower_each_rep": admitted,
-                          "cost_reduced_on_average": True},
+                          "cost_reduced_on_average": True,
+                          "comparison": comparison},
             "tuned_exam_skipped": not admitted,
         })
         return batch_dir, study_dir, {"tasks": tasks, "study": study_dir,
@@ -315,12 +350,19 @@ class FormalOutputAuditTests(unittest.TestCase):
             report = _read(study / "auto_self_research_report.json")
             report["selection"]["config_sha256"] = "0" * 64
             write_json(study / "auto_self_research_report.json", report)
-            with self.assertRaisesRegex(ValueError, "Selected configuration SHA differs"):
+            with self.assertRaisesRegex(ValueError, "Selected configuration SHA or ranking differs"):
                 audit_formal_outputs(batch, study)
         with TemporaryDirectory() as temp:
             batch, study, _ = self.fixture(Path(temp))
             report = _read(batch / "batch_report.json")
             report["admission"]["score_not_lower_each_rep"] = False
+            write_json(batch / "batch_report.json", report)
+            with self.assertRaisesRegex(ValueError, "admission differs"):
+                audit_formal_outputs(batch, study)
+        with TemporaryDirectory() as temp:
+            batch, study, _ = self.fixture(Path(temp))
+            report = _read(batch / "batch_report.json")
+            report["admission"]["comparison"]["candidate_mean_cost"] += 1
             write_json(batch / "batch_report.json", report)
             with self.assertRaisesRegex(ValueError, "admission differs"):
                 audit_formal_outputs(batch, study)
@@ -350,6 +392,92 @@ class FormalOutputAuditTests(unittest.TestCase):
             saved["model"] = "other-model"
             write_json(response, saved)
             with self.assertRaisesRegex(ValueError, "Proposal response provenance differs"):
+                audit_formal_outputs(batch, study)
+
+    def test_missing_or_tampered_public_holdout_score_fails_closed(self):
+        for mutation in ("missing", "wrong_split", "wrong_score"):
+            with self.subTest(mutation=mutation), TemporaryDirectory() as temp:
+                batch, study, info = self.fixture(Path(temp))
+                row = _read(batch / "batch_report.json")["runs"][0]
+                score_path = (info["root"] / "runs" / row["run_id"] / "tasks"
+                              / info["tasks"]["practice"][0] / "holdout_score.json")
+                if mutation == "missing":
+                    score_path.unlink()
+                    with self.assertRaises(FileNotFoundError):
+                        audit_formal_outputs(batch, study)
+                else:
+                    score = _read(score_path)
+                    if mutation == "wrong_split":
+                        score["split"] = "dev"
+                    else:
+                        score["score"] = 9.0
+                    write_json(score_path, score)
+                    with self.assertRaisesRegex(ValueError, "holdout score artifact differs"):
+                        audit_formal_outputs(batch, study)
+
+    def test_default_lib_config_swap_and_admission_evidence_tampering_fail(self):
+        with TemporaryDirectory() as temp:
+            batch, study, info = self.fixture(Path(temp))
+            rows = _read(batch / "batch_report.json")["runs"]
+            default_run = next(row["run_id"] for row in rows
+                               if row["config"] == "default_lib")
+            tuned_run = next(row["run_id"] for row in rows
+                             if row["config"] == "tuned_lib")
+            default_manifest = info["root"] / "runs" / default_run / "manifest.json"
+            tuned_manifest = info["root"] / "runs" / tuned_run / "manifest.json"
+            altered = _read(default_manifest)
+            altered["agent_config"] = _read(tuned_manifest)["agent_config"]
+            write_json(default_manifest, altered)
+            with self.assertRaisesRegex(ValueError, "Default batch config differs"):
+                audit_formal_outputs(batch, study)
+        with TemporaryDirectory() as temp:
+            batch, study, info = self.fixture(Path(temp), second_candidate=True)
+            extra = info["root"] / "config/tuned2.json"
+            plan = _read(batch / "plan.json")
+            plan["sealed_inputs"][str(extra)] = digest(extra)
+            write_json(batch / "plan.json", plan)
+            row = next(item for item in _read(batch / "batch_report.json")["runs"]
+                       if item["config"] == "naive")
+            manifest_path = info["root"] / "runs" / row["run_id"] / "manifest.json"
+            altered = _read(manifest_path)
+            altered["agent_config"] = {"path": "config/tuned2.json", "sha256": digest(extra)}
+            write_json(manifest_path, altered)
+            with self.assertRaisesRegex(ValueError, "Naive batch config differs"):
+                audit_formal_outputs(batch, study)
+        with TemporaryDirectory() as temp:
+            batch, study, _ = self.fixture(Path(temp))
+            report = _read(batch / "batch_report.json")
+            report["admission"]["comparison"]["evidence_run_ids"]["default_lib"][0] = "wrong-run"
+            write_json(batch / "batch_report.json", report)
+            with self.assertRaisesRegex(ValueError, "admission differs"):
+                audit_formal_outputs(batch, study)
+
+    def test_ranking_overall_winner_and_nonbest_selection_fail(self):
+        with TemporaryDirectory() as temp:
+            batch, study, _ = self.fixture(Path(temp), second_candidate=True)
+            self.assertEqual(audit_formal_outputs(batch, study)["study_runs"], 9)
+            report = _read(study / "auto_self_research_report.json")
+            report["ranking"][1]["mean_score"] = 99.0
+            write_json(study / "auto_self_research_report.json", report)
+            with self.assertRaisesRegex(ValueError, "ranking differs"):
+                audit_formal_outputs(batch, study)
+        with TemporaryDirectory() as temp:
+            batch, study, _ = self.fixture(Path(temp), second_candidate=True)
+            report = _read(study / "auto_self_research_report.json")
+            report["overall_best_on_practice"] = "auto-01"
+            write_json(study / "auto_self_research_report.json", report)
+            with self.assertRaisesRegex(ValueError, "Overall practice winner differs"):
+                audit_formal_outputs(batch, study)
+        with TemporaryDirectory() as temp:
+            batch, study, _ = self.fixture(Path(temp), second_candidate=True)
+            report = _read(study / "auto_self_research_report.json")
+            weaker = report["evaluations"]["auto-02"]["candidates"]["auto-02"]["config"]
+            report["selection"] = {**report["ranking"][2],
+                                   "config_path": weaker["path"],
+                                   "config_sha256": weaker["sha256"],
+                                   "beats_default_on_practice": False}
+            write_json(study / "auto_self_research_report.json", report)
+            with self.assertRaisesRegex(ValueError, "not the best generated"):
                 audit_formal_outputs(batch, study)
 
 

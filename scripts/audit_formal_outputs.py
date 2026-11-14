@@ -12,7 +12,7 @@ import json
 import math
 from pathlib import Path
 import re
-from statistics import mean
+from statistics import mean, stdev
 
 
 BUCKETS = ("input", "cached_input", "output", "reasoning")
@@ -242,6 +242,13 @@ def _audit_run(root: Path, run_id: str, *, phase: str, config: str, rep: int,
                  and type(ending_score) in (int, float) and math.isfinite(ending_score)
                  and math.isclose(score, ending_score, rel_tol=0, abs_tol=1e-12),
                  f"Task saved score differs from task_end: {run_id}/{task_id}")
+        saved_score = _json(task_dir / "holdout_score.json")
+        result_score = saved_score.get("score")
+        _require(saved_score.get("schema") == "score/1"
+                 and saved_score.get("split") == "holdout"
+                 and type(result_score) in (int, float) and math.isfinite(result_score)
+                 and math.isclose(result_score, ending_score, rel_tol=0, abs_tol=1e-12),
+                 f"Task holdout score artifact differs: {run_id}/{task_id}")
         _require(task.get("schema") == "task_report/1" and task.get("run_id") == run_id
                  and task.get("currency") == "TOKENS" and task.get("tokens") == usage
                  and task.get("model_calls") == len(calls),
@@ -255,7 +262,8 @@ def _audit_run(root: Path, run_id: str, *, phase: str, config: str, rep: int,
         _require(evidence.get("task_end_seq") == ends[0]["seq"]
                  and evidence.get("stop_seq") == stops[0]["seq"]
                  and evidence.get("model_call_seqs") == [row["seq"] for row in calls]
-                 and _inside(root, evidence.get("ledger_path")) == task_dir / "ledger.jsonl",
+                 and _inside(root, evidence.get("ledger_path")) == task_dir / "ledger.jsonl"
+                 and _inside(root, evidence.get("holdout_path")) == task_dir / "holdout_score.json",
                  f"Task evidence differs: {run_id}/{task_id}")
         attempt = _json(task_dir / "holdout_attempt.json")
         _require(attempt.get("schema") == "holdout_attempt/1",
@@ -321,6 +329,7 @@ def _audit_study(root: Path, study_dir: Path, tasks: list[str], bank_version: st
              "Default study files differ from plan")
     flat = {}
     task_cost = 0.0
+    verified_by_candidate = {}
     for name, evaluation in evaluations.items():
         descriptor = evaluation.get("candidates", {}).get(name)
         config_path = _candidate(root, descriptor)
@@ -332,6 +341,9 @@ def _audit_study(root: Path, study_dir: Path, tasks: list[str], bank_version: st
                  f"Candidate needs three practice runs: {name}")
         by_id = {row.get("run_id"): row for row in embedded}
         _require(len(by_id) == 3, f"Duplicate candidate run: {name}")
+        _require([row.get("rep") for row in reps] == list(REPS),
+                 f"Candidate repetitions are out of order: {name}")
+        verified_by_candidate[name] = []
         for attempt in reps:
             run_id = attempt.get("run_id")
             _require(run_id not in flat and attempt.get("candidate") == name
@@ -350,6 +362,12 @@ def _audit_study(root: Path, study_dir: Path, tasks: list[str], bank_version: st
                      and _inside(root, attempt.get("report_path")) == root / "runs" / run_id / "report.json",
                      f"Candidate saved report differs: {run_id}")
             _equal_cost(attempt.get("total_cost"), report["total_cost"], f"study {run_id}")
+            observed_score = mean(task["holdout_score"] for task in report["tasks"])
+            stated_score = attempt.get("mean_score")
+            _require(type(stated_score) in (int, float) and math.isfinite(stated_score)
+                     and math.isclose(stated_score, observed_score, rel_tol=0, abs_tol=1e-12),
+                     f"Candidate attempt mean score differs: {run_id}")
+            verified_by_candidate[name].append((report, observed_score))
             flat[run_id] = report
             task_cost += report["total_cost"]
     stated = study.get("reports")
@@ -359,18 +377,76 @@ def _audit_study(root: Path, study_dir: Path, tasks: list[str], bank_version: st
              "Self-research flat run list differs")
     _equal_cost(study.get("total_task_cost"), task_cost, "study tasks")
     _equal_cost(study.get("total_research_cost"), task_cost + proposal_cost, "study total")
+    ordered_candidates = ["default", *[row["candidate"] for row in attempts
+                                       if row.get("status") == "evaluated"]]
+    _require(len(ordered_candidates) == len(set(ordered_candidates))
+             and set(ordered_candidates) == set(evaluations),
+             "Candidate order differs from evaluated proposals")
+    cost_by_candidate = {"default": 0.0}
+    cost_by_candidate.update({row["candidate"]: float(row["cost"])
+                              for row in attempts if row.get("status") == "evaluated"})
+    expected_ranking = []
+    for name in ordered_candidates:
+        verified = verified_by_candidate[name]
+        mean_score = mean(score for _, score in verified)
+        mean_task_cost = mean(report["total_cost"] for report, _ in verified)
+        research_cost = sum(report["total_cost"] for report, _ in verified) + cost_by_candidate[name]
+        _require(research_cost > 0, f"Candidate has no positive research cost: {name}")
+        expected_ranking.append({
+            "candidate": name, "mean_score": mean_score,
+            "mean_task_cost": mean_task_cost, "proposal_cost": cost_by_candidate[name],
+            "research_cost": research_cost,
+            "score_per_currency": 3 * max(mean_score, 0.0) / research_cost,
+            "run_ids": [report["run_id"] for report, _ in verified],
+        })
+    _require(study.get("ranking") == expected_ranking,
+             "Self-research ranking differs from audited practice reports")
+    _require(len(expected_ranking) > 1, "No selected generated candidate")
+    rank_key = lambda row: (row["score_per_currency"], row["mean_score"], -row["research_cost"])
+    overall = max(expected_ranking, key=rank_key)
+    winner = max(expected_ranking[1:], key=rank_key)
+    _require(study.get("overall_best_on_practice") == overall["candidate"],
+             "Overall practice winner differs from audited ranking")
     selection = study.get("selection")
-    _require(isinstance(selection, dict) and selection.get("candidate") in evaluations
-             and selection["candidate"] in evaluated, "No selected generated candidate")
+    _require(isinstance(selection, dict) and selection.get("candidate") == winner["candidate"],
+             "Selected candidate is not the best generated proposal")
     _audit_proposal_responses(study_dir, proposals, attempts)
     chosen = evaluations[selection["candidate"]]["candidates"][selection["candidate"]]
     path = _candidate(root, chosen)
-    _require(_inside(root, selection.get("config_path")) == path
-             and selection.get("config_sha256") == chosen["config"]["sha256"],
-             "Selected configuration SHA differs")
+    expected_selection = {**winner, "config_path": str(path),
+                          "config_sha256": chosen["config"]["sha256"],
+                          "beats_default_on_practice": rank_key(winner) > rank_key(expected_ranking[0])}
+    _require(selection == expected_selection, "Selected configuration SHA or ranking differs")
     return path, {"runs": len(flat), "task_cost": task_cost,
                   "proposal_cost": proposal_cost, "total_cost": task_cost + proposal_cost,
-                  "selected_config_sha256": chosen["config"]["sha256"], "model": model}
+                  "selected_config_sha256": chosen["config"]["sha256"], "model": model,
+                  "default_config": evaluations["default"]["candidates"]["default"]["config"]}
+
+
+def _expected_comparison(base: list[dict], tuned: list[dict], tasks: list[str]) -> dict:
+    """Reconstruct the saved three-pair validation comparison from reported scores."""
+    base_scores = [mean(task["holdout_score"] for task in row["tasks"]) for row in base]
+    tuned_scores = [mean(task["holdout_score"] for task in row["tasks"]) for row in tuned]
+    differences = [candidate - baseline for baseline, candidate in zip(base_scores, tuned_scores)]
+    mean_gap = mean(differences)
+    noise = max(stdev(base_scores), stdev(tuned_scores))
+    return {
+        "schema": "comparison/1", "phase": "validation", "tasks": tasks,
+        "baseline": "default_lib", "candidate": "tuned_lib",
+        "baseline_scores": base_scores, "candidate_scores": tuned_scores,
+        "paired_differences": differences, "mean_score_gap": mean_gap,
+        "within_config_noise": noise,
+        "direction_consistent": all(value > 0 for value in differences),
+        "claim": ("better" if all(value > 0 for value in differences)
+                  and mean_gap > noise else "no_clear_difference"),
+        "baseline_mean_cost": mean(row["total_cost"] for row in base),
+        "candidate_mean_cost": mean(row["total_cost"] for row in tuned),
+        "evidence_run_ids": {
+            "default_lib": [row["run_id"] for row in base],
+            "tuned_lib": [row["run_id"] for row in tuned],
+        },
+        "rule": "Three paired repetitions must all improve; mean score gap must exceed both configurations' sample standard deviations.",
+    }
 
 
 def audit_formal_outputs(batch_dir: Path, auto_study_dir: Path) -> dict:
@@ -445,6 +521,16 @@ def audit_formal_outputs(batch_dir: Path, auto_study_dir: Path) -> dict:
     _require(str(chosen_path) in sealed and sealed[str(chosen_path)] ==
              study["selected_config_sha256"],
              "Selected config is not sealed in batch plan")
+    default_item = study["default_config"]
+    default_path = _inside(root, default_item["path"])
+    _require(str(default_path) in sealed and sealed[str(default_path)] ==
+             default_item["sha256"], "Default config is not sealed in batch plan")
+    # batch_plan/1 seals input files but does not itself map names to paths.
+    # This internal protocol fixes the naive comparator at config/naive.json;
+    # default comes from auto_plan and tuned from the selected candidate.
+    naive_path = root / "config/naive.json"
+    _require(str(naive_path) in sealed and sealed[str(naive_path)] == _sha(naive_path),
+             "Naive config is not sealed in batch plan")
     admission = batch.get("admission")
     _require(isinstance(admission, dict) and admission.get("schema") == "admission/1"
              and admission.get("baseline") == "default_lib"
@@ -478,6 +564,7 @@ def audit_formal_outputs(batch_dir: Path, auto_study_dir: Path) -> dict:
                      "Duplicate embedded batch report")
             report_by_id[report["run_id"]] = report
     audited = {}
+    config_sources = {}
     for row in rows:
         tier, config, rep, run_id = (row.get(key) for key in
                                     ("logical_phase", "config", "rep", "run_id"))
@@ -488,8 +575,28 @@ def audit_formal_outputs(batch_dir: Path, auto_study_dir: Path) -> dict:
                             task_ids=expected_tasks[tier], bank_version=version,
                             commit=commit, price_sha=price_sha,
                             selected_config=chosen_path if config == "tuned_lib" else None)
-        _require(_json(root / "runs" / run_id / "manifest.json").get("model") == study["model"],
+        manifest = _json(root / "runs" / run_id / "manifest.json")
+        _require(manifest.get("model") == study["model"],
                  f"Batch and self-research models differ: {run_id}")
+        agent_item = manifest["agent_config"]
+        agent_path = _inside(root, agent_item["path"])
+        signature = (str(agent_path), agent_item["sha256"])
+        _require(sealed.get(signature[0]) == signature[1],
+                 f"Batch config is not sealed by plan: {run_id}")
+        if config in ("default", "default_lib"):
+            _require(signature == (str(default_path), default_item["sha256"]),
+                     f"Default batch config differs from self-research plan: {run_id}")
+        elif config == "tuned_lib":
+            _require(signature == (str(chosen_path), study["selected_config_sha256"]),
+                     f"Tuned batch config differs from selected candidate: {run_id}")
+        else:
+            _require(signature == (str(naive_path), sealed[str(naive_path)]),
+                     f"Naive batch config differs from sealed comparator: {run_id}")
+        if config in config_sources:
+            _require(config_sources[config] == signature,
+                     f"Batch config changed between repetitions or phases: {config}")
+        else:
+            config_sources[config] = signature
         _require(report == report_by_id.get(run_id), f"Batch embedded report differs: {run_id}")
         audited[(tier, config, rep)] = report
     _require(set(report_by_id) == {row["run_id"] for row in rows},
@@ -502,7 +609,9 @@ def audit_formal_outputs(batch_dir: Path, auto_study_dir: Path) -> dict:
     cost_ok = mean(row["total_cost"] for row in tuned) < mean(row["total_cost"] for row in base)
     _require(admitted == (score_ok and cost_ok)
              and admission.get("score_not_lower_each_rep") is score_ok
-             and admission.get("cost_reduced_on_average") is cost_ok,
+             and admission.get("cost_reduced_on_average") is cost_ok
+             and admission.get("comparison") == _expected_comparison(
+                 base, tuned, expected_tasks["validation"]),
              "Recorded admission differs from validation evidence")
     return {"schema": "formal_output_audit/1", "ready": True,
             "bank_version": version, "code_commit": commit,
