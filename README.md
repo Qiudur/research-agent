@@ -28,7 +28,7 @@
     .venv/bin/python -m unittest discover -s dashboard/tests -v
     .venv/bin/python scripts/preflight.py --model <正式模型名>
 
-截至 2026-11-14，修复提交 bf9de62 的主回归 203 项通过；技能层 6 项、看板 7 项也已通过。24 道入库题的原始方案逐题通过真实沙箱 dev 评分，证据见 docs/B-全题dev烟测.json。wheel 已构建并从外部工作目录实测评分。真实 B 沙箱加 TEST 价目、脚本角色的三阶段四线端到端测试在 tests/test_real_batch_e2e.py；它跑 30 个 A 主循环任务和每任务一次 holdout，明确不构成真实模型效果。A 的真实计时和跨运行经验试验见 pilot/README.md。每个 TEST 运行的 manifest.phase 均为 dev，不会冒充正式考试。
+截至 2026-11-14，主线提交 7ef4df6 的主回归 237 项通过（1 项跳过），技能层 6 项、看板 9 项也已通过；正式批次使用的冻结提交 bf9de62 当时主回归 203 项通过。24 道入库题的原始方案逐题通过真实沙箱 dev 评分，证据见 docs/B-全题dev烟测.json。wheel 已构建并从外部工作目录实测评分。真实 B 沙箱加 TEST 价目、脚本角色的三阶段四线端到端测试在 tests/test_real_batch_e2e.py；它跑 30 个 A 主循环任务和每任务一次 holdout，明确不构成真实模型效果。A 的真实计时和跨运行经验试验见 pilot/README.md。每个 TEST 运行的 manifest.phase 均为 dev，不会冒充正式考试。
 
 ## 真实模型 dev 试点
 
