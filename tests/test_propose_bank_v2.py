@@ -9,7 +9,8 @@ from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import patch
 
-from scripts.propose_bank_v2 import audit_campaign, freeze, propose, runtime_drift, sha
+from scripts.propose_bank_v2 import (audit_campaign, freeze, propose, runtime_drift,
+                                     sha, verify_exam_trap)
 
 
 def put(path: Path, value) -> None:
@@ -45,6 +46,7 @@ class BankV2Fixture:
                   "config/hard_caps.json": {}, "config/triggers.json": {}}
         for relative, value in common.items():
             put(self.root / relative, value)
+        put(self.root / "harness_worker.py", "# deterministic test worker")
         for scenario, prefix in (("speedup", "spd"), ("tabular", "tab")):
             source = self.root.parent / f"source-{prefix}"
             campaign = self.root.parent / f"campaign-{prefix}"
@@ -54,21 +56,34 @@ class BankV2Fixture:
                 task_id = f"{prefix}-fresh-{index}"
                 ids.append(task_id)
                 baseline = 1.0 if prefix == "spd" else 0.70
-                ceiling = 3.0 if prefix == "spd" else baseline + self.tab_gap
+                ceiling = (0.95 if index == 0 else 3.0) if prefix == "spd" else baseline + self.tab_gap
                 entries.append({"task_id": task_id, "tier": "exam", "difficulty": None,
-                                "naive_cost": None, "trap": None,
+                                "naive_cost": None,
+                                "trap": ("stop_loss" if prefix == "spd" else "leakage")
+                                if index == 0 else None,
                                 "score_formula": "ratio" if prefix == "spd" else "gap",
                                 "baseline_raw": baseline, "ceiling_raw": ceiling})
                 package = self.root / "tasks" / task_id
                 metric = {"name": "speedup" if prefix == "spd" else "roc_auc"}
                 if prefix == "tab":
                     metric.update(baseline_raw=baseline, ceiling_raw=ceiling)
-                put(package / "task.json", {"schema": "task/1", "task_id": task_id,
-                                             "scenario": scenario, "metric": metric,
-                                             "budget": {"money": 40000, "wall_seconds": 1800}})
+                task = {"schema": "task/1", "task_id": task_id,
+                        "scenario": scenario, "metric": metric,
+                        "budget": {"money": 40000, "wall_seconds": 1800}}
+                if prefix == "spd" and index == 0:
+                    task["benchmark"] = {"kind": "builtin_sort"}
+                if prefix == "tab" and index == 0:
+                    task["forbidden_features"] = ["source_row_id"]
+                put(package / "task.json", task)
                 put(package / "workspace/original.py", "def solve(): return 1")
                 hidden = "reference.py" if prefix == "spd" else "dev.csv"
-                put(package / "hidden" / hidden, "dev-only")
+                put(package / "hidden" / hidden,
+                    "def solve(): return 1" if prefix == "spd" and index == 0 else
+                    "feature,y\n0,1\n" if prefix == "tab" and index == 0 else "dev-only")
+                if prefix == "spd" and index == 0:
+                    put(package / "workspace/profile.json", {"kind": "builtin_sort"})
+                if prefix == "tab" and index == 0:
+                    put(package / "workspace/train.csv", "feature,source_row_id,y\n0,1,1\n")
                 if prefix == "tab":
                     put(package / "SOURCE.md",
                         "UCI Machine Learning Repository source; CC BY 4.0; train/dev only.")
@@ -86,7 +101,8 @@ class BankV2Fixture:
                     if root == source and prefix == "tab":
                         copy_task["budget"]["money"] = None
                     put(target / "task.json", copy_task)
-                    put(target / "hidden" / hidden, "dev-only")
+                    put(target / "hidden" / hidden,
+                        (package / "hidden" / hidden).read_text(encoding="utf-8"))
             bank = {"schema": "bank/1", "version": "bank-v2", "frozen": False,
                     "calibration_only": True, "tasks": entries}
             put(source / "tasks/bank.json", bank)
@@ -100,6 +116,8 @@ class BankV2Fixture:
                           f"tasks/{task_id}/hidden/" +
                           ("reference.py" if prefix == "spd" else "dev.csv"),
                           f"tasks/{task_id}/workspace/original.py"]
+            files += ([f"tasks/{ids[0]}/workspace/profile.json"] if prefix == "spd"
+                      else [f"tasks/{ids[0]}/workspace/train.csv"])
             source_hashes = {relative: sha(source / relative) for relative in files}
             copied_hashes = {relative: sha(project / relative) for relative in files}
             attempts = []
@@ -121,6 +139,22 @@ class BankV2Fixture:
                 "label": "DEV ONLY; TEST TOKEN UNITS; NO HOLDOUT OR MONEY",
                 "ended_utc": "2026-11-15T00:00:00Z", "attempts": attempts})
             self.campaigns[scenario] = campaign
+        task_id = "spd-fresh-0"
+        paths = [f"tasks/{task_id}/task.json",
+                 f"tasks/{task_id}/workspace/profile.json",
+                 f"tasks/{task_id}/workspace/original.py",
+                 f"tasks/{task_id}/hidden/reference.py",
+                 "harness_worker.py", "config/triggers.json"]
+        samples = [{"seed": seed, "baseline_raw": raw, "reference_raw": ref,
+                    "reference_minus_baseline": ref - raw}
+                   for seed, raw, ref in ((20261114, 0.98, 0.94),
+                                          (20261115, 1.0, 0.95),
+                                          (20261116, 1.02, 0.96))]
+        put(self.root / "docs/B-v2提速stop-loss-dev校准.json", {
+            "schema": "speedup_stop_loss_dev/1", "task_id": task_id,
+            "mutation_candidate_rejected": True, "measurements": samples,
+            "baseline_median": 1.0, "reference_median": 0.95,
+            "source_sha256": {path: sha(self.root / path) for path in paths}})
 
 
 def audited_attempt(campaign, protocol, record, task_id, rep):
@@ -207,13 +241,77 @@ class BankV2ProposalTests(unittest.TestCase):
             self.build()
 
     def test_source_change_or_tiny_gap_rejected(self):
-        put(self.fx.root / "tasks/spd-fresh-0/workspace/original.py", "changed")
+        put(self.fx.root / "tasks/spd-fresh-1/workspace/original.py", "changed")
         with self.assertRaisesRegex(ValueError, "source file drift"):
             self.build()
         with TemporaryDirectory() as temp:
             fx = BankV2Fixture(Path(temp), tab_gap=0.005)
             with self.assertRaisesRegex(ValueError, "dev AUC gap"):
                 propose(fx.root, fx.campaigns["speedup"], fx.campaigns["tabular"], "b" * 40)
+
+    def test_new_exam_requires_verified_trap_in_each_scenario(self):
+        with patch("scripts.propose_bank_v2.verify_exam_trap", return_value=False):
+            with self.assertRaisesRegex(ValueError, "speedup: new exam lacks"):
+                self.build()
+
+    def test_stop_loss_accepts_no_headroom_and_rejects_stale_dev_evidence(self):
+        task_id = "spd-fresh-0"
+        task = json.loads((self.fx.root / "tasks" / task_id / "task.json").read_text())
+        entry = {"trap": "stop_loss", "baseline_raw": 1.0, "ceiling_raw": 0.95}
+        self.assertTrue(verify_exam_trap(self.fx.root, task_id, "speedup", entry, task))
+        evidence_path = self.fx.root / "docs/B-v2提速stop-loss-dev校准.json"
+        evidence = json.loads(evidence_path.read_text())
+        evidence["measurements"][1]["reference_raw"] = 1.05
+        put(evidence_path, evidence)
+        with self.assertRaisesRegex(ValueError, "invalid dev stop-loss sample"):
+            self.build()
+
+    def test_stop_loss_allows_noisy_reference_above_baseline(self):
+        task_id = "spd-fresh-0"
+        task = json.loads((self.fx.root / "tasks" / task_id / "task.json").read_text())
+        evidence_path = self.fx.root / "docs/B-v2提速stop-loss-dev校准.json"
+        evidence = json.loads(evidence_path.read_text())
+        evidence["measurements"] = [
+            {"seed": seed, "baseline_raw": 1.0, "reference_raw": ref,
+             "reference_minus_baseline": ref - 1.0}
+            for seed, ref in ((20261114, 1.01), (20261115, 1.02), (20261116, 0.99))]
+        evidence["reference_median"] = 1.01
+        put(evidence_path, evidence)
+        self.assertTrue(verify_exam_trap(self.fx.root, task_id, "speedup",
+                        {"trap": "stop_loss", "baseline_raw": 1.0,
+                         "ceiling_raw": 1.01}, task))
+
+    def test_leakage_trap_requires_train_only_forbidden_feature(self):
+        put(self.fx.root / "tasks/tab-fresh-0/hidden/dev.csv",
+            "feature,source_row_id,y\n0,1,1\n")
+        with self.assertRaisesRegex(ValueError, "leakage lure is not train-only"):
+            self.build()
+
+    def test_task_budget_drift_rejected_before_proposal(self):
+        path = self.fx.root / "tasks/spd-fresh-1/task.json"
+        task = json.loads(path.read_text())
+        task["budget"]["money"] = 39999
+        put(path, task)
+        with self.assertRaisesRegex(ValueError, "task or reference differs"):
+            self.build()
+
+    def test_freeze_binds_stop_loss_evidence_file_sha(self):
+        proposal = self.build()
+        proposal_path = self.fx.root.parent / "proposal.json"
+        put(proposal_path, proposal)
+        digest = sha(proposal_path)
+        review = self.fx.root.parent / "review.json"
+        put(review, {"schema": "bank_v2_license_review/1", "proposal_sha256": digest,
+                     "entries": [{"task_id": key, "source_md_sha256": value,
+                                  "redistribution_permitted": True}
+                                 for key, value in proposal["license_evidence"].items()]})
+        evidence_path = self.fx.root / "docs/B-v2提速stop-loss-dev校准.json"
+        evidence = json.loads(evidence_path.read_text())
+        evidence["method"] = "changed after proposal"
+        put(evidence_path, evidence)
+        with self.assertRaisesRegex(ValueError, "Proposal inputs changed"):
+            freeze(self.fx.root, proposal_path, digest, review,
+                   self.fx.root.parent / "bank-v2.json")
 
     def test_freeze_requires_exact_sha_and_all_license_confirmations(self):
         proposal = self.build()

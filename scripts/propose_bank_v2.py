@@ -8,11 +8,13 @@ from __future__ import annotations
 import argparse
 from collections import Counter
 from copy import deepcopy
+import csv
 import hashlib
 import json
 import math
 from pathlib import Path
 import re
+from statistics import median
 import subprocess
 from typing import Any
 
@@ -25,6 +27,7 @@ RUNTIME_FILES = {"harness.py", "harness_worker.py", "tabular_harness.py",
                  "tabular_worker.py", "ledger.py", "token_accounting.py",
                  "scripts/calibrate_naive_tokens.py", "scripts/run_token_pilot.py"}
 RUNTIME_PREFIXES = ("evaluation/", "research_agent/", "library/", "config/")
+STOP_LOSS_EVIDENCE = Path("docs/B-v2提速stop-loss-dev校准.json")
 
 
 def require(ok: bool, message: str) -> None:
@@ -42,6 +45,76 @@ def sha(path: Path) -> str:
 
 def positive(value: Any) -> bool:
     return type(value) in (int, float) and math.isfinite(value) and value > 0
+
+
+def csv_header(path: Path) -> list[str]:
+    with path.open(newline="", encoding="utf-8-sig") as handle:
+        header = next(csv.reader(handle), [])
+    require(bool(header) and len(set(header)) == len(header),
+            f"Invalid or duplicate CSV columns: {path}")
+    return header
+
+
+def verify_exam_trap(root: Path, task_id: str, scenario: str,
+                     entry: dict, task: dict) -> bool:
+    """Check the actual train/dev lure or measured no-headroom mechanism."""
+    trap = entry.get("trap")
+    if trap is None:
+        return False
+    if scenario == "speedup":
+        require(trap == "stop_loss" and task.get("metric", {}).get("name") == "speedup"
+                and task.get("benchmark", {}).get("kind") == "builtin_sort",
+                f"{task_id}: unsupported speedup exam trap")
+        evidence = read(root / STOP_LOSS_EVIDENCE)
+        samples = evidence.get("measurements")
+        require(evidence.get("schema") == "speedup_stop_loss_dev/1"
+                and evidence.get("task_id") == task_id
+                and evidence.get("mutation_candidate_rejected") is True
+                and isinstance(samples, list) and len(samples) == 3
+                and all(isinstance(sample, dict) for sample in samples)
+                and [sample.get("seed") for sample in samples] ==
+                [20261114, 20261115, 20261116],
+                f"{task_id}: missing preregistered dev stop-loss evidence")
+        baseline, reference = [], []
+        for sample in samples:
+            raw, ref = sample.get("baseline_raw"), sample.get("reference_raw")
+            difference = sample.get("reference_minus_baseline")
+            require(positive(raw) and positive(ref)
+                    and type(difference) in (int, float) and math.isfinite(difference)
+                    and math.isclose(difference, ref - raw, rel_tol=0, abs_tol=1e-12),
+                    f"{task_id}: invalid dev stop-loss sample")
+            baseline.append(raw)
+            reference.append(ref)
+        medians = ((evidence.get("baseline_median"), median(baseline)),
+                   (evidence.get("reference_median"), median(reference)),
+                   (entry["baseline_raw"], median(baseline)),
+                   (entry["ceiling_raw"], median(reference)))
+        require(all(positive(a) and math.isclose(a, b, rel_tol=0, abs_tol=1e-12)
+                    for a, b in medians),
+                f"{task_id}: stop-loss median differs from bank")
+        hashes = evidence.get("source_sha256")
+        required = {f"tasks/{task_id}/task.json",
+                    f"tasks/{task_id}/workspace/profile.json",
+                    f"tasks/{task_id}/workspace/original.py",
+                    f"tasks/{task_id}/hidden/reference.py",
+                    "harness_worker.py", "config/triggers.json"}
+        require(isinstance(hashes, dict) and set(hashes) == required
+                and all((root / key).is_file() and sha(root / key) == hashes[key]
+                        for key in required)
+                and hashes[f"tasks/{task_id}/workspace/original.py"] ==
+                hashes[f"tasks/{task_id}/hidden/reference.py"],
+                f"{task_id}: dev stop-loss source SHA drift")
+    else:
+        forbidden = task.get("forbidden_features")
+        require(trap == "leakage" and isinstance(forbidden, list) and forbidden
+                and all(isinstance(name, str) and name for name in forbidden)
+                and len(set(forbidden)) == len(forbidden),
+                f"{task_id}: leakage exam trap lacks forbidden features")
+        train = csv_header(root / "tasks" / task_id / "workspace/train.csv")
+        dev = csv_header(root / "tasks" / task_id / "hidden/dev.csv")
+        require(set(forbidden).issubset(train) and set(forbidden).isdisjoint(dev),
+                f"{task_id}: leakage lure is not train-only in dev")
+    return True
 
 
 def runtime_drift(root: Path, first: str, target: str) -> dict:
@@ -123,7 +196,8 @@ def audit_campaign(root: Path, campaign: Path, scenario: str, target_commit: str
             and all(rates[key] == 1 for key in prior.BUCKETS),
             f"{scenario}: price table differs")
     by_id = {row["task_id"]: row for row in source_bank["tasks"]}
-    task_hashes, license_evidence = {}, {}
+    task_hashes, license_evidence, verified_exam_traps = {}, {}, []
+    trap_evidence_hashes = {}
     for task_id in ids:
         entry = by_id[task_id]
         task = read(root / "tasks" / task_id / "task.json")
@@ -132,8 +206,13 @@ def audit_campaign(root: Path, campaign: Path, scenario: str, target_commit: str
                 and entry.get("tier") == "exam"
                 and entry.get("score_formula") == ("ratio" if scenario == "speedup" else "gap")
                 and positive(entry.get("baseline_raw")) and positive(entry.get("ceiling_raw"))
-                and entry["ceiling_raw"] > entry["baseline_raw"],
+                and (entry["ceiling_raw"] > entry["baseline_raw"]
+                     or (scenario == "speedup" and entry.get("trap") == "stop_loss")),
                 f"{task_id}: task or reference differs")
+        if verify_exam_trap(root, task_id, scenario, entry, task):
+            verified_exam_traps.append(task_id)
+            if scenario == "speedup":
+                trap_evidence_hashes[task_id] = sha(root / STOP_LOSS_EVIDENCE)
         if scenario == "tabular":
             require(entry["ceiling_raw"] - entry["baseline_raw"] >= 0.01
                     and task.get("metric", {}).get("baseline_raw") == entry["baseline_raw"]
@@ -188,6 +267,8 @@ def audit_campaign(root: Path, campaign: Path, scenario: str, target_commit: str
                         f"{task_id}: copied file drift: {relative}")
             hashes[relative] = copied[relative] if relative.endswith("/task.json") else source[relative]
         task_hashes[task_id] = dict(sorted(hashes.items()))
+    require(verified_exam_traps,
+            f"{scenario}: new exam lacks a verified task-level trap")
     attempts = summary.get("attempts")
     require(isinstance(attempts, list) and len(attempts) == 15,
             f"{scenario}: expected 15 attempts")
@@ -218,7 +299,9 @@ def audit_campaign(root: Path, campaign: Path, scenario: str, target_commit: str
             "source_bank_sha256": sha(source_root / "tasks/bank.json"),
             "source_root": str(source_root), "code_drift": runtime_drift(root, protocol.get("code_commit"), target_commit),
             "task_ids": ids, "rows": rows, "task_hashes": task_hashes,
-            "license_evidence": license_evidence}
+            "license_evidence": license_evidence,
+            "verified_exam_traps": verified_exam_traps,
+            "trap_evidence_sha256": trap_evidence_hashes}
 
 
 def propose(root: Path, speed_campaign: Path, tab_campaign: Path,

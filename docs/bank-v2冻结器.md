@@ -8,6 +8,7 @@
 - --speedup-campaign、--tabular-campaign：各含 protocol.json、已结束的 summary.json、project/、15 次逐次账本和 dev 回放封存。校准源工作树仍须可访问。脚本复用原独立审计器，重算四桶、失败已花 token、身份、每题三次尝试和预算上限，并拒绝任何 holdout 文件或事件。naive_cost 是三次全部用量之和除以正常完成次数；少于两次完成则阻断。
 - --target-code-commit：拟冻结的正式提交。每个 campaign 的提交与它比较；若 diff 涉及 harness、agent、编排、计价或校准配置，提案记录 runtime_changed 并置 ready=false，须按新代码重新测量。仅文档和测试差异不会阻断。配置及新题源码还须与 campaign 的封存 SHA 一致。
 - 新表格题须有 SOURCE.md、split_manifest.json 和 hidden/bank_v2_reference_measurements.json；task 与校准题库里的 AUC 基线/上限一致，差值至少 0.01。正式冻结另要求五份逐题许可确认，按 SOURCE.md SHA 与提案绑定。脚本不读取 holdout.csv 内容。
+- 新考试题每场景至少一题须有可核查的陷阱，而非仅在 bank 条目写 trap 名。提速 stop_loss 限 builtin_sort；原始与参考源码 SHA 必须相同，三组预注册固定 seed 的 dev 测量、中位数和 source SHA 必须与条目及当前代码吻合，测量证据 SHA 写入提案。由于相同代码的计时噪声，stop_loss 的 ceiling 允许高于或低于 baseline。表格 leakage 必须列明 forbidden_features，且训练 CSV 含诱饵列、dev 推断 CSV 不含该列；只读两份 CSV 的表头，不读 holdout。
 
 ## 两阶段命令
 
@@ -17,7 +18,7 @@
 
 输出 bank_v2_proposal/1，包含 24 题、两个 campaign 的逐次审计摘要、代码差异、SHA 和阻断项。每场景 12 题按 (naive_cost, task_id) 排序，前 4 道 easy、中 4 道 medium、后 4 道 hard。若 ready=false，命令退出 1，但保留提案供复盘，不能冻结。
 
-输入协议 schema 为 naive_token_calibration_protocol/1 与 naive_token_calibration_summary/1；每个 campaign 必须记录 model、bank_version、code_commit、tasks、repetitions、预算/输出上限、source_sha256、copied_sha256，summary 须有 ended_utc 和 15 条逐次 attempts。提案 schema bank_v2_proposal/1 的顶层字段为 ready、blocked、source_bank_v1_sha256、target_code_commit、campaigns、license_evidence、tasks；campaigns 分别带 protocol_sha256、summary_sha256、code_drift、五题的逐次成本和任务源码哈希。
+输入协议 schema 为 naive_token_calibration_protocol/1 与 naive_token_calibration_summary/1；每个 campaign 必须记录 model、bank_version、code_commit、tasks、repetitions、预算/输出上限、source_sha256、copied_sha256，summary 须有 ended_utc 和 15 条逐次 attempts。提案 schema bank_v2_proposal/1 的顶层字段为 ready、blocked、source_bank_v1_sha256、target_code_commit、campaigns、license_evidence、tasks；campaigns 分别带 protocol_sha256、summary_sha256、code_drift、五题的逐次成本、任务源码哈希和已核验的考试陷阱。提速测量文件 docs/B-v2提速stop-loss-dev校准.json 的 SHA 随提案封存。
 
 许可确认文件的 schema 为 bank_v2_license_review/1：proposal_sha256 是提案文件的 SHA-256；entries 恰有五项，每项包含 task_id、source_md_sha256 和 redistribution_permitted=true。确认人须先读对应 SOURCE.md 与来源许可。五项均与提案和源文件 SHA 匹配后执行：
 
