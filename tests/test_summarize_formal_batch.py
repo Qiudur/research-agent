@@ -510,7 +510,7 @@ class SummarizeFormalBatchTests(unittest.TestCase):
             with self.assertRaises(SummaryError):
                 write_outputs(summary, fx.batch_dir, "x")
 
-    def test_missing_evidence_and_tampered_embedded_report_are_reported(self):
+    def test_missing_evidence_and_tampered_saved_report_fail_closed(self):
         with TemporaryDirectory() as temp:
             fx = build(Path(temp))
             report = fx.reports[("exam", "default", 1)]
@@ -525,9 +525,54 @@ class SummarizeFormalBatchTests(unittest.TestCase):
             saved = json.loads(path.read_text(encoding="utf-8"))
             saved["tasks"][0]["holdout_score"] += 0.5
             path.write_text(json.dumps(saved), encoding="utf-8")
-            summary = summarize(fx.batch_dir)
-            self.assertTrue(any("report.json 与 batch_report.json" in item for item in summary["warnings"]))
-            self.assertIn("## 7. 数据提醒", render_markdown(summary))
+            with self.assertRaisesRegex(SummaryError, "report.json 缺失或与 batch_report.json"):
+                summarize(fx.batch_dir)
+
+    def test_validation_score_or_task_ledger_tampering_fails_closed(self):
+        with TemporaryDirectory() as temp:
+            fx = build(Path(temp))
+            path = fx.batch_dir / "batch_report.json"
+            batch = json.loads(path.read_text(encoding="utf-8"))
+            tuned = next(report for report in batch["reports"]["validation"]
+                         if report["config"] == "tuned_lib" and report["rep"] == 1)
+            tuned["tasks"][0]["holdout_score"] -= 1.0
+            write_json(path, batch)
+            with self.assertRaisesRegex(SummaryError, "内嵌报告不一致"):
+                summarize(fx.batch_dir, research_cost=2_094_728)
+        with TemporaryDirectory() as temp:
+            fx = build(Path(temp))
+            path = fx.batch_dir / "batch_report.json"
+            batch = json.loads(path.read_text(encoding="utf-8"))
+            batch["admission"]["comparison"]["candidate_scores"][0] += 1.0
+            write_json(path, batch)
+            with self.assertRaisesRegex(SummaryError, "admission 与按已保存 validation 报告重算"):
+                summarize(fx.batch_dir, research_cost=2_094_728)
+        with TemporaryDirectory() as temp:
+            fx = build(Path(temp))
+            report = fx.reports[("exam", "default", 1)]
+            ledger = fx.root / "runs" / report["run_id"] / "tasks" / "spd-exam-0" / "ledger.jsonl"
+            rows = [json.loads(line) for line in ledger.read_text(encoding="utf-8").splitlines()]
+            rows[1]["tokens"]["input"] += 1
+            ledger.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+            with self.assertRaisesRegex(SummaryError, "账本调用成本或四桶不一致"):
+                summarize(fx.batch_dir)
+
+    def test_partial_with_validation_reports_does_not_claim_admission_or_payback(self):
+        with TemporaryDirectory() as temp:
+            fx = build(Path(temp))
+            plan = fx.batch_dir / "plan.json"
+            old = time.time() - 10_000
+            os.utime(plan, (old, old))
+            (fx.batch_dir / "batch_report.json").unlink()
+            summary = summarize(fx.batch_dir, partial=True, research_cost=2_094_728)
+            markdown = render_markdown(summary)
+            self.assertEqual(summary["progress"]["completed_runs"]["validation"], 6)
+            self.assertIsNone(summary["validation"]["admission"])
+            self.assertFalse(summary["breakeven"]["computed"])
+            self.assertNotIn("admission_replay",
+                             summary["diagnostic_excluding_small_gap"]["phases"]["validation"])
+            self.assertNotIn("判定：**admitted**", markdown)
+            self.assertNotIn("数学回本点 4190 题", markdown)
 
     def test_cost_argument_accepts_thousands_separators(self):
         self.assertEqual(_cost_argument("2,094,728"), 2094728.0)

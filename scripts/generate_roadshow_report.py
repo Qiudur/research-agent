@@ -271,14 +271,6 @@ def formal_evidence_ok(data: object) -> bool:
         return False
 
 
-def committed_formal(repo: Path) -> dict | None:
-    try:
-        data = json.loads(committed_text(repo, FORMAL_EVIDENCE))
-    except ValueError:
-        return None
-    return data if formal_evidence_ok(data) else None
-
-
 def formal_results(data: dict | None) -> str:
     """HTML for audited formal evidence; empty unless the evidence is complete and usable."""
     if data is None or not formal_evidence_ok(data):
@@ -433,9 +425,12 @@ def evidence(repo: Path, formal: dict | None = None) -> dict[str, str]:
         )
     else:
         accounting_notice = "TEST 联调不能代表真实模型成本、现金价格或官方成绩。"
-    results = formal_results(formal if formal is not None else committed_formal(repo))
+    # A committed evidence snapshot alone cannot prove its numbers still match
+    # the original batch. Only this invocation's read-only source audit may
+    # authorize formal results on the page.
+    results = formal_results(formal)
     if results:
-        pass  # committed formal results replace the pending wording
+        pass  # freshly audited formal results replace the pending wording
     elif v2_pending:
         accounting_notice += "v2 自研究、验证与考试数字均待对应真实账本审计后填入。"
     elif formal_pending:
@@ -621,7 +616,9 @@ def generate(repo: Path, output: Path, formal: dict | None = None) -> bool:
         revision = "HEAD"
         label = "首次基线：汇总当前仓库全部已提交历史"
     commits = source_commits(repo, revision)
-    if older and not commits and formal is None:
+    had_formal_results = (output.exists() and
+                          "正式批次结果 · 已通过独立审计" in output.read_text(encoding="utf-8"))
+    if older and not commits and formal is None and not had_formal_results:
         return False
     if formal is not None:
         target = repo / FORMAL_EVIDENCE

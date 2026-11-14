@@ -213,7 +213,7 @@ class RoadshowReportTest(unittest.TestCase):
     def report(self) -> str:
         return self.output.read_text(encoding="utf-8")
 
-    def test_audited_admitted_batch_shows_four_exam_lines_and_survives_regeneration(self):
+    def test_audited_admitted_batch_requires_source_reaudit_for_regeneration(self):
         batch, study, _ = self.formal_fixture(admitted=True)
         formal = load_formal_evidence(batch, study)
         self.commit_v2_sources()
@@ -231,9 +231,18 @@ class RoadshowReportTest(unittest.TestCase):
         self.assertEqual(json.loads((self.repo / FORMAL_EVIDENCE).read_text(encoding="utf-8")), formal)
         start = report.index("正式批次结果 · 已通过独立审计")
         block = report[start:report.index("</div>", start)]
+        # Even with no new commit, a run without source paths must remove old
+        # formal numbers from the previously generated HTML.
+        self.assertTrue(generate(self.repo, self.output))
+        self.assertNotIn("正式批次结果 · 已通过独立审计", self.report())
+        self.assertTrue(generate(self.repo, self.output, formal=load_formal_evidence(batch, study)))
+        self.assertIn(block, self.report())
         self.run_git("add", FORMAL_EVIDENCE, "docs/路演汇报.html")
         self.run_git("commit", "-qm", "Commit audited formal evidence")
         self.assertTrue(generate(self.repo, self.output))
+        self.assertNotIn("正式批次结果 · 已通过独立审计", self.report())
+        self.assertIn(self.PENDING, self.report())
+        self.assertTrue(generate(self.repo, self.output, formal=load_formal_evidence(batch, study)))
         self.assertIn(block, self.report())
 
     def test_rejected_batch_hides_tuned_exam_scores_and_breakeven(self):
@@ -283,9 +292,14 @@ class RoadshowReportTest(unittest.TestCase):
         self.assertIn(self.PENDING, self.report())
         self.assertNotIn("正式批次结果", self.report())
 
-    def test_committed_evidence_must_be_audited_and_consistent(self):
+    def test_committed_evidence_never_substitutes_for_source_audit(self):
         batch, study, _ = self.formal_fixture()
         good = load_formal_evidence(batch, study)
+        forged_score = json.loads(json.dumps(good))
+        forged_score["phases"]["exam"]["default"]["scores"][0] = 999.0
+        forged_score["phases"]["exam"]["default"]["score_mean"] = 999.0
+        forged_sha = json.loads(json.dumps(good))
+        forged_sha["selected_config_sha256"] = "0" * 64
         exam_without_tuned = {key: value for key, value in good["phases"]["exam"].items()
                               if key != "tuned_lib"}
         variants = {
@@ -296,6 +310,9 @@ class RoadshowReportTest(unittest.TestCase):
             "admission_mismatch": dict(good, admission=dict(good["admission"], claim="rejected")),
             "missing_tuned_line": dict(good, phases=dict(good["phases"], exam=exam_without_tuned)),
             "short_commit": dict(good, code_commit="aaaaaaa"),
+            "forged_score_999": forged_score,
+            "forged_selected_sha": forged_sha,
+            "otherwise_valid_snapshot": good,
         }
         for name, value in variants.items():
             with self.subTest(name):
@@ -304,11 +321,6 @@ class RoadshowReportTest(unittest.TestCase):
                 self.assertTrue(generate(self.repo, self.output))
                 self.assertIn(self.PENDING, self.report())
                 self.assertNotIn("正式批次结果", self.report())
-        self.setUp()
-        self.commit_v2_sources(json.dumps(good, ensure_ascii=False))
-        self.assertTrue(generate(self.repo, self.output))
-        self.assertIn("正式批次结果 · 已通过独立审计", self.report())
-        self.assertNotIn(self.PENDING, self.report())
 
     def test_formal_text_is_html_escaped(self):
         batch, study, _ = self.formal_fixture()
@@ -317,7 +329,7 @@ class RoadshowReportTest(unittest.TestCase):
         evidence["comparisons"]["default_vs_naive"] = {"available": False, "reason": "<i>缺</i>"}
         evidence["warnings"] = ["w1", "w2"]
         self.commit_v2_sources(json.dumps(evidence, ensure_ascii=False))
-        self.assertTrue(generate(self.repo, self.output))
+        self.assertTrue(generate(self.repo, self.output, formal=evidence))
         report = self.report()
         self.assertIn("研究版回本点：不计算（&lt;b&gt;未达标&lt;/b&gt;）", report)
         self.assertIn("考试 默认 vs 朴素：未比较（&lt;i&gt;缺&lt;/i&gt;）", report)

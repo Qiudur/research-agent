@@ -63,6 +63,12 @@ class SummaryError(ValueError):
     """The batch cannot be summarized (missing or malformed saved files)."""
 
 
+def _issue(message: str, *, strict: bool, warnings: list[str]) -> None:
+    if strict:
+        raise SummaryError(message)
+    warnings.append(message)
+
+
 class LoadedRun(NamedTuple):
     phase: str
     report: dict
@@ -73,6 +79,8 @@ class LoadedRun(NamedTuple):
 # ---------------------------------------------------------------- file access
 
 def _load_json(path: Path) -> dict:
+    if path.is_symlink():
+        raise SummaryError(f"拒绝符号链接输入：{path}")
     value = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, dict):
         raise SummaryError(f"不是 JSON 对象：{path}")
@@ -80,11 +88,15 @@ def _load_json(path: Path) -> dict:
 
 
 def _sha256(path: Path) -> str:
+    if path.is_symlink():
+        raise SummaryError(f"拒绝符号链接输入：{path}")
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _ledger_rows(path: Path) -> list[dict]:
-    """Parse a ledger.jsonl; a half-written last line (live run) is ignored."""
+def _ledger_rows(path: Path, *, strict: bool = False) -> list[dict]:
+    """Ignore a half-written last line only while a run is still live."""
+    if path.is_symlink():
+        raise SummaryError(f"拒绝符号链接输入：{path}")
     lines = path.read_text(encoding="utf-8").splitlines()
     last = max((index for index, line in enumerate(lines) if line.strip()), default=-1)
     rows = []
@@ -94,11 +106,12 @@ def _ledger_rows(path: Path) -> list[dict]:
         try:
             row = json.loads(line)
         except json.JSONDecodeError:
-            if index == last:
+            if index == last and not strict:
                 break
             raise SummaryError(f"账本损坏（第 {index + 1} 行不是 JSON）：{path}")
-        if isinstance(row, dict):
-            rows.append(row)
+        if not isinstance(row, dict):
+            raise SummaryError(f"账本损坏（第 {index + 1} 行不是对象）：{path}")
+        rows.append(row)
     return rows
 
 
@@ -126,19 +139,48 @@ def _epoch(stamp: Any) -> float | None:
 
 def _task_evidence(run_dir: Path, task_id: str, *, strict: bool, warnings: list[str]) -> dict:
     """Read one task's ledger and holdout file straight from disk."""
+    tasks_root = (run_dir / "tasks").resolve()
+    if tasks_root != run_dir / "tasks":
+        raise SummaryError(f"任务目录为符号链接：{run_dir.name}")
+    if (run_dir / "tasks" / task_id).is_symlink():
+        raise SummaryError(f"任务路径为符号链接：{run_dir.name}/{task_id}")
     task_dir = (run_dir / "tasks" / task_id).resolve()
-    if task_dir.parent != (run_dir / "tasks").resolve():
+    if task_dir.parent != tasks_root:
         raise SummaryError(f"任务路径越出 run 目录：{run_dir.name}/{task_id}")
     evidence: dict[str, Any] = {"calls": None, "failed_calls": None, "stop_reasons": None,
                                 "raw": None, "raw_saved": False, "saved_score": None}
     ledger_path = task_dir / "ledger.jsonl"
     if ledger_path.is_file():
-        rows = _ledger_rows(ledger_path)
+        rows = _ledger_rows(ledger_path, strict=strict)
         calls = [row for row in rows if row.get("kind") == "llm_call"]
         evidence["calls"] = len(calls)
         evidence["failed_calls"] = sum(1 for row in calls if row.get("ok") is False)
         evidence["stop_reasons"] = [str(row.get("reason") or "未记录")
                                     for row in rows if row.get("kind") == "stop"]
+        if strict:
+            if any(row.get("schema") != "ledger/1" or row.get("seq") != index
+                   or row.get("run_id") != run_dir.name or row.get("task_id") != task_id
+                   for index, row in enumerate(rows, 1)):
+                raise SummaryError(f"账本身份或序号不一致：{ledger_path}")
+            for kind in ("task_start", "stop", "task_end"):
+                if sum(row.get("kind") == kind for row in rows) != 1:
+                    raise SummaryError(f"账本缺少唯一 {kind}：{ledger_path}")
+            buckets = {key: 0 for key in BUCKETS}
+            for call in calls:
+                tokens = call.get("tokens")
+                if (not isinstance(tokens, dict) or set(tokens) != set(BUCKETS)
+                        or any(type(tokens[key]) is not int or tokens[key] < 0 for key in BUCKETS)
+                        or _number(call.get("cost")) is None
+                        or not math.isclose(float(call["cost"]), sum(tokens.values()),
+                                            rel_tol=0, abs_tol=1e-8)):
+                    raise SummaryError(f"账本调用成本或四桶不一致：{ledger_path}")
+                for key in BUCKETS:
+                    buckets[key] += tokens[key]
+            ending = next(row for row in rows if row.get("kind") == "task_end")
+            evidence["ledger_buckets"] = buckets
+            evidence["ledger_cost"] = float(sum(buckets.values()))
+            evidence["end_cost"] = _number(ending.get("total_cost"))
+            evidence["end_score"] = _number(ending.get("holdout_score"))
     elif strict:
         raise SummaryError(f"缺少任务账本：{ledger_path}")
     else:
@@ -146,6 +188,9 @@ def _task_evidence(run_dir: Path, task_id: str, *, strict: bool, warnings: list[
     holdout_path = task_dir / "holdout_score.json"
     if holdout_path.is_file():
         saved = _load_json(holdout_path)
+        if strict and (saved.get("schema") != "score/1" or saved.get("split") != "holdout"
+                       or _number(saved.get("score")) is None):
+            raise SummaryError(f"holdout_score.json 无效：{holdout_path}")
         raw = _number(saved.get("raw"))
         evidence["raw"], evidence["raw_saved"] = raw, raw is not None
         evidence["saved_score"] = _number(saved.get("score"))
@@ -162,20 +207,42 @@ def _summarize_run(loaded: LoadedRun, *, limit: float, strict: bool,
                    warnings: list[str]) -> dict:
     report = loaded.report
     run_id = report["run_id"]
+    if (not isinstance(report.get("tasks"), list) or not report["tasks"]
+            or any(not isinstance(item, dict) or not isinstance(item.get("task_id"), str)
+                   for item in report["tasks"])):
+        raise SummaryError(f"{run_id}：报告缺少有效任务列表")
     tasks = []
     for item in report["tasks"]:
         task_id = item["task_id"]
         evidence = _task_evidence(loaded.run_dir, task_id, strict=strict, warnings=warnings)
-        cost = float(item["total_cost"])
-        buckets = {key: int(item["tokens"][key]) for key in BUCKETS}
-        score = float(item["holdout_score"])
+        cost = _number(item.get("total_cost"))
+        score = _number(item.get("holdout_score"))
+        stated_buckets = item.get("tokens")
+        if (cost is None or score is None or not isinstance(stated_buckets, dict)
+                or set(stated_buckets) != set(BUCKETS)
+                or any(type(stated_buckets[key]) is not int or stated_buckets[key] < 0
+                       for key in BUCKETS)):
+            raise SummaryError(f"任务报告成本、分数或四桶无效：{run_id}/{task_id}")
+        buckets = {key: stated_buckets[key] for key in BUCKETS}
         if not math.isclose(sum(buckets.values()), cost, rel_tol=0, abs_tol=1e-6):
-            warnings.append(f"{run_id}/{task_id}：四桶之和 {sum(buckets.values()):,} 与任务成本 {cost:,.0f} 不一致")
+            _issue(f"{run_id}/{task_id}：四桶之和 {sum(buckets.values()):,} 与任务成本 {cost:,.0f} 不一致",
+                   strict=strict, warnings=warnings)
         if evidence["calls"] is not None and evidence["calls"] != item.get("model_calls"):
-            warnings.append(f"{run_id}/{task_id}：账本 llm_call 行数 {evidence['calls']} 与报告 model_calls {item.get('model_calls')} 不一致")
+            _issue(f"{run_id}/{task_id}：账本 llm_call 行数 {evidence['calls']} 与报告 model_calls {item.get('model_calls')} 不一致",
+                   strict=strict, warnings=warnings)
+        if strict and (evidence["ledger_buckets"] != buckets
+                       or not math.isclose(evidence["ledger_cost"], cost, rel_tol=0, abs_tol=1e-8)
+                       or evidence["end_cost"] is None
+                       or not math.isclose(evidence["end_cost"], cost, rel_tol=0, abs_tol=1e-8)
+                       or evidence["end_score"] is None
+                       or not math.isclose(evidence["end_score"], score, rel_tol=0, abs_tol=1e-12)):
+            raise SummaryError(f"{run_id}/{task_id}：任务报告与账本四桶、成本或分数不一致")
+        if strict and evidence["saved_score"] is None:
+            raise SummaryError(f"{run_id}/{task_id}：holdout_score.json 缺少有效分数")
         if (evidence["saved_score"] is not None
                 and not math.isclose(evidence["saved_score"], score, rel_tol=0, abs_tol=1e-12)):
-            warnings.append(f"{run_id}/{task_id}：holdout_score.json 的分数与报告不一致")
+            _issue(f"{run_id}/{task_id}：holdout_score.json 的分数与报告不一致",
+                   strict=strict, warnings=warnings)
         seconds = item.get("seconds") if isinstance(item.get("seconds"), dict) else {}
         tasks.append({
             "task_id": task_id, "score": score, "tokens": cost, "buckets": buckets,
@@ -187,8 +254,12 @@ def _summarize_run(loaded: LoadedRun, *, limit: float, strict: bool,
             "over_limit": cost > limit,
         })
     total = sum(task["tokens"] for task in tasks)
-    if not math.isclose(total, float(report["total_cost"]), rel_tol=1e-9, abs_tol=1e-6):
-        warnings.append(f"{run_id}：任务成本合计 {total:,.0f} 与报告 total_cost {float(report['total_cost']):,.0f} 不一致")
+    reported_total = _number(report.get("total_cost"))
+    if reported_total is None:
+        raise SummaryError(f"{run_id}：报告 total_cost 无效")
+    if not math.isclose(total, reported_total, rel_tol=1e-9, abs_tol=1e-6):
+        _issue(f"{run_id}：任务成本合计 {total:,.0f} 与报告 total_cost {reported_total:,.0f} 不一致",
+               strict=strict, warnings=warnings)
     stops = Counter(reason for task in tasks for reason in (task["stop_reasons"] or []))
     known_failed = [task["failed_calls"] for task in tasks if task["failed_calls"] is not None]
     peak = max(tasks, key=lambda task: task["tokens"])
@@ -254,20 +325,24 @@ def _per_task(runs: list[dict], gaps: dict[str, float], small_gap: float) -> lis
 
 # --------------------------------------------------------- batch loading
 
-def _read_bank(root: Path, plan: dict, warnings: list[str]) -> tuple[dict, dict]:
+def _read_bank(root: Path, plan: dict, warnings: list[str], *, strict: bool) -> tuple[dict, dict]:
     path = root / "tasks" / "bank.json"
     if not path.is_file():
-        warnings.append("缺少 tasks/bank.json：无法标记小参考差表格题")
+        _issue("缺少 tasks/bank.json：无法标记小参考差表格题", strict=strict, warnings=warnings)
         return {}, {"bank_sha256": None, "bank_sealed_match": None}
     bank = _load_json(path)
+    if strict and (bank.get("schema") != "bank/1" or bank.get("frozen") is not True
+                   or bank.get("version") != plan.get("bank_version")):
+        raise SummaryError("tasks/bank.json 与正式批次计划身份不一致")
     tasks = bank.get("tasks") if isinstance(bank.get("tasks"), list) else []
     digest = _sha256(path)
     sealed = plan.get("sealed_inputs") if isinstance(plan.get("sealed_inputs"), dict) else {}
     sealed_digest = next((value for key, value in sealed.items()
                           if str(key).endswith("/tasks/bank.json")), None)
     match = None if sealed_digest is None else sealed_digest == digest
-    if match is False:
-        warnings.append("tasks/bank.json 的 SHA-256 与 plan.json 封存的不一致")
+    if match is not True:
+        _issue("tasks/bank.json 缺少封存 SHA-256 或与 plan.json 不一致",
+               strict=strict, warnings=warnings)
     return ({item["task_id"]: item for item in tasks if isinstance(item, dict) and "task_id" in item},
             {"bank_sha256": digest, "bank_sealed_match": match})
 
@@ -312,13 +387,19 @@ def _run_dir(root: Path, run_id: Any) -> Path:
 
 def _load_complete(root: Path, batch: dict, warnings: list[str]) -> list[LoadedRun]:
     rows, embedded = batch.get("runs"), batch.get("reports")
-    if not isinstance(rows, list) or not isinstance(embedded, dict):
+    if (not isinstance(rows, list) or not isinstance(embedded, dict)
+            or set(embedded) != set(TIERS)
+            or any(not isinstance(embedded[tier], list) for tier in TIERS)):
         raise SummaryError("batch_report.json 缺少 runs 或 reports")
     row_by_id = {row.get("run_id"): row for row in rows if isinstance(row, dict)}
+    if len(row_by_id) != len(rows):
+        raise SummaryError("batch_report.json 的 runs 含重复或无效条目")
     loaded: list[LoadedRun] = []
     seen: set[str] = set()
     for tier in TIERS:
         for report in embedded.get(tier) or []:
+            if not isinstance(report, dict):
+                raise SummaryError(f"batch_report.json 的 {tier} 报告不是对象")
             run_id = report.get("run_id")
             row = row_by_id.get(run_id)
             if (report.get("schema") != "run_report/1" or run_id in seen or row is None
@@ -329,11 +410,17 @@ def _load_complete(root: Path, batch: dict, warnings: list[str]) -> list[LoadedR
             seen.add(run_id)
             run_dir = _run_dir(root, run_id)
             saved = run_dir / "report.json"
-            if saved.is_file() and _load_json(saved) != report:
-                warnings.append(f"{run_id}：已保存的 report.json 与 batch_report.json 内嵌报告不一致")
-            loaded.append(LoadedRun(tier, report, _manifest_for(run_dir, strict=True, warnings=warnings), run_dir))
+            if not saved.is_file() or _load_json(saved) != report:
+                raise SummaryError(f"{run_id}：已保存的 report.json 缺失或与 batch_report.json 内嵌报告不一致")
+            manifest = _manifest_for(run_dir, strict=True, warnings=warnings)
+            if (manifest.get("schema") != "run/1" or manifest.get("run_id") != run_id
+                    or manifest.get("phase") != tier or manifest.get("config") != report.get("config")
+                    or manifest.get("rep") != report.get("rep")
+                    or manifest.get("tasks") != [task["task_id"] for task in report["tasks"]]):
+                raise SummaryError(f"{run_id}：manifest.json 与报告身份或任务顺序不一致")
+            loaded.append(LoadedRun(tier, report, manifest, run_dir))
     if set(row_by_id) != seen:
-        warnings.append("batch_report.json 的 runs 里有未附报告的 run")
+        raise SummaryError("batch_report.json 的 runs 里有未附报告的 run")
     return loaded
 
 
@@ -506,7 +593,7 @@ def _filtered(report: dict, excluded: set[str]) -> dict:
 
 
 def _diagnostic(loaded: list[LoadedRun], gaps: dict[str, float], small_gap: float,
-                *, tuned_exam_ran: bool) -> dict:
+                *, tuned_exam_ran: bool, allow_admission: bool) -> dict:
     excluded = {task_id for task_id, gap in gaps.items() if gap < small_gap}
     result: dict[str, Any] = {"note": DIAGNOSTIC_NOTE, "threshold": small_gap,
                               "excluded_tasks": [{"task_id": task_id, "gap": gaps[task_id]}
@@ -532,7 +619,7 @@ def _diagnostic(loaded: list[LoadedRun], gaps: dict[str, float], small_gap: floa
             runs.sort(key=lambda run: (CONFIGS.index(run["config"]), run["rep"]))
             entry["runs"] = runs
             entry["config_summary"] = _config_summary(runs)
-            if phase == "validation":
+            if phase == "validation" and allow_admission:
                 pair = _pair_reports(reports_by, "validation", "default_lib", "tuned_lib")
                 entry["admission_replay"] = admit_configuration(
                     pair, baseline="default_lib", candidate="tuned_lib") if pair else None
@@ -556,8 +643,8 @@ def summarize(batch_dir: Path, *, partial: bool = False, research_cost: float | 
     if not plan_path.is_file():
         raise SummaryError(f"缺少 plan.json：{plan_path}")
     plan = _load_json(plan_path)
-    if plan.get("schema") != "batch_plan/1":
-        raise SummaryError("plan.json 不是 batch_plan/1")
+    if plan.get("schema") != "batch_plan/1" or plan.get("label") != "FORMAL":
+        raise SummaryError("plan.json 不是 FORMAL batch_plan/1")
     report_path = batch_dir / "batch_report.json"
     complete = report_path.is_file()
     if not complete and not partial:
@@ -570,14 +657,14 @@ def summarize(batch_dir: Path, *, partial: bool = False, research_cost: float | 
     reserved: list[str] = []
     if complete:
         batch = _load_json(report_path)
-        if batch.get("schema") != "batch_report/1":
-            raise SummaryError("batch_report.json 不是 batch_report/1")
+        if batch.get("schema") != "batch_report/1" or batch.get("label") != "FORMAL":
+            raise SummaryError("batch_report.json 不是 FORMAL batch_report/1")
         if partial:
             notes.append("批次已写出 batch_report.json，--partial 不起作用，按完整批次汇总。")
         loaded = _load_complete(root, batch, warnings)
     else:
         loaded, running, reserved = _load_partial(root, plan, plan_path.stat().st_mtime, warnings)
-    bank_by_id, bank_sources = _read_bank(root, plan, warnings)
+    bank_by_id, bank_sources = _read_bank(root, plan, warnings, strict=complete)
 
     runs = []
     for item in loaded:
@@ -594,14 +681,18 @@ def summarize(batch_dir: Path, *, partial: bool = False, research_cost: float | 
     for item, run in zip(loaded, runs):
         slot = reports_by.setdefault((item.phase, run["config"]), {})
         if run["rep"] in slot:
-            warnings.append(f"{item.phase}/{run['config']} 第 {run['rep']} 遍有重复 run（{run['run_id']}），"
-                            "对比与聚合只用最早的一个")
+            _issue(f"{item.phase}/{run['config']} 第 {run['rep']} 遍有重复 run（{run['run_id']}）",
+                   strict=complete, warnings=warnings)
             continue
         slot[run["rep"]] = item.report
         kept_loaded.append(item)
         kept_runs.append(run)
 
     plan_tasks = plan.get("tasks") if isinstance(plan.get("tasks"), dict) else {}
+    if complete:
+        for item in kept_loaded:
+            if [task["task_id"] for task in item.report["tasks"]] != plan_tasks.get(item.phase):
+                raise SummaryError(f"{item.report['run_id']}：报告任务顺序与 plan.json 不一致")
     task_ids = [task_id for tier in TIERS for task_id in plan_tasks.get(tier, [])]
     gaps, gap_table = _reference_gaps(bank_by_id, task_ids, small_gap, warnings)
 
@@ -614,14 +705,28 @@ def summarize(batch_dir: Path, *, partial: bool = False, research_cost: float | 
     recomputed_matches = None
     admission_source = "batch_report.json" if admission is not None else None
     validation_pair = _pair_reports(reports_by, "validation", "default_lib", "tuned_lib")
-    if validation_pair is not None:
+    if complete:
+        if validation_pair is None or not isinstance(admission, dict):
+            raise SummaryError("完整批次缺少三遍 validation 配对或准入记录")
         recomputed = admit_configuration(validation_pair, baseline="default_lib", candidate="tuned_lib")
-        if admission is None:
-            admission, admission_source = recomputed, "预览（按已写出的 validation 报告现算，非正式记录）"
-        else:
-            recomputed_matches = recomputed == admission
-            if not recomputed_matches:
-                warnings.append("batch_report.json 的 admission 与按已保存 validation 报告重算的结果不一致")
+        material_fields = ("schema", "claim", "baseline", "candidate",
+                           "score_not_lower_each_rep", "cost_reduced_on_average",
+                           "comparison")
+        recomputed_matches = (all(admission.get(key) == recomputed[key] for key in material_fields)
+                              and ("rule" not in admission or admission["rule"] == recomputed["rule"]))
+        if not recomputed_matches:
+            raise SummaryError("batch_report.json 的 admission 与按已保存 validation 报告重算的结果不一致")
+        admitted = admission["claim"] == "admitted"
+        expected = {("practice", config, rep) for config in CONFIGS for rep in (1, 2, 3)}
+        expected |= {("validation", config, rep) for config in ("default_lib", "tuned_lib")
+                     for rep in (1, 2, 3)}
+        expected |= {("exam", config, rep)
+                     for config in (CONFIGS if admitted else CONFIGS[:3]) for rep in (1, 2, 3)}
+        actual = {(item.phase, item.report["config"], item.report["rep"]) for item in kept_loaded}
+        if (len(kept_loaded) != len(expected) or actual != expected
+                or batch.get("tuned_exam_skipped") is not (not admitted)
+                or tuned_exam_ran is not admitted):
+            raise SummaryError("完整批次运行数量或研究版考试准入状态不一致")
     exam_comparisons = _exam_comparisons(reports_by, tuned_exam_ran=tuned_exam_ran)
     exam_ids = [task["task_id"] for task in next(
         (item.report["tasks"] for item in kept_loaded if item.phase == "exam"), [])]
@@ -629,8 +734,8 @@ def summarize(batch_dir: Path, *, partial: bool = False, research_cost: float | 
     currencies = sorted({str(item.report.get("currency")) for item in kept_loaded})
     exact = bool(kept_loaded) and all(item.report.get("exact_token_accounting") is True for item in kept_loaded)
     if kept_loaded and not (currencies == ["TOKENS"] and exact):
-        warnings.append(f"存在非 TOKENS 币种或未核验精确计量的报告（币种：{'、'.join(currencies)}），"
-                        "成本数字不能按内部 token 解读")
+        _issue(f"存在非 TOKENS 币种或未核验精确计量的报告（币种：{'、'.join(currencies)}），"
+               "成本数字不能按内部 token 解读", strict=complete, warnings=warnings)
     expected_runs = {"practice": len(plan.get("configs", [])) * len(plan.get("reps", []))}
     trained = [config for config in plan.get("configs", []) if config in ("default_lib", "tuned_lib")]
     if plan.get("run_validation"):
@@ -660,7 +765,8 @@ def summarize(batch_dir: Path, *, partial: bool = False, research_cost: float | 
         "exam": {"tuned_exam_skipped": batch.get("tuned_exam_skipped") if complete else None,
                  "comparisons": exam_comparisons},
         "reference_gaps": gap_table,
-        "diagnostic_excluding_small_gap": _diagnostic(kept_loaded, gaps, small_gap, tuned_exam_ran=tuned_exam_ran),
+        "diagnostic_excluding_small_gap": _diagnostic(
+            kept_loaded, gaps, small_gap, tuned_exam_ran=tuned_exam_ran, allow_admission=complete),
         "breakeven": _breakeven(complete=complete, admission=admission if complete else None,
                                 comparison=comparison, exam_tasks=len(exam_ids) or 1,
                                 research_cost=research_cost),
@@ -794,7 +900,7 @@ def render_markdown(summary: dict) -> str:
     out += ["## 2. validation 准入", ""]
     if validation["admission"] is None:
         out += ["尚无准入记录：" + ("批次没有 validation 准入记录。" if not partial else
-                "validation 里 default_lib 与 tuned_lib 还没有各自完整的三遍 run。"), ""]
+                "批次尚未生成 batch_report.json；不做正式准入判定。"), ""]
     else:
         admission = validation["admission"]
         out += [f"来源：{validation['admission_source']}。" + ("" if validation["admission_recomputed_matches"] is None else
