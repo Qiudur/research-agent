@@ -44,7 +44,7 @@ CONFIG_LABELS = {"naive": "朴素版", "default": "默认设置／空库",
 BUCKETS = ("input", "cached_input", "output", "reasoning")
 SECONDS = ("llm", "run", "queue", "wall")
 STOP_LABELS = {"ceiling": "达到评分上限", "budget_cap": "预算闸门", "time": "时间上限",
-               "planner": "规划者主动停止", "error": "错误"}
+               "planner": "规划者主动停止", "stop_loss": "止损停止", "error": "错误"}
 TASK_TOKEN_LIMIT = 40_000
 SMALL_REFERENCE_GAP = 0.002
 EXAM_PAIRS = (("naive", "default", "default_vs_naive"),
