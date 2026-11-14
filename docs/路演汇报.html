@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- source-head: 5fbc131e32fa955a545ba6bdeee7810aa1011f10 -->
+<!-- source-head: 6dd0b9adfb0e0c967813567193839fe35ddf2051 -->
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
@@ -60,9 +60,9 @@
     <div class="eyebrow">Research Agent / Repository Briefing</div>
     <h1>自进化<br>Research Agent</h1>
     <p class="lead">让 Research Agent 研究自己。</p>
-    <p class="small" style="max-width:1050px;font-size:18px">这是按《分工文档》实现的可审计研究系统：A 的规划、写解、实验树、预算和能力库，B 的两类任务与隔离评分，以及 C 的账本、阶段编排、自研究和报告，均已通过工程回归与真实沙箱联调。bank-v1 已根据真实 dev 成本校准冻结。首次正式内部 token 练习批次未产生有效候选；修复后的 v2 正在独立工作区运行，验证与考试尚未启动。正式账本的 TOKENS 是资源计量，不能视作现金价格或官方比赛成绩；已核验结果和待办见 内部 token 正式研究报告。</p>
+    <p class="small" style="max-width:1050px;font-size:18px">这是按《分工文档》实现的可审计研究系统：A 的规划、写解、实验树、预算和能力库，B 的两类任务与隔离评分，以及 C 的账本、阶段编排、自研究和报告，均已通过工程回归与真实沙箱联调。bank-v1 已根据真实 dev 成本校准冻结。首次正式内部 token 练习批次未产生有效候选；修复后的 v2 自研究完成并选中 auto-02。正式批次已在独立工作区执行：四线练习完成；唯一一次验证按六份原始报告重算，拒绝研究版；一次性考试只运行朴素版、默认空库、默认练过库三线，并因 default 第 3 遍在 Heart Disease 题的 holdout 评分失败而中止，未生成 batch_report.json，完整考试成绩、成本比较和回本点不可报告。正式账本的 TOKENS 是资源计量，不能视作现金价格或官方比赛成绩；已核验结果和待办见 内部 token 正式研究报告。</p>
     <p><span class="tag">一次性正式考试中止 · 无完整三线成绩</span></p>
-    <p class="small">截至 2026-11-14 23:50 UTC+08:00 · 代码 5fbc131 · 按仓库已提交内容生成</p>
+    <p class="small">截至 2026-11-15 00:14 UTC+08:00 · 代码 6dd0b9a · 按仓库已提交内容生成</p>
   </div><div class="footer"><span>自进化 Research Agent · A / B / C</span><span>01 / 05</span></div></section>
   <section class="slide" id="system"><div class="inner">
     <div class="eyebrow">01 / System</div><h2>从研究到审计，三层闭环</h2>
@@ -71,7 +71,7 @@
       <article class="card"><div class="eyebrow">B / Bench</div><h3>任务与隔离评分</h3><p>提速与表格二分类两类任务，沙箱隔离，并保留 dev 测量。</p></article>
       <article class="card"><div class="eyebrow">C / Control</div><h3>编排与报告</h3><p>价格账本、练习／验证／考试、自研究、报告和只读看板。</p></article>
     </div>
-    <div class="grid" style="margin-top:22px"><div class="card"><span class="metric">24</span><span class="label">入库题 · README</span></div><div class="card"><span class="metric">216</span><span class="label">已通过测试 · README</span></div><div class="card"><span class="metric">89</span><span class="label">累计源码相关提交</span></div></div>
+    <div class="grid" style="margin-top:22px"><div class="card"><span class="metric">24</span><span class="label">入库题 · README</span></div><div class="card"><span class="metric">252</span><span class="label">已通过测试 · README</span></div><div class="card"><span class="metric">96</span><span class="label">累计源码相关提交</span></div></div>
   </div><div class="footer"><span>来源：<a href="../README.md">README</a> · <a href="项目交付与决策.md">决策记录</a></span><span>02 / 05</span></div></section>
   <section class="slide" id="evidence"><div class="inner">
     <div class="eyebrow">02 / Evidence</div><h2>真实模型 dev 证据</h2>
@@ -87,14 +87,14 @@
   <section class="slide" id="changes"><div class="inner">
     <div class="eyebrow">03 / Repository Delta</div><h2>本轮仓库更新</h2>
     <div class="split"><div>
-      <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:24px"><div class="card"><span class="metric">1</span><span class="label">新增相关提交</span></div><div class="card"><span class="metric">2</span><span class="label">涉及文件</span></div></div>
-      <p class="small">对比上次生成时的源码提交 7ef4df6 → 5fbc131</p><div class="chips"><span>运行与配置 · 1</span><span>验证与测试 · 1</span></div>
-      <details style="margin-top:24px"><summary>展开变更文件</summary><ul class="files"><li>scripts/generate_roadshow_report.py</li><li>tests/test_roadshow_report.py</li></ul></details>
-    </div><ol class="timeline"><li><strong>Show interrupted formal exam status in roadshow</strong><span>2026-11-14 · 5fbc131</span></li></ol></div>
+      <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:24px"><div class="card"><span class="metric">1</span><span class="label">新增相关提交</span></div><div class="card"><span class="metric">6</span><span class="label">涉及文件</span></div></div>
+      <p class="small">对比上次生成时的源码提交 5456601 → 6dd0b9a</p><div class="chips"><span>验证与测试 · 3</span><span>题库与评分 · 2</span><span>研究代理与经验库 · 1</span></div>
+      <details style="margin-top:24px"><summary>展开变更文件</summary><ul class="files"><li>harness.py</li><li>research_agent/runner.py</li><li>tabular_harness.py</li><li>tests/test_bank_v2_failure_scoring.py</li><li>tests/test_evaluation_finalize.py</li><li>tests/test_runner.py</li></ul></details>
+    </div><ol class="timeline"><li><strong>Score bank-v2 candidate sandbox failures as zero once</strong><span>2026-11-15 · 6dd0b9a</span></li></ol></div>
   </div><div class="footer"><span>提交记录：<a href="https://github.com/QZTnb/research-agent/commits/main/">Git 历史 ↗</a></span><span>04 / 05</span></div></section>
   <section class="slide" id="next"><div class="inner">
     <div class="eyebrow">04 / Decision</div><h2>下一步与边界</h2>
-    <div class="split"><div><div class="notice">bank-v1 已根据两组真实 dev 证据冻结：24 题、72 次尝试中 69 次正常完成、3 次提前停止，合计消耗 1,573,026 token，未打开校准 holdout；失败消耗已计入朴素成本。首次正式内部 token 练习批次未产生有效候选；修复后的 v2 正在独立工作区运行，验证与考试尚未启动。</div><p class="small">上方状态摘自 <a href="../README.md">README</a>；请以原始证据和正式预检为准。</p></div><div class="card"><h3>内部研究后续路径</h3><ol><li>等待独立工作区正在进行的 v2 十题 practice 自研究，并审计三遍分数、token、候选配置与提示词哈希；操作顺序见内部 token 正式运行手册。</li><li>仅在练习阶段选定候选后做只读预检，启动同一 bank-v1 的唯一一次三遍验证准入。</li><li>按准入结果执行三线或四线考试，核对每题预算、回放和一次性标记，再生成图表与报告。</li></ol><p class="small"><a href="项目交付与决策.md">查看完整决策记录 ↗</a></p></div></div>
+    <div class="split"><div><div class="notice">bank-v1 已根据两组真实 dev 证据冻结：24 题、72 次尝试中 69 次正常完成、3 次提前停止，合计消耗 1,573,026 token，未打开校准 holdout；失败消耗已计入朴素成本。</div><p class="small">上方状态摘自 <a href="../README.md">README</a>；请以原始证据和正式预检为准。</p></div><div class="card"><h3>内部研究后续路径</h3><ol><li>v2 自研究、唯一一次验证和中止的考试均已结束并审计；结果与边界见内部 token 正式研究报告。</li><li>bank-v1 的验证与考试一次性标记已经用掉，不得重跑同一次验证或考试，也不得补跑中止 run 的剩余题目。</li><li>如需完整考试结论，先修复“单题 holdout 评分失败会中止整个 run、批次不写 batch_report.json”的问题并通过回归测试，再用新的题库版本重新冻结、校准，执行全新的一次性流程。</li></ol><p class="small"><a href="项目交付与决策.md">查看完整决策记录 ↗</a></p></div></div>
     <p class="small">每小时检查仓库；仅当新的源码或文档提交出现时重生成。路演时可用方向键翻页，也可打印为 PDF。</p>
   </div><div class="footer"><span>生成器：scripts/generate_roadshow_report.py</span><span>05 / 05</span></div></section>
   <script>
