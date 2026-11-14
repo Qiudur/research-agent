@@ -269,6 +269,51 @@ class AggregateNaiveCostsTests(unittest.TestCase):
                     protocol["copied_sha256"][relative] = previous_hash
                 put(protocol_path, protocol)
 
+    def test_python_reference_cache_only_is_ignored(self):
+        campaign = self.campaigns["speedup"]
+        hidden = campaign / "project/tasks/spd-00/hidden"
+        cache = hidden / "__pycache__/reference.cpython-311.pyc"
+        put(cache, "compiled reference cache")
+        workspace_key = "tasks/spd-00/workspace/__pycache__/original.cpython-311.pyc"
+        source_cache = self.root / workspace_key
+        copied_cache = campaign / "project" / workspace_key
+        put(source_cache, "source bytecode")
+        put(copied_cache, "copied bytecode")
+        protocol_path = campaign / "protocol.json"
+        protocol = json.loads(protocol_path.read_text())
+        protocol["source_sha256"][workspace_key] = sha(source_cache)
+        protocol["copied_sha256"][workspace_key] = sha(copied_cache)
+        put(protocol_path, protocol)
+        put(copied_cache, "recompiled bytecode")
+        self.assertTrue(aggregate(self.root, campaign,
+                                  self.campaigns["tabular"])["ready"])
+        extra = copied_cache.parent / "unrelated.txt"
+        put(extra, "unexpected")
+        with self.assertRaisesRegex(ValueError, "Unexpected workspace cache data"):
+            aggregate(self.root, campaign, self.campaigns["tabular"])
+        extra.unlink()
+        extra = hidden / "__pycache__/unrelated.txt"
+        put(extra, "unexpected")
+        with self.assertRaisesRegex(ValueError, "unexpected hidden data"):
+            aggregate(self.root, campaign, self.campaigns["tabular"])
+        extra.unlink()
+        extra = hidden / "__pycache__/other.cpython-311.pyc"
+        put(extra, "unrelated bytecode")
+        with self.assertRaisesRegex(ValueError, "unexpected hidden data"):
+            aggregate(self.root, campaign, self.campaigns["tabular"])
+        extra.unlink()
+        extra = hidden / "unrelated.csv"
+        put(extra, "unexpected")
+        with self.assertRaisesRegex(ValueError, "unexpected hidden data"):
+            aggregate(self.root, campaign, self.campaigns["tabular"])
+        extra.unlink()
+        reference = hidden / "reference.py"
+        put(reference, "changed reference")
+        protocol["copied_sha256"]["tasks/spd-00/hidden/reference.py"] = sha(reference)
+        put(protocol_path, protocol)
+        with self.assertRaisesRegex(ValueError, "source/copy content differs"):
+            aggregate(self.root, campaign, self.campaigns["tabular"])
+
     def test_dev_result_and_replay_seal_tampering_are_rejected(self):
         campaign = self.campaigns["speedup"]
         summary_path = campaign / "summary.json"
