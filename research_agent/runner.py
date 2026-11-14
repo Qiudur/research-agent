@@ -12,6 +12,8 @@ from pathlib import Path
 from time import monotonic
 from typing import Any, Mapping
 
+from library import LibraryConflict, LibraryError, LibraryFrozen
+
 from .artifacts import append_run_log, node_directory, save_score, save_solution
 from .io import append_jsonl, atomic_json, field, fields, read_json
 from .model import BudgetReserveError, ModelCallError
@@ -504,15 +506,39 @@ class TaskRunner:
             return
         seen_nodes = {node["id"] for node in compact}
         written_ids = []
-        for draft in drafts:
+        rejection_path = self.run_dir / "tasks" / self.task_id / "experience_rejections.jsonl"
+
+        def reject_draft(index: int, draft: Any, reason: str) -> None:
+            append_jsonl(rejection_path, {
+                "schema": "experience_rejection/1", "run_id": self.run_id,
+                "task_id": self.task_id, "draft_index": index,
+                "reason": reason, "draft": draft,
+            })
+
+        for index, draft in enumerate(drafts):
             if not isinstance(draft, dict):
+                reject_draft(index, draft, "draft_not_object")
                 continue
             evidence_nodes = draft.get("node_ids", [])
-            if not isinstance(evidence_nodes, list) or not evidence_nodes or any(node_id not in seen_nodes for node_id in evidence_nodes):
+            if (not isinstance(evidence_nodes, list) or not evidence_nodes
+                    or any(not isinstance(node_id, str) or node_id not in seen_nodes
+                           for node_id in evidence_nodes)):
+                reject_draft(index, draft, "invalid_evidence_nodes")
+                continue
+            triggers = draft.get("triggers", [])
+            if (not isinstance(triggers, list) or any(
+                    not isinstance(trigger, str) or trigger not in self.context["features"]
+                    for trigger in triggers)):
+                reject_draft(index, draft, "invalid_triggers")
                 continue
             source = {"run_id": self.run_id, "task_id": self.task_id, "node_ids": sorted(set(evidence_nodes))}
             entry_draft = {key: value for key, value in draft.items() if key != "node_ids"}
-            written_ids.extend(self.library.write_experiences([entry_draft], source=source))
+            try:
+                written_ids.extend(self.library.write_experiences([entry_draft], source=source))
+            except (LibraryConflict, LibraryFrozen):
+                raise
+            except LibraryError as exc:
+                reject_draft(index, draft, f"invalid_library_draft: {exc}")
         if written_ids:
             self._emit("library", op="write", entry_ids=written_ids, version_after=self.library.version)
         failed_citations: dict[str, list[str]] = {}

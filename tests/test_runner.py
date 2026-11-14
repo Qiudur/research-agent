@@ -4,8 +4,9 @@ import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import patch
 
-from library import Library
+from library import Library, LibraryConflict
 from research_agent.io import read_jsonl
 from research_agent.model import BudgetReserveError, ModelCallError
 from research_agent.replay import replay_node
@@ -159,6 +160,48 @@ class RunnerTests(unittest.TestCase):
             self.assertEqual(last["n0001"]["calls"], [{"role": "executor", "effort": "low", "n": 1}])
             self.assertTrue((root / "runs/run-test/tasks/tab-sample/nodes/n0001/parent.diff").exists())
             self.assertEqual([event["kind"] for event in ledger.events if event["kind"] in {"task_start", "stop", "experiment", "score"}].count("experiment"), 2)
+
+    def test_invalid_summary_drafts_are_audited_without_losing_best_node(self):
+        class MixedDraftRoles(FakeRoles):
+            def summarize(self, payload, *, node_id=None):
+                self.ledger.charge()
+                base = {"scope": "domain", "scenario": "tabular",
+                        "conditions": "sample task", "action": "Check missing values",
+                        "negative": False, "node_ids": ["n0001"]}
+                return {"drafts": [
+                    {**base, "triggers": ["n0001"]},
+                    {**base, "triggers": ["missing_heavy"], "scope": "unknown"},
+                    {**base, "triggers": ["missing_heavy"]},
+                ], "narrowings": []}
+
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            ledger = FakeLedger()
+            library = Library.open(root / "runs/run-test/library")
+            result = self.make_runner(root, FakeHarness(root), MixedDraftRoles(ledger, [idea("good")]), ledger, library).run()
+            self.assertEqual((result.reason, result.best_node, result.library_version),
+                             ("planner", "n0001", "lib-1"))
+            rejections = read_jsonl(
+                root / "runs/run-test/tasks/tab-sample/experience_rejections.jsonl",
+                "experience_rejection/1",
+            )
+            self.assertEqual([entry["draft_index"] for entry in rejections], [0, 1])
+            self.assertEqual(rejections[0]["reason"], "invalid_triggers")
+            self.assertIn("invalid_library_draft", rejections[1]["reason"])
+            self.assertEqual(len(library.entries), 1)
+            self.assertEqual(library.entries[0]["triggers"], ["missing_heavy"])
+
+    def test_library_conflict_during_summary_still_fails_closed(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            ledger = FakeLedger()
+            library = Library.open(root / "runs/run-test/library")
+            roles = FakeRoles(ledger, [idea("good")])
+            with patch.object(library, "write_experiences", side_effect=LibraryConflict("advanced")):
+                with self.assertRaises(RuntimeError) as caught:
+                    self.make_runner(root, FakeHarness(root), roles, ledger, library).run()
+            self.assertIsInstance(caught.exception.__cause__, LibraryConflict)
+            self.assertEqual(ledger.events[-1]["reason"], "error")
 
     def test_opening_plan_is_available_before_first_experiment(self):
         with TemporaryDirectory() as temp:

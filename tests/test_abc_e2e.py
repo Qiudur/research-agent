@@ -56,7 +56,13 @@ class FakeResponses:
         elif purpose == "planner_review":
             data = {"decision": "continue", "budget_moves": [], "note": "Fixture review"}
         elif purpose == "summarizer_summarize":
-            data = {"drafts": [], "narrowings": []}
+            draft = {"scope": "domain", "scenario": "speedup",
+                     "conditions": "pairwise distance task",
+                     "action": "Vectorize distance calculation",
+                     "negative": False, "node_ids": ["n0001"]}
+            data = {"drafts": [{**draft, "triggers": ["n0001"]},
+                               {**draft, "triggers": ["nested_python_loop"]}],
+                    "narrowings": []}
         else:
             raise AssertionError(f"Unexpected model purpose: {purpose}")
         return SimpleNamespace(
@@ -120,6 +126,11 @@ class FullStackTests(unittest.TestCase):
             self.assertEqual(report["tasks"][0]["task_id"], TASK)
             self.assertEqual(report["currency"], "TEST")
             self.assertTrue(replay["integrity_verified"])
+            self.assertEqual(report["tasks"][0]["best_node"], "n0001")
+            rejections = (run / "tasks" / TASK / "experience_rejections.jsonl").read_text().splitlines()
+            self.assertEqual(len(rejections), 1)
+            self.assertEqual(json.loads(rejections[0])["reason"], "invalid_triggers")
+            self.assertEqual(len(json.loads((run / "library/state.json").read_text())["entries"]), 1)
             events = Ledger.open(run, TASK)._events()
             kinds = [item["kind"] for item in events]
             self.assertLess(kinds.index("quote"), kinds.index("experiment"))
