@@ -7,6 +7,7 @@ used only for their run IDs and resolved within the supplied campaign.
 from __future__ import annotations
 
 import argparse
+from copy import deepcopy
 import hashlib
 import json
 import math
@@ -23,6 +24,9 @@ COMMON = ("tasks/bank.json", "config/naive_token_pilot.json",
 RUN_ID = re.compile(r"run-\d{8}-\d{6}-[0-9a-f]{4}")
 SHA = re.compile(r"[0-9a-f]{64}")
 COMMIT = re.compile(r"[0-9a-f]{40}")
+MANIFEST_KEYS = ("run_id", "phase", "config", "rep", "bank_version",
+                 "tasks", "library", "agent_config", "prices", "hard_caps",
+                 "code_commit", "model")
 
 
 def require(ok: bool, message: str) -> None:
@@ -53,6 +57,13 @@ def verify_hashes(root: Path, hashes: Any, label: str) -> None:
         path = (root / relative).resolve()
         require(path.is_relative_to(root) and path.is_file() and sha(path) == digest,
                 f"{label}: changed or missing {relative}")
+
+
+def workspace_files(root: Path, task_id: str) -> set[str]:
+    workspace = root / "tasks" / task_id / "workspace"
+    require(workspace.is_dir(), f"Missing workspace: {task_id}")
+    return {str(path.relative_to(root)) for path in workspace.rglob("*")
+            if path.is_file()}
 
 
 def bank_tasks(root: Path) -> tuple[dict[str, list[str]], str]:
@@ -102,33 +113,51 @@ def load_campaign(root: Path, campaign: Path, scenario: str,
     verify_hashes(campaign / "project", copied, f"{scenario} copy")
     require(all(key in source and key in copied for key in COMMON),
             f"{scenario}: common hashes incomplete")
+    for key in COMMON[1:]:
+        require(source[key] == copied[key],
+                f"{scenario}: source/copy config differs: {key}")
+    source_bank = read(root / "tasks/bank.json")
     copied_bank = read(campaign / "project/tasks/bank.json")
-    require(copied_bank.get("schema") == "bank/1"
-            and copied_bank.get("frozen") is False
-            and isinstance(copied_bank.get("tasks"), list)
-            and all(isinstance(entry, dict) for entry in copied_bank["tasks"])
-            and [entry.get("task_id") for entry in copied_bank.get("tasks", [])] == ids,
-            f"{scenario}: copied bank differs")
+    expected_bank = deepcopy(source_bank)
+    expected_bank["tasks"] = [entry for entry in source_bank["tasks"]
+                              if entry["task_id"] in ids]
+    expected_bank["frozen"] = False
+    require(copied_bank == expected_bank,
+            f"{scenario}: copied bank differs from task-filtered source")
+    copied_tasks = campaign / "project/tasks"
+    require({path.name for path in copied_tasks.iterdir()} == set(ids) | {"bank.json"},
+            f"{scenario}: copied task directory differs from selection")
     require(not any(path.name.startswith("holdout")
                     for path in (campaign / "project/tasks").rglob("*")),
             f"{scenario}: copied project contains holdout data")
     for task_id in ids:
         hidden = "reference.py" if scenario == "speedup" else "dev.csv"
         require(all(f"tasks/{task_id}/{suffix}" in source
+                    and f"tasks/{task_id}/{suffix}" in copied
                     for suffix in ("task.json", f"hidden/{hidden}")),
-                f"{scenario}: source hashes incomplete for {task_id}")
+                f"{scenario}: task hashes incomplete for {task_id}")
         hidden_dir = campaign / "project/tasks" / task_id / "hidden"
         require(hidden_dir.is_dir() and
                 {path.name for path in hidden_dir.iterdir()} == {hidden},
                 f"{scenario}: unexpected hidden data for {task_id}")
-        for path in (root / "tasks" / task_id / "workspace").rglob("*"):
-            if path.is_file():
-                key = str(path.relative_to(root))
-                require(key in source and key in copied,
-                        f"{scenario}: workspace SHA omitted for {key}")
+        source_files = workspace_files(root, task_id)
+        copied_files = workspace_files(campaign / "project", task_id)
+        prefix = f"tasks/{task_id}/workspace/"
+        require(source_files == copied_files
+                and {key for key in source if key.startswith(prefix)} == source_files
+                and {key for key in copied if key.startswith(prefix)} == copied_files,
+                f"{scenario}: workspace file set or SHA map differs for {task_id}")
+        for key in source_files | {f"tasks/{task_id}/hidden/{hidden}"}:
+            require(source[key] == copied[key],
+                    f"{scenario}: source/copy content differs: {key}")
+        source_task = read(root / "tasks" / task_id / "task.json")
+        expected_task = deepcopy(source_task)
+        require(isinstance(expected_task.get("budget"), dict),
+                f"{scenario}: source budget missing for {task_id}")
+        expected_task["budget"]["money"] = protocol["budget_tokens_per_task"]
         require(read(campaign / "project/tasks" / task_id / "task.json")
-                .get("budget", {}).get("money") == 40000,
-                f"{scenario}: copied budget differs for {task_id}")
+                == expected_task,
+                f"{scenario}: copied task differs from budget-overridden source: {task_id}")
     prices = read(campaign / "project/config/prices_token_pilot.json")
     rates = prices.get("models", {}).get(protocol["model"], {})
     require(prices.get("currency") == "TOKENS" and prices.get("test_only") is True
@@ -143,13 +172,13 @@ def load_campaign(root: Path, campaign: Path, scenario: str,
 
 
 def compare_commits(root: Path, first: str, second: str) -> dict[str, Any]:
-    if first == second:
-        return {"code_commits": [first, second], "docs_only_exception": False,
-                "changed_docs": []}
-    for commit in (first, second):
+    for commit in set((first, second)):
         result = subprocess.run(["git", "-C", str(root), "cat-file", "-e",
                                  f"{commit}^{{commit}}"], capture_output=True)
         require(result.returncode == 0, f"Missing local Git commit: {commit}")
+    if first == second:
+        return {"code_commits": [first, second], "docs_only_exception": False,
+                "changed_docs": []}
     result = subprocess.run(["git", "-C", str(root), "diff", "--name-only",
                              "--no-renames", first, second], text=True,
                             capture_output=True)
@@ -159,6 +188,76 @@ def compare_commits(root: Path, first: str, second: str) -> dict[str, Any]:
             "Calibration commits differ outside docs/")
     return {"code_commits": [first, second], "docs_only_exception": True,
             "changed_docs": changed}
+
+
+def audit_sealed_dev_result(run: Path, task_id: str, protocol: dict,
+                            manifest: dict, record: dict, stop: dict) -> None:
+    """Cross-check the dev result against its ledger, tree, and portable seal."""
+    label = f"{task_id}/{record['rep']}"
+    best_node = record.get("best_node")
+    dev_score = record.get("dev_score")
+    require(isinstance(best_node, str) and re.fullmatch(r"n[0-9]{4,}", best_node)
+            and isinstance(dev_score, (int, float)) and not isinstance(dev_score, bool)
+            and math.isfinite(dev_score), f"Invalid dev result: {label}")
+    require(stop.get("best_node") == best_node and stop.get("dev_score") == dev_score,
+            f"Summary/ledger dev result mismatch: {label}")
+    task_dir = run / "tasks" / task_id
+    tree_path = task_dir / "tree.jsonl"
+    require(tree_path.is_file(), f"Missing experiment tree: {label}")
+    nodes: dict[str, dict] = {}
+    for line in tree_path.read_text(encoding="utf-8").splitlines():
+        node = json.loads(line)
+        require(isinstance(node, dict) and node.get("schema") == "node/1"
+                and node.get("run_id") == run.name and node.get("task_id") == task_id
+                and isinstance(node.get("node_id"), str)
+                and re.fullmatch(r"n[0-9]{4,}", node["node_id"]) is not None,
+                f"Invalid experiment tree identity: {label}")
+        nodes[node["node_id"]] = node
+    accepted = [node for node in nodes.values() if node.get("status") == "accepted"]
+    require(bool(accepted) and all(isinstance(node.get("score"), dict)
+            and isinstance(node["score"].get("dev"), (int, float))
+            and not isinstance(node["score"]["dev"], bool)
+            and math.isfinite(node["score"]["dev"]) for node in accepted),
+            f"Invalid accepted experiment score: {label}")
+    best = max(accepted, key=lambda node: node["score"]["dev"])
+    require(best["node_id"] == best_node and best["score"]["dev"] == dev_score,
+            f"Ledger/experiment tree dev result mismatch: {label}")
+    context = read(task_dir / "replay_context.json")
+    require(context.get("schema") == "a_replay_context/1"
+            and context.get("run_id") == run.name and context.get("task_id") == task_id
+            and context.get("manifest_fields") ==
+            {key: manifest.get(key) for key in MANIFEST_KEYS}
+            and context.get("model") == protocol["model"]
+            and context.get("max_output_tokens") ==
+            protocol["max_output_tokens_requested"]
+            and context.get("tree_sha256") == sha(tree_path),
+            f"Replay seal/tree/manifest mismatch: {label}")
+    saved_nodes = context.get("nodes")
+    require(isinstance(saved_nodes, dict) and set(saved_nodes) == set(nodes),
+            f"Replay seal node set differs: {label}")
+    for node_id, node in nodes.items():
+        saved = saved_nodes[node_id]
+        version = node.get("library_version")
+        require(isinstance(saved, dict) and isinstance(version, str)
+                and re.fullmatch(r"lib-(0|[1-9][0-9]*)", version) is not None
+                and saved.get("library_version") == version,
+                f"Replay seal library version differs: {label}/{node_id}")
+        node_dir = task_dir / "nodes" / node_id
+        for filename, field in (("solution.py", "solution_sha256"),
+                                ("score.json", "score_sha256")):
+            path = node_dir / filename
+            actual = sha(path) if path.is_file() else None
+            require(saved.get(field) == actual,
+                    f"Replay seal artifact changed: {label}/{node_id}/{filename}")
+        snapshot = run / "library" / "snapshots" / f"{version}.json"
+        require(snapshot.is_file() and
+                saved.get("library_snapshot_sha256") == sha(snapshot),
+                f"Replay seal library snapshot changed: {label}/{node_id}")
+    best_score = read(task_dir / "nodes" / best_node / "score.json")
+    require(best_score.get("schema") == "score/1"
+            and best_score.get("split") == "dev"
+            and best_score.get("score") == dev_score,
+            f"Sealed best-node score differs: {label}")
 
 
 def audit_attempt(campaign: Path, protocol: dict, record: dict,
@@ -216,9 +315,7 @@ def audit_attempt(campaign: Path, protocol: dict, record: dict,
         require(len(stops) == 1 and
                 stops[0].get("reason") == record.get("stop_reason"),
                 f"Stop evidence mismatch: {task_id}/{rep}")
-        context = task_dir / "replay_context.json"
-        require(context.is_file() and read(context).get("schema") == "a_replay_context/1",
-                f"Missing replay context: {task_id}/{rep}")
+        audit_sealed_dev_result(run, task_id, protocol, manifest, record, stops[0])
     calls = [event for event in events if event.get("kind") == "llm_call"]
     require(bool(calls), f"No metered model call: {task_id}/{rep}")
     buckets = {bucket: 0 for bucket in BUCKETS}
@@ -245,9 +342,6 @@ def audit_attempt(campaign: Path, protocol: dict, record: dict,
                 and record.get("model_calls") == len(calls)
                 and record.get("budget_respected") is (tokens <= 40000),
                 f"Summary usage mismatch: {task_id}/{rep}")
-        score = record.get("dev_score")
-        require(isinstance(score, (int, float)) and not isinstance(score, bool)
-                and math.isfinite(score), f"Invalid dev score: {task_id}/{rep}")
     stop_reason = stops[0].get("reason") if stops else None
     require(status != "completed" or
             (tokens <= 40000 and stop_reason != "error"),
@@ -343,6 +437,11 @@ def aggregate(project_root: Path, speedup_campaign: Path,
             "source_bank_sha256": sha(root / "tasks/bank.json"),
             "campaigns": {name: str(paths[name]) for name in SCENARIOS},
             "commit_check": commits, "blocked": blocked,
+            "verification_limits": [
+                "Original-machine absolute source paths in replay_context are not portable; local copied inputs and node seals are checked.",
+                "Unkeyed SHA256 evidence cannot prove provenance if protocol, ledger, tree, seal and artifacts are all rewritten together.",
+                "A failed attempt without a completed replay seal cannot provide a verified dev score or best node.",
+            ],
             "tasks": rows, "bank_proposal": proposal}
 
 

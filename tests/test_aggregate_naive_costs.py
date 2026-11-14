@@ -7,7 +7,7 @@ import subprocess
 from tempfile import TemporaryDirectory
 import unittest
 
-from scripts.aggregate_naive_costs import aggregate, main, sha
+from scripts.aggregate_naive_costs import MANIFEST_KEYS, aggregate, main, sha
 
 
 def put(path: Path, value: dict | str) -> None:
@@ -110,7 +110,6 @@ class AggregateNaiveCostsTests(unittest.TestCase):
                             "library": {"start_version": "lib-0", "frozen": False}}
                 put(run / "manifest.json", manifest)
                 task_root = run / "tasks" / task_id
-                put(task_root / "replay_context.json", {"schema": "a_replay_context/1"})
                 tokens = (index + 1) * 10
                 events = [
                     {"schema": "ledger/1", "seq": 1, "run_id": run_id,
@@ -120,9 +119,31 @@ class AggregateNaiveCostsTests(unittest.TestCase):
                      "tokens": {"input": tokens, "cached_input": 0,
                                 "output": 0, "reasoning": 0}, "cost": float(tokens)},
                     {"schema": "ledger/1", "seq": 3, "run_id": run_id,
-                     "task_id": task_id, "kind": "stop", "reason": "ceiling"},
+                     "task_id": task_id, "kind": "stop", "reason": "ceiling",
+                     "best_node": "n0000", "dev_score": 1.0},
                 ]
                 put(task_root / "ledger.jsonl", "\n".join(json.dumps(row) for row in events))
+                node_dir = task_root / "nodes/n0000"
+                put(node_dir / "solution.py", "def solution(): return 1")
+                put(node_dir / "score.json", {"schema": "score/1", "split": "dev",
+                                              "score": 1.0})
+                snapshot = run / "library/snapshots/lib-0.json"
+                put(snapshot, {"schema": "library_snapshot/1"})
+                tree = {"schema": "node/1", "run_id": run_id, "task_id": task_id,
+                        "node_id": "n0000", "status": "accepted",
+                        "score": {"dev": 1.0}, "library_version": "lib-0"}
+                put(task_root / "tree.jsonl", json.dumps(tree))
+                put(task_root / "replay_context.json", {
+                    "schema": "a_replay_context/1", "run_id": run_id,
+                    "task_id": task_id, "model": "qwen3.5-27b",
+                    "max_output_tokens": 2048,
+                    "manifest_fields": {key: manifest.get(key) for key in MANIFEST_KEYS},
+                    "tree_sha256": sha(task_root / "tree.jsonl"),
+                    "nodes": {"n0000": {
+                        "library_version": "lib-0",
+                        "library_snapshot_sha256": sha(snapshot),
+                        "solution_sha256": sha(node_dir / "solution.py"),
+                        "score_sha256": sha(node_dir / "score.json")}}})
                 attempts.append({"task_id": task_id, "rep": rep,
                                  "run_dir": "/remote-machine/" + run_id,
                                  "status": "completed", "stop_reason": "ceiling",
@@ -130,7 +151,7 @@ class AggregateNaiveCostsTests(unittest.TestCase):
                                  "token_buckets": {"input": tokens, "cached_input": 0,
                                                    "output": 0, "reasoning": 0},
                                  "model_calls": 1, "budget_respected": True,
-                                 "dev_score": 1.0})
+                                 "dev_score": 1.0, "best_node": "n0000"})
         put(campaign / "summary.json", {
             "schema": "naive_token_calibration_summary/1",
             "label": protocol["label"], "ended_utc": "2026-11-14T00:00:00Z",
@@ -214,6 +235,79 @@ class AggregateNaiveCostsTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "changed or missing"):
             aggregate(self.root, self.campaigns["speedup"], campaign)
 
+    def test_rehashed_copy_changes_and_extra_workspace_files_are_rejected(self):
+        campaign = self.campaigns["tabular"]
+        for relative, replacement, expected in (
+            ("tasks/tab-00/workspace/original.py", "modified code", "source/copy content"),
+            ("tasks/tab-00/hidden/dev.csv", "modified dev rows", "source/copy content"),
+            ("tasks/tab-00/task.json", {"task_id": "tab-00", "scenario": "tabular",
+                                         "budget": {"money": 40000, "wall_seconds": 999}},
+             "copied task differs"),
+            ("tasks/bank.json", {"schema": "bank/1", "version": "bank-test",
+                                 "frozen": False,
+                                 "tasks": [{"task_id": task_id, "tier": "changed"}
+                                           for task_id in self.ids["tabular"]]},
+             "copied bank differs"),
+            ("tasks/tab-00/workspace/extra.py", "unexpected file", "workspace file set"),
+        ):
+            with self.subTest(relative=relative):
+                path = campaign / "project" / relative
+                before = path.read_bytes() if path.exists() else None
+                protocol_path = campaign / "protocol.json"
+                protocol = json.loads(protocol_path.read_text())
+                previous_hash = protocol["copied_sha256"].get(relative)
+                put(path, replacement)
+                protocol["copied_sha256"][relative] = sha(path)
+                put(protocol_path, protocol)
+                with self.assertRaisesRegex(ValueError, expected):
+                    aggregate(self.root, self.campaigns["speedup"], campaign)
+                if before is None:
+                    path.unlink()
+                    del protocol["copied_sha256"][relative]
+                else:
+                    path.write_bytes(before)
+                    protocol["copied_sha256"][relative] = previous_hash
+                put(protocol_path, protocol)
+
+    def test_dev_result_and_replay_seal_tampering_are_rejected(self):
+        campaign = self.campaigns["speedup"]
+        summary_path = campaign / "summary.json"
+        summary = json.loads(summary_path.read_text())
+        record = summary["attempts"][0]
+        run = campaign / "project/runs" / Path(record["run_dir"]).name
+        task_dir = run / "tasks" / record["task_id"]
+        record["dev_score"] = 0.5
+        put(summary_path, summary)
+        with self.assertRaisesRegex(ValueError, "Summary/ledger dev result mismatch"):
+            aggregate(self.root, campaign, self.campaigns["tabular"])
+        record["dev_score"] = 1.0
+        put(summary_path, summary)
+        record["best_node"] = "n9999"
+        put(summary_path, summary)
+        with self.assertRaisesRegex(ValueError, "Summary/ledger dev result mismatch"):
+            aggregate(self.root, campaign, self.campaigns["tabular"])
+        record["best_node"] = "n0000"
+        put(summary_path, summary)
+        tree_path = task_dir / "tree.jsonl"
+        tree = json.loads(tree_path.read_text())
+        tree["score"]["dev"] = 0.5
+        put(tree_path, json.dumps(tree))
+        with self.assertRaisesRegex(ValueError, "Ledger/experiment tree dev result mismatch"):
+            aggregate(self.root, campaign, self.campaigns["tabular"])
+        tree["score"]["dev"] = 1.0
+        put(tree_path, json.dumps(tree))
+        score_path = task_dir / "nodes/n0000/score.json"
+        put(score_path, {"schema": "score/1", "split": "dev", "score": 0.5})
+        with self.assertRaisesRegex(ValueError, "Replay seal artifact changed"):
+            aggregate(self.root, campaign, self.campaigns["tabular"])
+        put(score_path, {"schema": "score/1", "split": "dev", "score": 1.0})
+        context_path = task_dir / "replay_context.json"
+        context = json.loads(context_path.read_text())
+        context["tree_sha256"] = "0" * 64
+        put(context_path, context)
+        with self.assertRaisesRegex(ValueError, "Replay seal/tree/manifest mismatch"):
+            aggregate(self.root, campaign, self.campaigns["tabular"])
+
     def test_cli_writes_separate_audit_and_proposal(self):
         bank_before = (self.root / "tasks/bank.json").read_bytes()
         output = self.root / "runs/audit-v1"
@@ -245,8 +339,19 @@ class AggregateNaiveCostsTests(unittest.TestCase):
             aggregate(self.root, self.campaigns["speedup"],
                       self.campaigns["tabular"])
 
+    def test_same_nonexistent_commit_is_rejected(self):
+        missing = "f" * 40
+        self.set_campaign_commit("speedup", missing)
+        self.set_campaign_commit("tabular", missing)
+        with self.assertRaisesRegex(ValueError, "Missing local Git commit"):
+            aggregate(self.root, self.campaigns["speedup"],
+                      self.campaigns["tabular"])
+
     def set_tabular_commit(self, commit: str) -> None:
-        campaign = self.campaigns["tabular"]
+        self.set_campaign_commit("tabular", commit)
+
+    def set_campaign_commit(self, scenario: str, commit: str) -> None:
+        campaign = self.campaigns[scenario]
         protocol = json.loads((campaign / "protocol.json").read_text())
         protocol["code_commit"] = commit
         put(campaign / "protocol.json", protocol)
@@ -254,6 +359,11 @@ class AggregateNaiveCostsTests(unittest.TestCase):
             manifest = json.loads(path.read_text())
             manifest["code_commit"] = commit
             put(path, manifest)
+            task_id = manifest["tasks"][0]
+            context_path = path.parent / "tasks" / task_id / "replay_context.json"
+            context = json.loads(context_path.read_text())
+            context["manifest_fields"]["code_commit"] = commit
+            put(context_path, context)
 
 
 if __name__ == "__main__":
