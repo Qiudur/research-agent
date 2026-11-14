@@ -390,12 +390,16 @@ def evaluate_candidates(
         mean_cost = mean(item["total_cost"] for item in group)
         if not math.isfinite(mean_score) or not math.isfinite(mean_cost) or mean_cost <= 0:
             raise ValueError(f"Candidate {name} lacks a positive audited cost or finite score")
+        # A negative normalized score is worse than the reference. Dividing it
+        # by a larger cost would perversely reward extra spending.
         ranking.append({"candidate": name, "mean_score": mean_score,
-                        "mean_cost": mean_cost, "score_per_currency": mean_score / mean_cost,
+                        "mean_cost": mean_cost,
+                        "score_per_currency": max(mean_score, 0.0) / mean_cost,
                         "run_ids": [item["run_id"] for item in group]})
     winner = max(ranking, key=lambda item: (item["score_per_currency"],
                                             item["mean_score"], -item["mean_cost"]))
     result = {"schema": "self_research/1", "label": "FORMAL" if formal else "TEST ONLY",
+              "ranking_policy": "max(mean_score, 0) / mean_cost; tie by higher score then lower cost",
               "currency": prices["currency"], "bank_version": bank["version"],
               "practice_tasks": task_ids, "candidates": descriptors,
               "attempts": attempts, "reports": reports, "ranking": ranking,
@@ -499,7 +503,7 @@ def auto_evaluate_candidates(
         ranking.append({"candidate": name, "mean_score": row["mean_score"],
                         "mean_task_cost": row["mean_cost"],
                         "proposal_cost": proposal_cost, "research_cost": actual_cost,
-                        "score_per_currency": 3 * row["mean_score"] / actual_cost,
+                        "score_per_currency": 3 * max(row["mean_score"], 0.0) / actual_cost,
                         "run_ids": row["run_ids"]})
 
     evaluate_one("default", default_config, 0.0)
@@ -574,6 +578,7 @@ def auto_evaluate_candidates(
     proposal_cost = proposal_ledger.spent()
     selected = evaluations[winner["candidate"]] if winner is not None else None
     result = {"schema": "auto_self_research/1", "label": "FORMAL" if formal else "TEST ONLY",
+              "ranking_policy": "max(mean_score, 0) / amortized research cost; tie by higher score then lower cost",
               "currency": prices["currency"], "practice_tasks": practice,
               "proposal_ledger_path": str(proposal_ledger.path),
               "proposal_ledger_sha256": _hash(proposal_ledger.path),

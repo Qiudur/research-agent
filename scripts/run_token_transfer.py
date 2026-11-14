@@ -45,11 +45,18 @@ def prepare_candidate(project: Path, source_campaign: Path) -> tuple[Path, dict]
     copied = project / relative
     copied.parent.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(candidate.parent, copied.parent)
-    if _sha(candidate) != _sha(copied):
-        raise ValueError("Candidate changed during transfer copy")
+    copied_files = {}
+    for original in candidate.parent.iterdir():
+        if not original.is_file():
+            raise ValueError("Candidate directory contains a non-file")
+        digest = _sha(original)
+        if _sha(copied.parent / original.name) != digest:
+            raise ValueError("Candidate changed during transfer copy")
+        copied_files[original.name] = digest
     return copied, {"source_campaign": str(source_campaign),
                     "source_candidate": report["selection"]["candidate"],
                     "source_candidate_sha256": _sha(candidate),
+                    "source_candidate_files_sha256": copied_files,
                     "source_research_tokens": report["total_research_cost"]}
 
 

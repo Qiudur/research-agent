@@ -102,7 +102,8 @@ class SelfResearchTests(unittest.TestCase):
         return baselines, {"default": root / "config/agent.json", "tuned-1": tuned}, planner
 
     def fake_executor(self, calls, *, tamper: Path | None = None,
-                      tuned_score: float = .60, tuned_tokens: int = 100):
+                      default_score: float = .55, tuned_score: float = .60,
+                      tuned_tokens: int = 100):
         def execute(*, run_dir, task_id, harness, baseline_solution,
                     test_only_budget, **kwargs):
             self.assertEqual(test_only_budget, 1.0)
@@ -130,7 +131,7 @@ class SelfResearchTests(unittest.TestCase):
             ledger.llm_call(node_id=None, role="planner", purpose="plan", effort="high",
                             model="test-scripted", usage=Usage(input=tuned_tokens if tuned else 300),
                             seconds=.1, prompt_hash="a" * 64)
-            score = tuned_score if tuned else .55
+            score = tuned_score if tuned else default_score
             tree = {"schema": "node/1", "node_id": "n0000", "parent": None,
                     "hypothesis": "Baseline", "status": "accepted", "score": {"dev": score},
                     "cost": 0, "failure": None, "cites": []}
@@ -186,6 +187,24 @@ class SelfResearchTests(unittest.TestCase):
                     code_commit="a" * 40, test_only_budget=1.0,
                     task_executor=self.fake_executor([]),
                 )
+
+    def test_negative_practice_scores_do_not_reward_extra_spending(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            baselines, candidates, _ = self.setup_project(root)
+            result = evaluate_candidates(
+                project_root=root, study_dir=root / "batches/study", harness=object(),
+                candidates=candidates, baseline_solutions=baselines,
+                prices_path=root / "config/prices_test_only.json", model="test-scripted",
+                code_commit="a" * 40, test_only_budget=1.0,
+                task_executor=self.fake_executor([], default_score=-1.0,
+                                                 tuned_score=-0.8, tuned_tokens=100),
+            )
+            self.assertEqual(result["selection"]["candidate"], "tuned-1")
+            self.assertEqual([row["score_per_currency"] for row in result["ranking"]],
+                             [0.0, 0.0])
+            self.assertEqual([row["mean_score"] for row in result["ranking"]],
+                             [-1.0, -0.8])
 
     def test_protected_file_mutation_fails_closed(self):
         with TemporaryDirectory() as temp:
@@ -317,6 +336,25 @@ class SelfResearchTests(unittest.TestCase):
             self.assertEqual(result["selection"]["candidate"], "auto-01")
             self.assertFalse(result["selection"]["beats_default_on_practice"])
             self.assertTrue(verify_auto_selected(result).is_file())
+
+    def test_auto_negative_scores_choose_higher_quality_before_cost(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            baselines, candidates, _ = self.setup_project(root)
+            result = auto_evaluate_candidates(
+                project_root=root, study_dir=root / "batches/auto-study", harness=object(),
+                default_config=candidates["default"], baseline_solutions=baselines,
+                prices_path=root / "config/prices_test_only.json", model="test-scripted",
+                code_commit="a" * 40, rounds=1, max_output_tokens=1024,
+                test_only_budget=1.0,
+                proposal_client=SimpleNamespace(responses=FakeProposalResponses()),
+                task_executor=self.fake_executor([], default_score=-1.0,
+                                                 tuned_score=-0.8, tuned_tokens=100),
+            )
+            self.assertEqual(result["overall_best_on_practice"], "auto-01")
+            self.assertTrue(result["selection"]["beats_default_on_practice"])
+            self.assertEqual([row["score_per_currency"] for row in result["ranking"]],
+                             [0.0, 0.0])
 
     def test_all_rejected_proposals_stop_before_validation_with_cost_recorded(self):
         class BadResponses:
