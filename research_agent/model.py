@@ -22,6 +22,20 @@ ROLES = frozenset({"planner", "executor", "diagnoser", "summarizer"})
 PURPOSES = frozenset({"plan", "quote", "code", "fix", "diagnose", "review", "summarize"})
 EFFORTS = frozenset({"low", "medium", "high"})  # ledger/1 enum
 
+# Two ways Qwen-family OpenAI-compatible gateways take the "do not think" switch.
+# Both go through the SDK's extra_body, so they never touch the Responses fields.
+THINKING_SWITCH_STYLES = ("enable_thinking", "chat_template_kwargs")
+DEFAULT_THINKING_SWITCH_STYLE = THINKING_SWITCH_STYLES[0]
+ROLE_CONTROL_KEYS = frozenset({"thinking", "max_output_tokens"})
+
+# Roles that run once, at the end of a task. They are held back by their own
+# worst case rather than the full per-call reserve; see ModelClient._reserve_for.
+WRAPUP_ROLES = frozenset({"summarizer"})
+# Deliberately pessimistic request-size estimate (mixed Chinese/JSON prompts
+# measure 2.5-4 bytes per token; digit-heavy JSON gets close to 1).
+_INPUT_BYTES_PER_TOKEN = 1.5
+_REQUEST_OVERHEAD_TOKENS = 256
+
 
 class ModelCallError(RuntimeError):
     """A model request failed, was refused, or returned unusable output."""
@@ -151,6 +165,53 @@ def _parse_json_text(output_text: str) -> Any:
     return json.loads(text)
 
 
+def check_thinking_switch_style(style: Any) -> str:
+    if not isinstance(style, str) or style not in THINKING_SWITCH_STYLES:
+        raise ValueError(f"thinking_switch_style must be one of {list(THINKING_SWITCH_STYLES)}")
+    return style
+
+
+def thinking_off_extra_body(style: str) -> dict[str, Any]:
+    """The extra request fields that switch thinking off for the chosen style."""
+    if check_thinking_switch_style(style) == "enable_thinking":
+        return {"enable_thinking": False}
+    return {"chat_template_kwargs": {"enable_thinking": False}}
+
+
+def _check_output_limit(value: Any, name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise ValueError(f"{name} must be a positive integer")
+    return value
+
+
+def parse_role_controls(config: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+    """Validate agent/1 ``role_controls``: per-role ``thinking`` and ``max_output_tokens``.
+
+    A missing key means "behave as before" for every role.
+    """
+    raw = config.get("role_controls")
+    if raw is None:
+        return {}
+    if not isinstance(raw, Mapping):
+        raise ValueError("role_controls must be an object keyed by role")
+    controls: dict[str, dict[str, Any]] = {}
+    for role, spec in raw.items():
+        if role not in ROLES:
+            raise ValueError(f"role_controls names an unknown role: {role!r}")
+        if not isinstance(spec, Mapping) or set(spec) - ROLE_CONTROL_KEYS:
+            raise ValueError(f"role_controls.{role} may only set {sorted(ROLE_CONTROL_KEYS)}")
+        entry: dict[str, Any] = {}
+        if "thinking" in spec:
+            if not isinstance(spec["thinking"], bool):
+                raise ValueError(f"role_controls.{role}.thinking must be a boolean")
+            entry["thinking"] = spec["thinking"]
+        if "max_output_tokens" in spec:
+            entry["max_output_tokens"] = _check_output_limit(
+                spec["max_output_tokens"], f"role_controls.{role}.max_output_tokens")
+        controls[role] = entry
+    return controls
+
+
 class ModelClient:
     """One-model, many-effort JSON client, injectable for deterministic tests.
 
@@ -169,11 +230,13 @@ class ModelClient:
         reserve_cost: float = 0.0,
         audit_dir: Path | None = None,
         clock: Any = perf_counter,
+        thinking_switch_style: str = DEFAULT_THINKING_SWITCH_STYLE,
     ) -> None:
         if not model:
             raise ValueError("A model name must come from the run manifest or caller")
         if max_output_tokens < 1:
             raise ValueError("max_output_tokens must be positive")
+        check_thinking_switch_style(thinking_switch_style)
         if (isinstance(reserve_cost, bool) or not isinstance(reserve_cost, (int, float))
                 or not math.isfinite(reserve_cost) or reserve_cost < 0):
             raise ValueError("reserve_cost must be nonnegative and finite")
@@ -197,6 +260,30 @@ class ModelClient:
         self.reserve_cost = float(reserve_cost)
         self.audit_dir = Path(audit_dir) if audit_dir is not None else None
         self.clock = clock
+        self.thinking_switch_style = thinking_switch_style
+
+    def _reserve_for(self, role: str, instructions: str, user_input: str,
+                     schema: Mapping[str, Any], output_cap: int) -> float:
+        """Cost held back before dispatch; the call is refused if it would not fit.
+
+        Every role is normally held to the full ``reserve_cost`` (30% of the task
+        budget in the token study). That starved the summarizer, which only runs
+        after the experiments have spent most of the budget. Wrap-up roles are
+        instead held to their own worst case: a pessimistic estimate of the
+        request's input tokens plus the output cap, never more than
+        ``reserve_cost``. The call still cannot take the task past
+        ``budget_limit``, but it is no longer refused for headroom it does not use.
+
+        The estimate is in tokens, so it only lowers the reserve where one cost
+        unit is one token (the TOKENS/TEST token studies). For any other currency
+        the min() keeps the configured reserve, i.e. the old behaviour.
+        """
+        if role not in WRAPUP_ROLES:
+            return self.reserve_cost
+        request = (instructions + user_input
+                   + json.dumps(schema, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
+        input_tokens = math.ceil(len(request.encode("utf-8")) / _INPUT_BYTES_PER_TOKEN)
+        return min(self.reserve_cost, float(input_tokens + _REQUEST_OVERHEAD_TOKENS + output_cap))
 
     def call_json(
         self,
@@ -208,19 +295,28 @@ class ModelClient:
         payload: Mapping[str, Any],
         schema: Mapping[str, Any],
         node_id: str | None = None,
+        thinking: bool | None = None,
+        max_output_tokens: int | None = None,
+        thinking_switch_style: str | None = None,
     ) -> ModelResult:
+        """One stateless JSON call.
+
+        thinking=False asks the gateway not to think (extra_body switch, style
+        from thinking_switch_style or the client default); None and True leave
+        the request exactly as before. max_output_tokens is a per-call limit and
+        can only lower the client-wide limit.
+        """
         if role not in ROLES or purpose not in PURPOSES or effort not in EFFORTS:
             raise ValueError("role, purpose, or effort is not in ledger/1")
         if not system_prompt.strip():
             raise ValueError("Role instructions cannot be empty")
-        if self.budget_limit is not None:
-            if self.ledger is None or not hasattr(self.ledger, "spent"):
-                raise ValueError("A budgeted model call requires a spending ledger")
-            spent = float(self.ledger.spent())
-            if not math.isfinite(spent) or spent < 0:
-                raise ValueError("Ledger reported invalid spend")
-            if spent + self.reserve_cost > self.budget_limit:
-                raise BudgetReserveError("Not enough budget remains for a reserved model call")
+        if thinking is not None and not isinstance(thinking, bool):
+            raise ValueError("thinking must be True, False or None")
+        style = check_thinking_switch_style(
+            self.thinking_switch_style if thinking_switch_style is None else thinking_switch_style)
+        output_cap = self.max_output_tokens
+        if max_output_tokens is not None:
+            output_cap = min(output_cap, _check_output_limit(max_output_tokens, "max_output_tokens"))
         user_input = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         schema_name = f"{role}_{purpose}"
         instructions = (system_prompt + "\n\nOutput JSON contract: Return exactly one JSON object "
@@ -228,28 +324,42 @@ class ModelClient:
                         "required field, do not add other fields, and use JSON numbers "
                         "rather than numeric strings. No Markdown or prose.\n"
                         + json.dumps(schema, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
+        if self.budget_limit is not None:
+            if self.ledger is None or not hasattr(self.ledger, "spent"):
+                raise ValueError("A budgeted model call requires a spending ledger")
+            spent = float(self.ledger.spent())
+            if not math.isfinite(spent) or spent < 0:
+                raise ValueError("Ledger reported invalid spend")
+            if spent + self._reserve_for(role, instructions, user_input, schema, output_cap) > self.budget_limit:
+                raise BudgetReserveError("Not enough budget remains for a reserved model call")
+        hashed = {"instructions": instructions, "input": user_input, "schema": schema, "effort": effort}
+        if thinking is False:
+            hashed["thinking"] = False  # absent otherwise, so default hashes stay as they were
         prompt_hash = hashlib.sha256(
             json.dumps(
-                {"instructions": instructions, "input": user_input, "schema": schema, "effort": effort},
+                hashed,
                 sort_keys=True,
                 ensure_ascii=False,
                 separators=(",", ":"),
             ).encode("utf-8")
         ).hexdigest()
+        request: dict[str, Any] = {
+            "model": self.model,
+            "instructions": instructions,
+            "input": user_input,
+            "reasoning": {"effort": effort},
+            "text": {"format": {"type": "json_schema", "name": schema_name, "schema": dict(schema), "strict": True}},
+            "max_output_tokens": output_cap,
+        }
+        if thinking is False:
+            request["extra_body"] = thinking_off_extra_body(style)
         started = self.clock()
         response: Any | None = None
         usage = TokenUsage()
         data: dict[str, Any] | None = None
         error: Exception | None = None
         try:
-            response = self.client.responses.create(
-                model=self.model,
-                instructions=instructions,
-                input=user_input,
-                reasoning={"effort": effort},
-                text={"format": {"type": "json_schema", "name": schema_name, "schema": dict(schema), "strict": True}},
-                max_output_tokens=self.max_output_tokens,
-            )
+            response = self.client.responses.create(**request)
             usage = token_usage_from_response(response)
             status = _field(response, "status", "completed")
             if status != "completed":
@@ -291,6 +401,7 @@ class ModelClient:
                 "response_id": _field(response, "id"),
                 "status": _field(response, "status"),
                 "output_text": _field(response, "output_text"),
+                "thinking": thinking, "max_output_tokens": output_cap,
                 "tokens": vars(usage), "cost": cost,
                 "error": str(error) if error is not None else None,
             }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
