@@ -77,7 +77,7 @@ def _flags(node: Path, workspace: Path, task_root: Path):
 SPEED_KINDS = {"distance_matrix", "rolling_mean", "max_drawdown", "edit_distance",
                "membership_filter", "prefix_sum", "dedupe_order", "group_counts",
                "string_build", "top_frequency", "weighted_groups", "already_vectorized",
-               "pair_sum_count", "range_counts", "sliding_minimum",
+               "pair_sum_count", "range_counts", "builtin_sort",
                "running_median", "inversion_count"}
 
 
@@ -108,7 +108,7 @@ def _equal(kind: str, actual, expected) -> bool:
     if kind in {"edit_distance", "pair_sum_count", "inversion_count"}:
         return type(actual) is int and actual == expected
     if kind in {"membership_filter", "dedupe_order", "top_frequency",
-                "range_counts", "sliding_minimum"}:
+                "range_counts", "builtin_sort"}:
         if type(actual) is not list or actual != expected:
             return False
         if kind == "top_frequency":
@@ -177,12 +177,13 @@ def _case(kind: str, seed: int, size: int) -> tuple:
             left, right = rng.randrange(-size, size + 1), rng.randrange(-size, size + 1)
             queries.append((min(left, right), max(left, right)))
         return (values, queries)
-    if kind == "sliding_minimum":
-        return ([rng.randrange(-size, size + 1) for _ in range(size)], max(1, size // 35))
     if kind == "running_median":
         return ([rng.randrange(-size, size + 1) for _ in range(size)],)
     if kind == "inversion_count":
         return ([rng.randrange(-max(2, size // 3), max(3, size // 3)) for _ in range(size)],)
+    if kind == "builtin_sort":
+        return ([rng.getrandbits(130) * (-1 if rng.randrange(2) else 1)
+                 for _ in range(size)],)
     raise ValueError(f"Unknown speedup kind: {kind}")
 
 
@@ -233,15 +234,15 @@ def _edge_cases(kind: str, seed: int) -> list[tuple]:
     if kind == "range_counts":
         return [([], []), ([2, 2, -1], [(-1, 2), (2, 2), (3, 1)]),
                 ([4], []), _case(kind, seed + 10001, 13)]
-    if kind == "sliding_minimum":
-        return [([], 3), ([5], 1), ([3, 1, 2, 0], 2),
-                ([1, 2], 5), _case(kind, seed + 10001, 13)]
     if kind == "running_median":
         return [([],), ([2],), ([5, 1, 5, -1],),
                 _case(kind, seed + 10001, 13)]
     if kind == "inversion_count":
         return [([],), ([1],), ([1, 2, 3],), ([3, 2, 1],),
                 ([2, 2, 1, 1],), _case(kind, seed + 10001, 13)]
+    if kind == "builtin_sort":
+        return [([],), ([1],), ([2, -1, 2, 0],),
+                _case(kind, seed + 10001, 13)]
     raise ValueError(f"Unknown speedup kind: {kind}")
 
 
@@ -289,9 +290,14 @@ def _speed(kind: str, candidate, original, seed: int, size: int, repeats: int):
             results = {}
             for label in order:
                 func = original if label == "original" else candidate
+                # This stop-loss task promises a fresh sorted copy. Reject an
+                # in-place sort even if it happens to return correct values.
+                input_before = case[0].copy() if kind == "builtin_sort" else None
                 t0 = time.perf_counter()
                 result = func(*case)
                 elapsed = time.perf_counter() - t0
+                if input_before is not None and case[0] != input_before:
+                    return {"correct": False, "reason": "behavior_change"}
                 results[label] = result
                 times[label].append(elapsed)
             # Compare after both timers stop, including the full matrix. A

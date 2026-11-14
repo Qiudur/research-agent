@@ -57,31 +57,6 @@
       "ceiling_median": 134.68911710848548
     },
     {
-      "task_id": "spd-sliding-minimum",
-      "seeds": [
-        20261114,
-        20261115,
-        20261116
-      ],
-      "baseline_raw": [
-        0.973198295083567,
-        0.9967267822946748,
-        0.9912410228676745
-      ],
-      "ceiling_raw": [
-        17.30185115443301,
-        17.326707698848754,
-        17.695757103024683
-      ],
-      "source_sha256": {
-        "task.json": "fe094f6c80122ff9fbdc66aa8f4c04b8edd9756db304bc959eb2b3249e9603b7",
-        "workspace/original.py": "aa08644e7b17229d426202b6f8bc684abf216feebd22fe0cee70831f7f6882b9",
-        "hidden/reference.py": "0789e0c96ec1d89866ac31e03b8bd67991c3b201970035392b31566d99fb6659"
-      },
-      "baseline_median": 0.9912410228676745,
-      "ceiling_median": 17.326707698848754
-    },
-    {
       "task_id": "spd-running-median",
       "seeds": [
         20261114,
@@ -131,5 +106,9 @@
       "baseline_median": 1.0023650172018062,
       "ceiling_median": 52.205973262918356
     }
-  ]
+  ],
+  "superseded_task_id": "spd-sliding-minimum",
+  "replacement_task_id": "spd-builtin-sort",
+  "note": "Four retained records are exploratory measurements under the earlier worker SHA. The final bank-v2 runtime changes workload kinds and triggers; all five tasks require fresh isolated dev calibration after integration.",
+  "status": "exploratory_unfrozen"
 }

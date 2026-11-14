@@ -1,0 +1,41 @@
+{
+  "schema": "speedup_stop_loss_dev/1",
+  "task_id": "spd-builtin-sort",
+  "status": "dev_only_candidate_not_frozen",
+  "measured_at_utc": "2026-11-14T17:05:03.437972+00:00",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "python": "3.11.12",
+  "method": "macOS sandbox dev only; original and identical hidden reference; three preregistered fixed seeds; no holdout; no concurrent benchmark",
+  "measurements": [
+    {
+      "seed": 20261114,
+      "baseline_raw": 1.0042810060664036,
+      "reference_raw": 1.02473450615435,
+      "reference_minus_baseline": 0.02045350008794644
+    },
+    {
+      "seed": 20261115,
+      "baseline_raw": 0.9547899523687915,
+      "reference_raw": 1.0107051332710475,
+      "reference_minus_baseline": 0.055915180902256
+    },
+    {
+      "seed": 20261116,
+      "baseline_raw": 1.0719154311239263,
+      "reference_raw": 1.0454599854307152,
+      "reference_minus_baseline": -0.02645544569321112
+    }
+  ],
+  "baseline_median": 1.0042810060664036,
+  "reference_median": 1.02473450615435,
+  "mutation_candidate_rejected": true,
+  "source_sha256": {
+    "tasks/spd-builtin-sort/task.json": "1524f568f2b71074aef5b4f5580264bf4dd98f9da35b78179f4382aa686d6630",
+    "tasks/spd-builtin-sort/workspace/profile.json": "eb0b9ebbeb57340a3a8a3daf0e2fe28f337795d0341bc7269253d8b6aca5f8da",
+    "tasks/spd-builtin-sort/workspace/original.py": "e36d989876ac326a0c8ae769574269bc148eeaf6183d07d8c27fe1b89e57d4f6",
+    "tasks/spd-builtin-sort/hidden/reference.py": "e36d989876ac326a0c8ae769574269bc148eeaf6183d07d8c27fe1b89e57d4f6",
+    "harness_worker.py": "c8640e021b97151f7dc1cc3c0372f6a84b24beb83a616b37d3913be6b7d16ce1",
+    "config/triggers.json": "c34bff3f0c18358cfeca4d7b1909c40890cfeacaa0f355f475de793bf585e1a0"
+  },
+  "reference_minus_baseline_median": 0.02045350008794644
+}

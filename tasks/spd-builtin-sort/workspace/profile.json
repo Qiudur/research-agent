@@ -1,0 +1,11 @@
+{
+  "schema": "profile/1",
+  "features": ["already_optimized_builtin"],
+  "summary": {
+    "hotspot": "The entire operation is a single optimized built-in sort; speculative Python loops are unlikely to help",
+    "input_type": "list of arbitrary-precision signed integers",
+    "output_type": "new ascending integer list",
+    "benchmark_size": 30000,
+    "edge_cases": ["empty", "singleton", "negative values", "duplicates", "input remains unchanged"]
+  }
+}

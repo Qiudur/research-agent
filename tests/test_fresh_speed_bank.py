@@ -15,7 +15,7 @@ from harness_worker import _case, _edge_cases, _equal
 
 
 ROOT = Path(__file__).resolve().parents[1]
-KINDS = ("pair_sum_count", "range_counts", "sliding_minimum",
+KINDS = ("pair_sum_count", "range_counts", "builtin_sort",
          "running_median", "inversion_count")
 
 
@@ -35,6 +35,8 @@ class FreshSpeedBankTests(unittest.TestCase):
             task_id = "spd-" + kind.replace("_", "-")
             self.assertNotIn(task_id, used)
             self.assertEqual(harness.load_task(task_id)["benchmark"]["kind"], kind)
+        self.assertEqual(harness.load_task("spd-builtin-sort")["features"],
+                         ["already_optimized_builtin"])
 
     def test_reference_agrees_on_edges_and_fresh_dev_cases(self):
         for kind in KINDS:
@@ -61,7 +63,10 @@ class FreshSpeedBankTests(unittest.TestCase):
                     scores[name] = harness.score(task_id, node, "dev", seed=739)
                     self.assertTrue(scores[name]["ok"], scores[name])
                     self.assertTrue(scores[name]["correct"], scores[name])
-                self.assertGreater(scores["reference"]["raw"], 4.0)
+                if kind == "builtin_sort":
+                    self.assertLess(abs(scores["reference"]["raw"] - 1.0), 0.30)
+                else:
+                    self.assertGreater(scores["reference"]["raw"], 4.0)
                 self.assertLess(scores["baseline"]["raw"], 2.0)
                 (node / "solution.py").write_text(f"def {kind}(*args):\n    return 0\n",
                                                  encoding="utf-8")
@@ -69,6 +74,20 @@ class FreshSpeedBankTests(unittest.TestCase):
                 self.assertTrue(bad["ok"], bad)
                 self.assertFalse(bad["correct"], bad)
                 self.assertEqual(bad["score"], 0)
+
+    @unittest.skipUnless(sys.platform == "darwin" and shutil.which("sandbox-exec"),
+                         "Dev scorer requires macOS sandbox-exec")
+    def test_builtin_sort_rejects_input_mutation_on_dev(self):
+        with TemporaryDirectory() as temp:
+            node = Path(temp)
+            (node / "solution.py").write_text(
+                "def builtin_sort(values):\n    values.sort()\n    return values\n",
+                encoding="utf-8")
+            bad = harness.score("spd-builtin-sort", node, "dev", seed=739)
+            self.assertTrue(bad["ok"], bad)
+            self.assertFalse(bad["correct"], bad)
+            self.assertEqual(bad["score"], 0)
+            self.assertIn("behavior_change", bad["cheat_flags"])
 
 
 if __name__ == "__main__":
