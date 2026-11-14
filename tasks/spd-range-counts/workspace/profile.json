@@ -1,0 +1,17 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "nested_python_loop"
+  ],
+  "summary": {
+    "hotspot": "Every query scans the full value list",
+    "input_type": "integer list and query bounds",
+    "output_type": "integer counts by query",
+    "benchmark_size": 3200,
+    "edge_cases": [
+      "empty",
+      "duplicates",
+      "reversed bounds"
+    ]
+  }
+}

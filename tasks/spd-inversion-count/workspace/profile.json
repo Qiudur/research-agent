@@ -1,0 +1,18 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "nested_python_loop"
+  ],
+  "summary": {
+    "hotspot": "Nested scan of all index pairs",
+    "input_type": "integer list",
+    "output_type": "integer inversion count",
+    "benchmark_size": 2700,
+    "edge_cases": [
+      "empty",
+      "sorted",
+      "reverse sorted",
+      "duplicates"
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "repeated_recompute_window"
+  ],
+  "summary": {
+    "hotspot": "Re-sorts every growing prefix",
+    "input_type": "integer list",
+    "output_type": "prefix medians",
+    "benchmark_size": 1600,
+    "edge_cases": [
+      "empty",
+      "duplicates",
+      "negative integers"
+    ]
+  }
+}

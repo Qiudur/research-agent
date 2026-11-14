@@ -1,0 +1,17 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "nested_python_loop"
+  ],
+  "summary": {
+    "hotspot": "Nested scan of all index pairs",
+    "input_type": "integer list and target",
+    "output_type": "integer count",
+    "benchmark_size": 2600,
+    "edge_cases": [
+      "empty",
+      "duplicates",
+      "negative integers"
+    ]
+  }
+}

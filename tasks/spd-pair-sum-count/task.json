@@ -1,0 +1,31 @@
+{
+  "schema": "task/1",
+  "task_id": "spd-pair-sum-count",
+  "scenario": "speedup",
+  "title": "Count integer pairs matching a target",
+  "description": "Optimize pair_sum_count while preserving original.py behavior.",
+  "metric": {
+    "name": "speedup",
+    "higher_is_better": true
+  },
+  "deliverable": {
+    "file": "solution.py",
+    "function": "pair_sum_count",
+    "signature": "pair_sum_count(values: list[int], target: int) -> int",
+    "returns": "Number of index pairs i < j whose values sum to target"
+  },
+  "benchmark": {
+    "kind": "pair_sum_count",
+    "dev_size": 2600,
+    "holdout_size": 3000,
+    "profile_size": 400
+  },
+  "budget": {
+    "money": 40000,
+    "wall_seconds": 1800
+  },
+  "limits": {
+    "run_seconds": 120,
+    "memory_mb": 1024
+  }
+}

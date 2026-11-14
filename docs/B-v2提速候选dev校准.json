@@ -1,0 +1,135 @@
+{
+  "schema": "speedup_candidate_calibration/1",
+  "measured_at_utc": "2026-11-14T16:00:11.133982+00:00",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "python": "3.11.12",
+  "method": "macOS sandbox dev only; original and hidden reference candidates; three fixed seeds; medians; no holdout read or scoring",
+  "harness_worker_sha256": "e2c33bdf8d1d7f9bb426cca4b658db19b3243fc0aa1758b4884354f50be286bb",
+  "records": [
+    {
+      "task_id": "spd-pair-sum-count",
+      "seeds": [
+        20261114,
+        20261115,
+        20261116
+      ],
+      "baseline_raw": [
+        1.0132912710627886,
+        1.0058438398858234,
+        1.0075651460147859
+      ],
+      "ceiling_raw": [
+        418.43508831436037,
+        391.3197081102708,
+        387.2075601102469
+      ],
+      "source_sha256": {
+        "task.json": "ca010de352fd4aeebf8a6072522d53c1bfb005407daa9e84b98365fb76335851",
+        "workspace/original.py": "798f1e4c75173231215e7ee15272c3b9ffdf3a815c065279011390bf20961ef6",
+        "hidden/reference.py": "ae1e3bff8c079d2aa069b21e93080b55cbe2c97ebca388994f5f746c77693f5d"
+      },
+      "baseline_median": 1.0075651460147859,
+      "ceiling_median": 391.3197081102708
+    },
+    {
+      "task_id": "spd-range-counts",
+      "seeds": [
+        20261114,
+        20261115,
+        20261116
+      ],
+      "baseline_raw": [
+        0.9755799133443195,
+        1.0103200054398214,
+        0.9926553694638206
+      ],
+      "ceiling_raw": [
+        136.28597966720633,
+        133.1288042399664,
+        134.68911710848548
+      ],
+      "source_sha256": {
+        "task.json": "d693d33cc2a393fd5440e6eb4ac51ef2f2beb965fa616f9210deb4c22da75207",
+        "workspace/original.py": "0ef00a1c64e19672919ef1b494c23d364a2c241e824c41f7ae24ed348c1fa0af",
+        "hidden/reference.py": "2f1138de1e460906ec5b4069ce6aa9718d1ad76b26110981e8775f40db657f74"
+      },
+      "baseline_median": 0.9926553694638206,
+      "ceiling_median": 134.68911710848548
+    },
+    {
+      "task_id": "spd-sliding-minimum",
+      "seeds": [
+        20261114,
+        20261115,
+        20261116
+      ],
+      "baseline_raw": [
+        0.973198295083567,
+        0.9967267822946748,
+        0.9912410228676745
+      ],
+      "ceiling_raw": [
+        17.30185115443301,
+        17.326707698848754,
+        17.695757103024683
+      ],
+      "source_sha256": {
+        "task.json": "fe094f6c80122ff9fbdc66aa8f4c04b8edd9756db304bc959eb2b3249e9603b7",
+        "workspace/original.py": "aa08644e7b17229d426202b6f8bc684abf216feebd22fe0cee70831f7f6882b9",
+        "hidden/reference.py": "0789e0c96ec1d89866ac31e03b8bd67991c3b201970035392b31566d99fb6659"
+      },
+      "baseline_median": 0.9912410228676745,
+      "ceiling_median": 17.326707698848754
+    },
+    {
+      "task_id": "spd-running-median",
+      "seeds": [
+        20261114,
+        20261115,
+        20261116
+      ],
+      "baseline_raw": [
+        0.9955529995561827,
+        1.0036408355453599,
+        1.00072119152398
+      ],
+      "ceiling_raw": [
+        98.12913428933572,
+        100.06642683751319,
+        96.94712802200496
+      ],
+      "source_sha256": {
+        "task.json": "32cb5d1dcf722da3c2e48cd1e9f293691bf6ca7f63640f9490d36278879126fc",
+        "workspace/original.py": "961a2f926e578342de7ea0238b8bd141e6eb45a654918e322a3194da95db17e7",
+        "hidden/reference.py": "0e9074f608dcd54a8290b4addba272b451cf5afa8935a5a279cbd5b5f59d7e5b"
+      },
+      "baseline_median": 1.00072119152398,
+      "ceiling_median": 98.12913428933572
+    },
+    {
+      "task_id": "spd-inversion-count",
+      "seeds": [
+        20261114,
+        20261115,
+        20261116
+      ],
+      "baseline_raw": [
+        1.019907665433661,
+        1.0023650172018062,
+        0.9999972956276636
+      ],
+      "ceiling_raw": [
+        53.41096721498586,
+        50.64121698962087,
+        52.205973262918356
+      ],
+      "source_sha256": {
+        "task.json": "8453de1443c5aa4a108ded9a9e1a94739a32c1e1b54992a98b801974d2693f99",
+        "workspace/original.py": "229e1dcabc88dccb5c972610579065025fc19d302584f645dd6499bae3b4011d",
+        "hidden/reference.py": "deecc23da61b020e988d76873e65cc26b8401f597a6c1f459cca07b8e1c2dd9d"
+      },
+      "baseline_median": 1.0023650172018062,
+      "ceiling_median": 52.205973262918356
+    }
+  ]
+}

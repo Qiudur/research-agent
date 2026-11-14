@@ -76,7 +76,9 @@ def _flags(node: Path, workspace: Path, task_root: Path):
 
 SPEED_KINDS = {"distance_matrix", "rolling_mean", "max_drawdown", "edit_distance",
                "membership_filter", "prefix_sum", "dedupe_order", "group_counts",
-               "string_build", "top_frequency", "weighted_groups", "already_vectorized"}
+               "string_build", "top_frequency", "weighted_groups", "already_vectorized",
+               "pair_sum_count", "range_counts", "sliding_minimum",
+               "running_median", "inversion_count"}
 
 
 def _number(value) -> bool:
@@ -95,7 +97,7 @@ def _equal(kind: str, actual, expected) -> bool:
         return (isinstance(actual, list) and len(actual) == len(expected)
                 and all(_number(a) and math.isclose(a, b, rel_tol=1e-9, abs_tol=1e-12)
                         for a, b in zip(actual, expected)))
-    if kind == "prefix_sum":
+    if kind in {"prefix_sum", "running_median"}:
         return (isinstance(actual, list) and len(actual) == len(expected)
                 and all(_number(a) and math.isclose(a, b, rel_tol=1e-9, abs_tol=1e-12)
                         for a, b in zip(actual, expected)))
@@ -103,9 +105,10 @@ def _equal(kind: str, actual, expected) -> bool:
         return _number(actual) and math.isclose(actual, expected, rel_tol=1e-9, abs_tol=1e-12)
     if kind == "already_vectorized":
         return _number(actual) and math.isclose(actual, expected, rel_tol=1e-12, abs_tol=1e-12)
-    if kind == "edit_distance":
+    if kind in {"edit_distance", "pair_sum_count", "inversion_count"}:
         return type(actual) is int and actual == expected
-    if kind in {"membership_filter", "dedupe_order", "top_frequency"}:
+    if kind in {"membership_filter", "dedupe_order", "top_frequency",
+                "range_counts", "sliding_minimum"}:
         if type(actual) is not list or actual != expected:
             return False
         if kind == "top_frequency":
@@ -164,6 +167,22 @@ def _case(kind: str, seed: int, size: int) -> tuple:
         return ([rng.randrange(max(2, size // 20)) for _ in range(size)], min(10, size))
     if kind == "already_vectorized":
         return ([rng.uniform(-1.0, 1.0) for _ in range(size)],)
+    if kind == "pair_sum_count":
+        return ([rng.randrange(-max(2, size // 2), max(3, size // 2)) for _ in range(size)],
+                rng.randrange(-max(2, size // 2), max(3, size // 2)))
+    if kind == "range_counts":
+        values = [rng.randrange(-size, size + 1) for _ in range(size)]
+        queries = []
+        for _ in range(max(1, size // 4)):
+            left, right = rng.randrange(-size, size + 1), rng.randrange(-size, size + 1)
+            queries.append((min(left, right), max(left, right)))
+        return (values, queries)
+    if kind == "sliding_minimum":
+        return ([rng.randrange(-size, size + 1) for _ in range(size)], max(1, size // 35))
+    if kind == "running_median":
+        return ([rng.randrange(-size, size + 1) for _ in range(size)],)
+    if kind == "inversion_count":
+        return ([rng.randrange(-max(2, size // 3), max(3, size // 3)) for _ in range(size)],)
     raise ValueError(f"Unknown speedup kind: {kind}")
 
 
@@ -208,6 +227,21 @@ def _edge_cases(kind: str, seed: int) -> list[tuple]:
     if kind == "already_vectorized":
         return [([],), ([2.0],), ([1.0, -1.0, 3.0],),
                 _case(kind, seed + 10001, 13)]
+    if kind == "pair_sum_count":
+        return [([], 0), ([3], 6), ([3, 3, 3], 6), ([-2, 1, 4, 4], 2),
+                _case(kind, seed + 10001, 13)]
+    if kind == "range_counts":
+        return [([], []), ([2, 2, -1], [(-1, 2), (2, 2), (3, 1)]),
+                ([4], []), _case(kind, seed + 10001, 13)]
+    if kind == "sliding_minimum":
+        return [([], 3), ([5], 1), ([3, 1, 2, 0], 2),
+                ([1, 2], 5), _case(kind, seed + 10001, 13)]
+    if kind == "running_median":
+        return [([],), ([2],), ([5, 1, 5, -1],),
+                _case(kind, seed + 10001, 13)]
+    if kind == "inversion_count":
+        return [([],), ([1],), ([1, 2, 3],), ([3, 2, 1],),
+                ([2, 2, 1, 1],), _case(kind, seed + 10001, 13)]
     raise ValueError(f"Unknown speedup kind: {kind}")
 
 
