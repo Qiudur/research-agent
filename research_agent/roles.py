@@ -5,7 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Mapping
 
-from .model import ModelClient
+from .experience_script import writer_mode
+from .model import DEFAULT_THINKING_SWITCH_STYLE, ModelClient, check_thinking_switch_style, parse_role_controls
 
 
 def _object(properties: dict[str, Any]) -> dict[str, Any]:
@@ -93,6 +94,11 @@ class RoleAgents:
             raise ValueError("Unknown agent config schema")
         self.model = model
         self.effort = dict(config["effort"])
+        # Optional agent/1 keys; absent means every role behaves exactly as before.
+        self.role_controls = parse_role_controls(config)
+        self.thinking_switch_style = check_thinking_switch_style(
+            config.get("thinking_switch_style", DEFAULT_THINKING_SWITCH_STYLE))
+        writer_mode(config)  # a typo in experience_writer should fail now, not after the budget is spent
         self.prompts: dict[str, str] = {}
         resolved_root = project_root.resolve()
         for role in ("planner", "executor", "diagnoser", "summarizer"):
@@ -109,6 +115,13 @@ class RoleAgents:
                 raise ValueError(f"Empty prompt for {role}")
             self.prompts[role] = prompt
 
+    def _controls(self, role: str) -> dict[str, Any]:
+        """Per-call limits from role_controls; empty (no new arguments) by default."""
+        controls = dict(self.role_controls.get(role, {}))
+        if controls.get("thinking") is False:
+            controls["thinking_switch_style"] = self.thinking_switch_style
+        return controls
+
     def _call(self, role: str, purpose: str, payload: Mapping[str, Any], node_id: str | None) -> dict[str, Any]:
         return self.model.call_json(
             role=role,
@@ -118,6 +131,7 @@ class RoleAgents:
             payload=payload,
             schema=SCHEMAS[purpose],
             node_id=node_id,
+            **self._controls(role),
         ).data
 
     def plan(self, payload: Mapping[str, Any], *, node_id: str | None = None) -> dict[str, Any]:

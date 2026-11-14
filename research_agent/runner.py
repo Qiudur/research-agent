@@ -467,6 +467,8 @@ class TaskRunner:
         return decision
 
     def _summarize(self) -> None:
+        from . import experience_script  # local on purpose: keeps this change inside _summarize
+
         compact = []
         for node in self.tree.all_nodes():
             if node["origin"] == "root":
@@ -476,22 +478,28 @@ class TaskRunner:
                 "status": node["status"], "score": node["score"]["dev"] if node["score"] else None,
                 "cost": node["cost"], "failure": node["failure"], "cites": node["cites"],
             })
-        cited_ids = {entry_id for node in compact for entry_id in node["cites"]}
-        cited_entries = []
-        for entry_id in sorted(cited_ids):
-            entry = self.library.get(entry_id)
-            cited_entries.append({
-                "id": entry_id, "conditions": entry["conditions"], "action": entry["action"],
-                "triggers": entry["triggers"], "status": entry["status"], "effect": entry["effect"],
+        if experience_script.writer_mode(self.config) == "script":
+            # No model call, so no tokens and no reserve gate: drafts come from the tree.
+            drafts = experience_script.drafts_from_tree(
+                self.tree, scenario=self.context["scenario"], features=self.context["features"])
+            narrowings: list[Any] = []
+        else:
+            cited_ids = {entry_id for node in compact for entry_id in node["cites"]}
+            cited_entries = []
+            for entry_id in sorted(cited_ids):
+                entry = self.library.get(entry_id)
+                cited_entries.append({
+                    "id": entry_id, "conditions": entry["conditions"], "action": entry["action"],
+                    "triggers": entry["triggers"], "status": entry["status"], "effect": entry["effect"],
+                })
+            result = self._role("summarize", {
+                "scenario": self.context["scenario"], "features": self.context["features"],
+                "task_id": self.task_id, "experiments": compact[-40:],
+                "cited_entries": cited_entries,
+                "best": {"node_id": self.tree.best_node()["node_id"], "score": self.tree.best_node()["score"]["dev"]},
             })
-        result = self._role("summarize", {
-            "scenario": self.context["scenario"], "features": self.context["features"],
-            "task_id": self.task_id, "experiments": compact[-40:],
-            "cited_entries": cited_entries,
-            "best": {"node_id": self.tree.best_node()["node_id"], "score": self.tree.best_node()["score"]["dev"]},
-        })
-        drafts = result.get("drafts", [])
-        narrowings = result.get("narrowings", [])
+            drafts = result.get("drafts", [])
+            narrowings = result.get("narrowings", [])
         if not isinstance(drafts, list) or not isinstance(narrowings, list):
             raise ValueError("Summarizer must return arrays of drafts and narrowings")
         if not drafts and not narrowings:
