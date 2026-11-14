@@ -33,7 +33,9 @@ def digest(path: Path) -> str:
 
 class FormalOutputAuditTests(unittest.TestCase):
     def fixture(self, root: Path, *, admitted: bool = True,
-                second_candidate: bool = False) -> tuple[Path, Path, dict]:
+                second_candidate: bool = False,
+                over_unit: int | None = None) -> tuple[Path, Path, dict]:
+        """over_unit sets the per-task token cost of exam naive rep 1 (budget is 40,000)."""
         root = root.resolve()
         tasks = {tier: [f"spd-{tier}-{number}" for number in range(count)]
                  for tier, count in (("practice", 10), ("validation", 4), ("exam", 10))}
@@ -110,6 +112,9 @@ class FormalOutputAuditTests(unittest.TestCase):
                     "schema": "task_report/1", "run_id": run_id,
                     "task_id": task_id, "currency": "TOKENS",
                     "holdout_score": score, "total_cost": float(unit),
+                    "holdout_failed": False,
+                    "budget": 40_000.0, "budget_violation": unit > 40_000,
+                    "budget_excess": max(0.0, unit - 40_000.0),
                     "tokens": tokens, "model_calls": 1,
                     "cost_by_role": {role: float(unit) if role == "planner" else 0.0
                                      for role in ROLES},
@@ -245,6 +250,8 @@ class FormalOutputAuditTests(unittest.TestCase):
             for rep in (1, 2, 3):
                 for config in members:
                     unit = 10 if config == "tuned_lib" else 20
+                    if over_unit is not None and (tier, config, rep) == ("exam", "naive", 1):
+                        unit = over_unit
                     score = 1.0 if config == "tuned_lib" and admitted else 0.0
                     if config == "tuned_lib" and not admitted:
                         score = -1.0
@@ -294,8 +301,23 @@ class FormalOutputAuditTests(unittest.TestCase):
                 self.assertEqual(timestamps, {path: path.stat().st_mtime_ns
                                               for path in timestamps})
 
+    def test_over_budget_tasks_are_reported_not_assumed_zero(self):
+        with TemporaryDirectory() as temp:
+            clean, study, _ = self.fixture(Path(temp) / "clean")
+            self.assertEqual(audit_formal_outputs(clean, study)["over_budget_tasks"], 0)
+        with TemporaryDirectory() as temp:
+            batch, study, info = self.fixture(Path(temp), over_unit=40_001)
+            audit = audit_formal_outputs(batch, study)
+            self.assertTrue(audit["ready"])
+            self.assertEqual(audit["over_budget_tasks"], 10)
+            self.assertEqual({item["task_id"] for item in audit["over_budget"]},
+                             set(info["tasks"]["exam"]))
+            self.assertEqual({item["excess"] for item in audit["over_budget"]}, {1.0})
+            self.assertEqual(len({item["run_id"] for item in audit["over_budget"]}), 1)
+
     def test_task_over_budget_and_report_tampering_fail(self):
         with TemporaryDirectory() as temp:
+            # The ledger shows an overspend that the saved report does not admit to.
             batch, study, info = self.fixture(Path(temp))
             row = info["root"] / "runs" / json.loads(
                 (batch / "batch_report.json").read_text())["runs"][0]["run_id"]
@@ -305,7 +327,37 @@ class FormalOutputAuditTests(unittest.TestCase):
             events[1]["tokens"]["input"] = 40_001
             events[1]["cost"] = 40_001.0
             write_jsonl(ledger, events)
-            with self.assertRaisesRegex(ValueError, "exceeds 40,000"):
+            with self.assertRaisesRegex(ValueError, "budget-violation record differs"):
+                audit_formal_outputs(batch, study)
+
+        with TemporaryDirectory() as temp:
+            # A saved report may not claim a violation the ledger does not show.
+            batch, study, info = self.fixture(Path(temp))
+            row = info["root"] / "runs" / json.loads(
+                (batch / "batch_report.json").read_text())["runs"][0]["run_id"]
+            report = _read(row / "report.json")
+            report["tasks"][0]["budget_violation"] = True
+            report["tasks"][0]["budget_excess"] = 5.0
+            write_json(row / "report.json", report)
+            with self.assertRaisesRegex(ValueError, "budget-violation record differs"):
+                audit_formal_outputs(batch, study)
+
+        with TemporaryDirectory() as temp:
+            # Partial batches and unscored holdouts fail closed with their own reason.
+            batch, study, info = self.fixture(Path(temp))
+            saved = _read(batch / "batch_report.json")
+            saved["status"] = "partial"
+            write_json(batch / "batch_report.json", saved)
+            with self.assertRaisesRegex(ValueError, "partial"):
+                audit_formal_outputs(batch, study)
+        with TemporaryDirectory() as temp:
+            batch, study, info = self.fixture(Path(temp))
+            row = info["root"] / "runs" / json.loads(
+                (batch / "batch_report.json").read_text())["runs"][0]["run_id"]
+            report = _read(row / "report.json")
+            report["tasks"][0]["holdout_failed"] = True
+            write_json(row / "report.json", report)
+            with self.assertRaisesRegex(ValueError, "holdout failed"):
                 audit_formal_outputs(batch, study)
 
         with TemporaryDirectory() as temp:

@@ -159,6 +159,31 @@ class EvaluationCliTests(unittest.TestCase):
                              root / "batches/selected/agent.json")
             self.assertEqual(json.loads(output.getvalue())["reports"]["exam"], 12)
 
+    @patch("evaluation.cli.formal_preflight", return_value={"schema": "formal_preflight/1", "ready": True})
+    def test_partial_batch_is_reported_with_failures_and_a_distinct_exit_code(self, readiness):
+        with TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            self.setup_project(root)
+            partial = {"status": "partial", "admission": {"claim": "incomplete"},
+                       "reports": {"practice": [{}] * 11, "validation": [], "exam": []},
+                       "failed_runs": [{"run_id": "run-1", "config": "naive", "rep": 3,
+                                        "logical_phase": "practice", "error": "boom"}],
+                       "skipped_runs": [{}, {}], "holdout_failures": [{}],
+                       "budget_violations": [], "tuned_exam_skipped": True}
+            output = StringIO()
+            with patch("evaluation.cli.execute_batch", return_value=partial):
+                with redirect_stdout(output):
+                    code = main(["batch", *self.common(root),
+                                 "--tuned-config", "batches/selected/agent.json",
+                                 "--batch-dir", "batches/batch-1", "--exam"])
+            self.assertEqual(code, 3)  # batch_report.json exists but the batch is not complete
+            shown = json.loads(output.getvalue())
+            self.assertEqual(shown["status"], "partial")
+            self.assertEqual(shown["failed_runs"][0]["run_id"], "run-1")
+            self.assertEqual((shown["skipped_runs"], shown["holdout_failures"],
+                              shown["budget_violations"]), (2, 1, 0))
+            self.assertEqual(shown["admission"]["claim"], "incomplete")
+
     def test_figures_dispatch_and_runtime_exit_code(self):
         with patch("evaluation.cli.figures.main", return_value=0) as render:
             code = main(["figures", "--batch-dir", "batches/batch-1",

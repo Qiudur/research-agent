@@ -167,7 +167,9 @@ def _candidate(root: Path, descriptor: dict) -> Path:
 
 def _audit_run(root: Path, run_id: str, *, phase: str, config: str, rep: int,
                task_ids: list[str], bank_version: str, commit: str,
-               price_sha: str, selected_config: Path | None = None) -> dict:
+               price_sha: str, selected_config: Path | None = None,
+               violations: list[dict] | None = None) -> dict:
+    """Audit one run; token overspend is reported in ``violations``, not assumed absent."""
     _require(isinstance(run_id, str) and RUN_ID.fullmatch(run_id) is not None,
              f"Invalid run ID: {run_id}")
     run_dir = (root / "runs" / run_id).resolve()
@@ -233,7 +235,18 @@ def _audit_run(root: Path, run_id: str, *, phase: str, config: str, rep: int,
                 usage[key] += buckets[key]
             role_cost[call["role"]] += cost
         cost = float(sum(usage.values()))
-        _require(cost <= TASK_BUDGET, f"Task exceeds 40,000 tokens: {run_id}/{task_id}")
+        _require(task.get("holdout_failed") is not True and ends[0].get("holdout_failed") is not True,
+                 f"Task holdout failed and has no score; the formal audit needs scored holdouts: {run_id}/{task_id}")
+        over = cost > TASK_BUDGET
+        excess = max(0.0, cost - TASK_BUDGET)
+        stated = task.get("budget_excess", 0.0)
+        _require(task.get("budget_violation", False) is over
+                 and type(stated) in (int, float) and math.isfinite(stated)
+                 and math.isclose(float(stated), excess, rel_tol=0, abs_tol=1e-9),
+                 f"Task budget-violation record differs from its ledger: {run_id}/{task_id}")
+        if over and violations is not None:
+            violations.append({"run_id": run_id, "task_id": task_id,
+                               "total_cost": cost, "budget": TASK_BUDGET, "excess": excess})
         _equal_cost(task.get("total_cost"), cost, f"{run_id}/{task_id} report")
         _equal_cost(ends[0].get("total_cost"), cost, f"{run_id}/{task_id} task_end")
         score = task.get("holdout_score")
@@ -281,7 +294,8 @@ def _audit_run(root: Path, run_id: str, *, phase: str, config: str, rep: int,
 
 
 def _audit_study(root: Path, study_dir: Path, tasks: list[str], bank_version: str,
-                 commit: str, price_sha: str) -> tuple[Path, dict]:
+                 commit: str, price_sha: str,
+                 violations: list[dict] | None = None) -> tuple[Path, dict]:
     plan = _json(study_dir / "auto_plan.json")
     study = _json(study_dir / "auto_self_research_report.json")
     _require(plan.get("schema") == "auto_self_research_plan/1"
@@ -355,7 +369,8 @@ def _audit_study(root: Path, study_dir: Path, tasks: list[str], bank_version: st
                                 config="default_lib" if name == "default" else "tuned_lib",
                                 rep=attempt["rep"], task_ids=tasks,
                                 bank_version=bank_version, commit=commit,
-                                price_sha=price_sha, selected_config=config_path)
+                                price_sha=price_sha, selected_config=config_path,
+                                violations=violations)
             _require(_json(root / "runs" / run_id / "manifest.json").get("model") == model,
                      f"Proposal and task models differ: {run_id}")
             _require(report == by_id.get(run_id)
@@ -467,6 +482,10 @@ def audit_formal_outputs(batch_dir: Path, auto_study_dir: Path) -> dict:
              and plan.get("label") == batch.get("label") == "FORMAL"
              and plan.get("bank_version") == batch.get("bank_version") == bank.get("version"),
              "Formal batch or frozen bank identity differs")
+    # batch_report.json written before status existed has no field and was always complete.
+    _require(batch.get("status", "complete") == "complete",
+             "Batch report is partial (failed or skipped runs); a complete batch is required")
+    violations: list[dict] = []
     version = bank["version"]
     _require(isinstance(version, str) and re.fullmatch(r"bank-v[1-9][0-9]*", version)
              and isinstance(bank.get("tasks"), list)
@@ -517,7 +536,7 @@ def audit_formal_outputs(batch_dir: Path, auto_study_dir: Path) -> dict:
     _require(local_attempt.get("schema") == "exam_attempt/1"
              and local_attempt.get("label") == "FORMAL", "Batch exam attempt marker differs")
     chosen_path, study = _audit_study(root, study_dir, expected_tasks["practice"],
-                                      version, commit, price_sha)
+                                      version, commit, price_sha, violations)
     _require(str(chosen_path) in sealed and sealed[str(chosen_path)] ==
              study["selected_config_sha256"],
              "Selected config is not sealed in batch plan")
@@ -574,7 +593,8 @@ def audit_formal_outputs(batch_dir: Path, auto_study_dir: Path) -> dict:
         report = _audit_run(root, run_id, phase=tier, config=config, rep=rep,
                             task_ids=expected_tasks[tier], bank_version=version,
                             commit=commit, price_sha=price_sha,
-                            selected_config=chosen_path if config == "tuned_lib" else None)
+                            selected_config=chosen_path if config == "tuned_lib" else None,
+                            violations=violations)
         manifest = _json(root / "runs" / run_id / "manifest.json")
         _require(manifest.get("model") == study["model"],
                  f"Batch and self-research models differ: {run_id}")
@@ -620,7 +640,9 @@ def audit_formal_outputs(batch_dir: Path, auto_study_dir: Path) -> dict:
             "study_runs": study["runs"], "study_task_cost": study["task_cost"],
             "proposal_cost": study["proposal_cost"], "total_research_cost": study["total_cost"],
             "selected_config_sha256": study["selected_config_sha256"],
-            "admission": admission["claim"], "over_budget_tasks": 0}
+            "admission": admission["claim"],
+            # Reported, never assumed zero: each entry is a protocol violation.
+            "over_budget_tasks": len(violations), "over_budget": violations}
 
 
 def main() -> int:

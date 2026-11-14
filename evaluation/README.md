@@ -44,6 +44,8 @@ TEST-only 模式允许脚本角色与临时预算，但底层 manifest 的 phase
 
 `evaluation.report` 从账本、实验树和 holdout 文件提取带序号证据的任务/运行报告；`evaluation.compare.compare_configurations` 实现原定三遍判定：每个配置恰好重复 1、2、3，三次方向一致且平均差距超过配置内波动才报告 `better`，否则 `no_clear_difference`。
 
+`evaluation.finalize.finish_task` 在最佳节点 `solution.py` 的私有副本（`holdout_candidate/<节点>/`）上做唯一一次 holdout，打分前后核对原文件仍在且 SHA-256 与封存记录一致；评分器抛错、文件缺失或被改、B 返回无效都记入 `holdout_score.json`（`score: null`）并让 `task_end` 带 `holdout_failed: true`，不使运行崩溃，一次性标记不变、不重试。基线（n0000）另在同一份 holdout 上打一次参照分写入 `baseline_holdout.json`，`task_end` 带 `baseline_holdout_score`、`baseline_holdout_raw` 和 `holdout_raw_lift`。`evaluation.report` 的任务报告对应带 `holdout_failed`、`holdout_raw_lift`、`budget_violation`、`budget_excess`，运行报告汇总 `holdout_failures` 与 `budget_violations`；正式 token 模式下单题超预算只记违规，账本单位不一致或预算无效才拒绝。`evaluation.comparable` 的 `comparable_reports` 把 holdout 失败的题从同组所有运行里剔除并列明，`admit_complete` 在运行不齐全时返回 claim 为 `incomplete`（比较逻辑 `compare.py` 不变）。`execute_batch` 把单个运行的失败隔离进 `batch_report.json` 的 `failed_runs`/`skipped_runs`，其余运行继续，批次结束一定写出 batch_report，并带 `status: complete|partial`。
+
 `evaluation.admission.admit_configuration` 是验证集准入闸门：候选配置必须在三次配对运行中每次得分不低于默认配置，且平均成本更低，才返回 `admitted`；它与只比较分数的 `compare_configurations` 分开，避免把更高分但更贵的配置误当成可替换版本。
 
 本地 `tests/fixtures/prices_test_only.json` 与 `test_only_budget` 只用于无 API 凭据的集成联调，货币标为 `TEST`，manifest 强制只允许 `dev`。根目录 `config/prices.json` 保持未填价格，不能用于正式运行。正式考试需要 C 写入真实价格、模型和预算，并把能力库冻结。

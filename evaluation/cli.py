@@ -239,13 +239,19 @@ def main(argv: list[str] | None = None) -> int:
                     run_exam=args.exam, max_workers=args.workers)
             output = {"schema": "cli_result/1", "command": args.command,
                       "batch_dir": str(_within(root, args.batch_dir)),
+                      "status": result.get("status", "complete"),
                       "admission": result["admission"],
                       "reports": {tier: len(rows) for tier, rows in result["reports"].items()},
+                      "failed_runs": result.get("failed_runs", []),
+                      "skipped_runs": len(result.get("skipped_runs", [])),
+                      "holdout_failures": len(result.get("holdout_failures", [])),
+                      "budget_violations": len(result.get("budget_violations", [])),
                       "tuned_exam_skipped": result["tuned_exam_skipped"],
                       "accounting_scope": readiness.get("accounting_scope"),
                       "accounting_note": readiness.get("accounting_note")}
         print(json.dumps(output, ensure_ascii=False, indent=2))
-        return 0
+        # A partial batch still wrote batch_report.json; exit 3 tells scripts to look.
+        return 0 if output.get("status", "complete") == "complete" else 3
     except (ValueError, OSError, KeyError, TypeError, RuntimeError) as exc:
         print(json.dumps({"schema": "cli_error/1", "error": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 2

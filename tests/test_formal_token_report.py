@@ -42,14 +42,43 @@ class FormalTokenReportTests(unittest.TestCase):
         node = {"node_id": "n0000", "status": "accepted", "library_version": "lib-0"}
         return run, task_id, ledger, node
 
-    def test_over_budget_real_tokens_block_formal_report(self):
+    def test_over_budget_real_tokens_are_reported_not_fatal(self):
         with TemporaryDirectory() as temp:
             run, task_id, ledger, node = self.report_fixture(Path(temp),
                                                               cost=40_001, budget=40_000)
             with patch("evaluation.report.Ledger.open", return_value=ledger):
                 with patch("evaluation.report._latest_nodes", return_value={"n0000": node}):
+                    with patch("evaluation.report._verify_replay_context",
+                               return_value={"max_output_tokens": 2048}) as verify:
+                        report = task_report(run, task_id)
+                        # The sealed replay is still verified: only the budget rule relaxed.
+                        verify.assert_called_once()
+            self.assertTrue(report["budget_violation"])
+            self.assertEqual(report["budget_excess"], 1.0)
+            self.assertEqual(report["budget"], 40_000.0)
+            self.assertEqual(report["total_cost"], 40_001)
+
+    def test_within_budget_is_not_a_violation(self):
+        with TemporaryDirectory() as temp:
+            for cost in (12_000, 40_000):
+                run, task_id, ledger, node = self.report_fixture(Path(temp) / str(cost),
+                                                                  cost=cost, budget=40_000)
+                with patch("evaluation.report.Ledger.open", return_value=ledger):
+                    with patch("evaluation.report._latest_nodes", return_value={"n0000": node}):
+                        with patch("evaluation.report._verify_replay_context",
+                                   return_value={"max_output_tokens": 2048}):
+                            report = task_report(run, task_id)
+                self.assertFalse(report["budget_violation"])
+                self.assertEqual(report["budget_excess"], 0.0)
+
+    def test_missing_budget_or_unit_mismatch_still_blocks_formal_report(self):
+        with TemporaryDirectory() as temp:
+            run, task_id, ledger, node = self.report_fixture(Path(temp), cost=100, budget=40_000)
+            ledger._events()[0]["budget"] = None
+            with patch("evaluation.report.Ledger.open", return_value=ledger):
+                with patch("evaluation.report._latest_nodes", return_value={"n0000": node}):
                     with patch("evaluation.report._verify_replay_context") as verify:
-                        with self.assertRaisesRegex(ValueError, "exceeded its budget"):
+                        with self.assertRaisesRegex(ValueError, "invalid budget"):
                             task_report(run, task_id)
                         verify.assert_not_called()
 
