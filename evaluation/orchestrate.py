@@ -16,9 +16,23 @@ from research_agent.model import ModelClient
 from research_agent.replay import selected_library_settings, write_replay_context
 from research_agent.roles import RoleAgents
 from research_agent.runner import TaskRunner
+from token_accounting import require_exact_token_accounting
 
 from .finalize import assert_not_in_eval_window, finish_task
 from .quote import make_quote_callback
+
+
+def _internal_token_limits(prices: dict, model: str, task: dict) -> dict | None:
+    """Match the measured token study's per-call budget controls."""
+    if prices.get("currency") != "TOKENS":
+        return None
+    require_exact_token_accounting(prices, model)
+    budget = task.get("budget", {}).get("money")
+    if (isinstance(budget, bool) or not isinstance(budget, (int, float))
+            or not math.isfinite(budget) or budget <= 0):
+        raise ValueError("Internal token study needs a positive task budget")
+    return {"max_output_tokens": 2048, "budget_limit": float(budget),
+            "reserve_cost": float(budget) * 0.3}
 
 
 class _TestBudgetHarness:
@@ -65,6 +79,10 @@ def execute_task(
             "schema": "test_controls/1", "label": "TEST ONLY - no real monetary budget",
             "budget": float(test_only_budget), "currency": "TEST",
         }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    token_limits = _internal_token_limits(ledger.prices, manifest["model"],
+                                          scored_harness.load_task(task_id))
+    if token_limits is not None:
+        max_output_tokens = min(max_output_tokens, token_limits["max_output_tokens"])
     baseline_dir = run_dir / "tasks" / task_id / "nodes" / "n0000"
     baseline_dir.mkdir(parents=True, exist_ok=False)
     shutil.copyfile(Path(baseline_solution), baseline_dir / "solution.py")
@@ -81,7 +99,11 @@ def execute_task(
     with selected_library_settings(config_path, triggers_path):
         library = Library.open(library_root, frozen=bool(manifest["library"]["frozen"]))
         if roles is None:
-            roles = RoleAgents(ModelClient(manifest["model"], ledger, max_output_tokens=max_output_tokens),
+            model_kwargs = {"max_output_tokens": max_output_tokens}
+            if token_limits is not None:
+                model_kwargs.update(budget_limit=token_limits["budget_limit"],
+                                    reserve_cost=token_limits["reserve_cost"])
+            roles = RoleAgents(ModelClient(manifest["model"], ledger, **model_kwargs),
                                config, project_root=project_root)
         outcome = TaskRunner(
             run_dir=run_dir, task_id=task_id, harness=scored_harness, ledger=ledger,

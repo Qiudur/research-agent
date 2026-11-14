@@ -100,6 +100,10 @@ def formal_preflight(
             accounting_note = "自选 token 预算的内部冻结题库研究；非现金节省、非官方比赛成绩。"
     except (ValueError, OSError, KeyError, TypeError, json.JSONDecodeError) as exc:
         blockers.append(f"Price table: {exc}")
+    if (model == "qwen3.5-27b" and accounting_scope == "internal_token_study"
+            and os.environ.get("OPENAI_BASE_URL", "").rstrip("/")
+            != "https://ai-gateway.ailab.jiuan.com/v1"):
+        blockers.append("OPENAI_BASE_URL must point to the authorized Qwen study gateway")
     try:
         bank = _json(root / "tasks/bank.json")
         bank_version = bank.get("version")

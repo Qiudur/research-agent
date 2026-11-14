@@ -16,6 +16,28 @@ SHA = "a" * 40
 
 
 class EvaluationCliTests(unittest.TestCase):
+    def test_qwen_token_study_requires_authorized_gateway(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            self.setup_project(root)
+            (root / "config").mkdir()
+            prices = root / "config/prices.json"
+            prices.write_text(json.dumps({
+                "schema": "prices/1", "currency": "TOKENS", "unit_tokens": 1,
+                "models": {"qwen3.5-27b": {key: 1 for key in
+                           ("input", "cached_input", "output", "reasoning")}},
+            }), encoding="utf-8")
+            args = dict(project_root=root, model="qwen3.5-27b", prices_path=prices,
+                        code_commit=SHA, default_config=root / "config/missing.json")
+            with patch.dict(os.environ, {"OPENAI_API_KEY": "test-only",
+                                      "OPENAI_BASE_URL": "https://wrong.invalid/v1"}):
+                result = formal_preflight(**args)
+                self.assertTrue(any("OPENAI_BASE_URL" in item for item in result["blockers"]))
+            with patch.dict(os.environ, {"OPENAI_API_KEY": "test-only",
+                                      "OPENAI_BASE_URL": "https://ai-gateway.ailab.jiuan.com/v1"}):
+                result = formal_preflight(**args)
+                self.assertFalse(any("OPENAI_BASE_URL" in item for item in result["blockers"]))
+
     def test_formal_preflight_marks_valid_token_accounting_as_internal(self):
         with TemporaryDirectory() as temp:
             root = Path(temp).resolve()

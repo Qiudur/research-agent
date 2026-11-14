@@ -8,7 +8,7 @@ import unittest
 
 from evaluation.finalize import finish_run, start_run
 from evaluation.manifest import create_manifest
-from evaluation.orchestrate import execute_task
+from evaluation.orchestrate import _internal_token_limits, execute_task
 from evaluation.report import run_report
 from ledger import Ledger
 from pilot.harness import PilotHarness, TASK_ID, WORKSPACE
@@ -30,6 +30,20 @@ class HoldoutPilot(PilotHarness):
 
 
 class OrchestrateTests(unittest.TestCase):
+    def test_internal_token_limits_match_calibration_protocol(self):
+        prices = {"currency": "TOKENS", "unit_tokens": 1,
+                  "models": {"qwen3.5-27b": {bucket: 1 for bucket in
+                              ("input", "cached_input", "output", "reasoning")}}}
+        task = {"budget": {"money": 40_000}}
+        self.assertEqual(_internal_token_limits(prices, "qwen3.5-27b", task),
+                         {"max_output_tokens": 2048, "budget_limit": 40_000.0,
+                          "reserve_cost": 12_000.0})
+        with self.assertRaisesRegex(ValueError, "positive task budget"):
+            _internal_token_limits(prices, "qwen3.5-27b", {"budget": {"money": None}})
+        prices["models"]["qwen3.5-27b"]["reasoning"] = 2
+        with self.assertRaisesRegex(ValueError, "unit_tokens=1"):
+            _internal_token_limits(prices, "qwen3.5-27b", task)
+
     def test_model_json_error_still_reaches_one_holdout_and_report(self):
         with TemporaryDirectory() as temp:
             root = Path(temp)
