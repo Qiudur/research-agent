@@ -242,7 +242,7 @@ class TaskRunner:
         payload = {
             "task": self.context,
             "ability_brief": self.library.brief(entries),
-            "available_entry_ids": [entry["id"] for entry in entries],
+            "available_entry_ids": [entry["id"] for entry in self.library.brief_entries(entries)],
             "best": {"node_id": self.tree.best_node()["node_id"], "score": self.tree.best_node()["score"]["dev"]},
             "recent_experiments": recent,
             "budget": {"total": self.scheduler.budget, "spent": self._spent(), "remaining_to_cap": self.scheduler.budget_remaining(self._spent())},
@@ -544,6 +544,10 @@ class TaskRunner:
             self.reviewed_behind = True
         return decision
 
+    def _script_experiences(self) -> bool:
+        from . import experience_script
+        return experience_script.writer_mode(self.config) == "script"
+
     def _summarize(self) -> None:
         from . import experience_script  # local on purpose: keeps this change inside _summarize
 
@@ -660,6 +664,7 @@ class TaskRunner:
             if original.is_file():
                 save_solution(node_directory(self.run_dir, self.task_id, "n0000"), original.read_text(encoding="utf-8"))
         reason = "planner"
+        summarized = False
         try:
             while True:
                 best = self.tree.best_node()
@@ -727,8 +732,10 @@ class TaskRunner:
                         if decision == "switch":
                             self.allocations.clear()
                         self.reviewed_behind = False
-            if self._elapsed() < self.scheduler.wall_seconds and self._spent() < self.scheduler.budget:
+            if self._script_experiences() or (
+                    self._elapsed() < self.scheduler.wall_seconds and self._spent() < self.scheduler.budget):
                 self._summarize()
+                summarized = True
         except BudgetReserveError:
             reason = "budget_cap"
         except ModelCallError:
@@ -739,6 +746,14 @@ class TaskRunner:
             reason = "error"
             self._emit("stop", reason=reason, best_node=self.tree.best_node()["node_id"], dev_score=self.tree.best_node()["score"]["dev"])
             raise RuntimeError(f"Task {self.task_id} failed after {self.completed} experiments") from exc
+        if not summarized and self._script_experiences():
+            # Script-written experiences cost no tokens, so a budget, time or provider
+            # stop must not skip them the way it skips the summarizer's model call.
+            try:
+                self._summarize()
+            except Exception as exc:
+                self._emit("stop", reason="error", best_node=self.tree.best_node()["node_id"], dev_score=self.tree.best_node()["score"]["dev"])
+                raise RuntimeError(f"Task {self.task_id} failed while writing experiences") from exc
         self._emit("stop", reason=reason, best_node=self.tree.best_node()["node_id"], dev_score=self.tree.best_node()["score"]["dev"])
         best = self.tree.best_node()
         return TaskOutcome(self.run_id, self.task_id, reason, best["node_id"], best["score"]["dev"], self._spent(), self.completed, self.library.version, self.predicted)

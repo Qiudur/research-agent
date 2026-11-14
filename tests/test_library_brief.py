@@ -153,7 +153,7 @@ class PlannerPayloadTests(unittest.TestCase):
             brief, available = roles.briefs[0]
             self.assertEqual([line[:10] for line in brief.splitlines()], ["[exp-0001]"])
             self.assertLessEqual(len(brief), 60)
-            self.assertIn("exp-0002", available)  # the id list is not filtered by the brief
+            self.assertEqual(available, ["exp-0001"])  # citable ids follow what the brief shows
 
 
 if __name__ == "__main__":

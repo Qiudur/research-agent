@@ -27,6 +27,7 @@ def _number(value: Any, name: str) -> float:
 SCENARIO_KEYS = ("spd", "tab")  # task_id prefixes: spd-... and tab-...
 STOP_LOSS_KEYS = ("first_n_no_gain", "consecutive_no_gain")
 PLANNER_MODES = ("standard", "lean")
+SUMMARIZER_RESERVES = ("standard", "worst_case")
 BASELINE_NODE_ID = "n0000"
 MAX_STOP_LOSS_NODES = 100
 MAX_HYPOTHESES_PER_PLAN = 20
@@ -72,6 +73,9 @@ def validate_options(config: Mapping[str, Any]) -> None:
     mode = config.get("planner_mode")
     if mode is not None and mode not in PLANNER_MODES:
         raise ScheduleError(f"planner_mode must be one of {list(PLANNER_MODES)}")
+    reserve = config.get("summarizer_reserve")
+    if reserve is not None and reserve not in SUMMARIZER_RESERVES:
+        raise ScheduleError(f"summarizer_reserve must be one of {list(SUMMARIZER_RESERVES)}")
     per_plan = config.get("hypotheses_per_plan")
     if per_plan is not None:
         _bounded_int(per_plan, "hypotheses_per_plan", 1, MAX_HYPOTHESES_PER_PLAN)

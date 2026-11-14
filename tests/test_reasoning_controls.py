@@ -119,6 +119,7 @@ class SummarizerReserveTests(unittest.TestCase):
     """The token study holds every call to a 12,000-token reserve (30% of 40,000)."""
 
     def summarize(self, ledger, fake, **kwargs):
+        kwargs.setdefault("wrapup_reserve", True)  # agent/1 summarizer_reserve: "worst_case"
         client = ModelClient("m", ledger, client=fake, clock=lambda: 1.0, max_output_tokens=2048,
                              budget_limit=40_000, reserve_cost=12_000)
         return client.call_json(role="summarizer", purpose="summarize", effort="low",
@@ -136,6 +137,13 @@ class SummarizerReserveTests(unittest.TestCase):
         client = self.plain_client(ledger, fake)
         with self.assertRaises(BudgetReserveError):
             call(client)
+        self.assertEqual(fake.responses.requests, [])
+
+    def test_without_opt_in_the_summarizer_keeps_the_full_reserve(self):
+        ledger, fake = FakeLedger(), FakeClient(response({"drafts": [], "narrowings": []}))
+        ledger.money = 30_000
+        with self.assertRaises(BudgetReserveError):
+            self.summarize(ledger, fake, payload={"experiments": []}, wrapup_reserve=False)
         self.assertEqual(fake.responses.requests, [])
 
     def test_summarizer_runs_after_the_experiments_spent_past_28000(self):
@@ -332,15 +340,17 @@ class ScriptedGateway:
 class SummarizerAfterBudgetSpentTests(unittest.TestCase):
     """The reported bug: past 28,000 tokens the gate refused the summarizer, so no experience was written."""
 
-    def run_task(self, root, gateway):
+    WORST_CASE = {**CONFIG, "summarizer_reserve": "worst_case"}
+
+    def run_task(self, root, gateway, config=WORST_CASE):
         ledger = TokenLedger()
         model = ModelClient("m", ledger, client=gateway, clock=lambda: 1.0, max_output_tokens=2048,
                             budget_limit=40_000, reserve_cost=12_000)
-        roles = RoleAgents(model, CONFIG, project_root=ROOT)
+        roles = RoleAgents(model, config, project_root=ROOT)
         library = Library.open(root / "runs/run-test/library")
         outcome = TaskRunner(run_dir=root / "runs/run-test", task_id="tab-sample",
                              harness=FakeHarness(root, money=40_000), ledger=ledger, roles=roles,
-                             library=library, baseline_score=score(0.1), config=CONFIG,
+                             library=library, baseline_score=score(0.1), config=config,
                              hard_caps=CAPS).run()
         return outcome, ledger, library
 
@@ -358,6 +368,20 @@ class SummarizerAfterBudgetSpentTests(unittest.TestCase):
             self.assertEqual(len(library.entries), 1)
             self.assertEqual(ledger.money, 32_500)
             self.assertTrue(any(e["kind"] == "library" and e["op"] == "write" for e in ledger.events))
+
+    def test_default_config_keeps_the_old_gate(self):
+        with TemporaryDirectory() as temp:
+            gateway = ScriptedGateway()
+            outcome, ledger, library = self.run_task(Path(temp), gateway, config=CONFIG)
+            self.assertNotIn("summarizer_summarize",
+                             [request["text"]["format"]["name"] for request in gateway.requests])
+            self.assertEqual(outcome.reason, "budget_cap")
+            self.assertEqual(ledger.money, 30_000)
+            self.assertEqual(len(library.entries), 0)
+
+    def test_unknown_summarizer_reserve_is_rejected(self):
+        with self.assertRaises(ValueError):
+            RoleAgents(object(), {**CONFIG, "summarizer_reserve": "bogus"}, project_root=ROOT)
 
     def test_a_summary_that_cannot_fit_is_skipped_and_the_task_stays_in_budget(self):
         class LateExpensivePlan(ScriptedGateway):

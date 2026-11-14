@@ -392,6 +392,28 @@ class ScriptModeIgnoresTheReserveGateTests(unittest.TestCase):
             self.assertEqual(ledger.money, 30_000)
             self.assertEqual([e["sources"][0]["node_ids"] for e in library.entries], [["n0001"]])
 
+    def test_experiences_are_still_written_when_the_reserve_gate_stops_the_loop(self):
+        class Expensive(ScriptedGateway):
+            EXECUTOR_TOKENS = 14_000  # 3,000 + 2 x 14,000 = 31,000; the next plan cannot reserve 12,000
+
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            gateway, ledger = Expensive(), TokenLedger()
+            model = ModelClient("m", ledger, client=gateway, clock=lambda: 1.0, max_output_tokens=2048,
+                                budget_limit=40_000, reserve_cost=12_000)
+            library = Library.open(root / "runs/run-test/library")
+            outcome = TaskRunner(run_dir=root / "runs/run-test", task_id="tab-sample",
+                                 harness=FakeHarness(root, money=40_000), ledger=ledger,
+                                 roles=RoleAgents(model, SCRIPT, project_root=ROOT), library=library,
+                                 baseline_score=score(0.1), config=SCRIPT, hard_caps=CAPS).run()
+            names = [request["text"]["format"]["name"] for request in gateway.requests]
+            self.assertEqual(outcome.reason, "budget_cap")
+            self.assertNotIn("summarizer_summarize", names)
+            self.assertEqual(ledger.money, 31_000)
+            self.assertEqual([e["sources"][0]["node_ids"] for e in library.entries], [["n0001"]])
+            stops = [e for e in ledger.events if e["kind"] == "stop"]
+            self.assertEqual([e["reason"] for e in stops], ["budget_cap"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -263,12 +263,14 @@ class ModelClient:
         self.thinking_switch_style = thinking_switch_style
 
     def _reserve_for(self, role: str, instructions: str, user_input: str,
-                     schema: Mapping[str, Any], output_cap: int) -> float:
+                     schema: Mapping[str, Any], output_cap: int,
+                     wrapup_reserve: bool = False) -> float:
         """Cost held back before dispatch; the call is refused if it would not fit.
 
         Every role is normally held to the full ``reserve_cost`` (30% of the task
         budget in the token study). That starved the summarizer, which only runs
-        after the experiments have spent most of the budget. Wrap-up roles are
+        after the experiments have spent most of the budget. When the caller opts
+        in (agent/1 ``summarizer_reserve: "worst_case"``), wrap-up roles are
         instead held to their own worst case: a pessimistic estimate of the
         request's input tokens plus the output cap, never more than
         ``reserve_cost``. The call still cannot take the task past
@@ -278,7 +280,7 @@ class ModelClient:
         unit is one token (the TOKENS/TEST token studies). For any other currency
         the min() keeps the configured reserve, i.e. the old behaviour.
         """
-        if role not in WRAPUP_ROLES:
+        if role not in WRAPUP_ROLES or not wrapup_reserve:
             return self.reserve_cost
         request = (instructions + user_input
                    + json.dumps(schema, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
@@ -298,13 +300,16 @@ class ModelClient:
         thinking: bool | None = None,
         max_output_tokens: int | None = None,
         thinking_switch_style: str | None = None,
+        wrapup_reserve: bool = False,
     ) -> ModelResult:
         """One stateless JSON call.
 
         thinking=False asks the gateway not to think (extra_body switch, style
         from thinking_switch_style or the client default); None and True leave
         the request exactly as before. max_output_tokens is a per-call limit and
-        can only lower the client-wide limit.
+        can only lower the client-wide limit. wrapup_reserve=True lets a wrap-up
+        role reserve only its own worst case (see _reserve_for); False keeps the
+        full reserve_cost gate.
         """
         if role not in ROLES or purpose not in PURPOSES or effort not in EFFORTS:
             raise ValueError("role, purpose, or effort is not in ledger/1")
@@ -330,7 +335,8 @@ class ModelClient:
             spent = float(self.ledger.spent())
             if not math.isfinite(spent) or spent < 0:
                 raise ValueError("Ledger reported invalid spend")
-            if spent + self._reserve_for(role, instructions, user_input, schema, output_cap) > self.budget_limit:
+            if spent + self._reserve_for(role, instructions, user_input, schema, output_cap,
+                                       wrapup_reserve) > self.budget_limit:
                 raise BudgetReserveError("Not enough budget remains for a reserved model call")
         hashed = {"instructions": instructions, "input": user_input, "schema": schema, "effort": effort}
         if thinking is False:

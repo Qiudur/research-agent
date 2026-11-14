@@ -112,6 +112,7 @@ class RoleAgents:
         self.thinking_switch_style = check_thinking_switch_style(
             config.get("thinking_switch_style", DEFAULT_THINKING_SWITCH_STYLE))
         writer_mode(config)  # a typo in experience_writer should fail now, not after the budget is spent
+        self.summarizer_reserve = config.get("summarizer_reserve") or "standard"
         self.prompts: dict[str, str] = {}
         resolved_root = project_root.resolve()
         for role in ("planner", "executor", "diagnoser", "summarizer"):
@@ -133,6 +134,8 @@ class RoleAgents:
         controls = dict(self.role_controls.get(role, {}))
         if controls.get("thinking") is False:
             controls["thinking_switch_style"] = self.thinking_switch_style
+        if role == "summarizer" and self.summarizer_reserve == "worst_case":
+            controls["wrapup_reserve"] = True
         return controls
 
     def _call(
