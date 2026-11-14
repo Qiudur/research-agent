@@ -242,10 +242,12 @@ class DryRunCampaignTests(unittest.TestCase):
             self.assertNotIn(SECRET, json.dumps(summary))
             self.assertEqual(summary["runs"][0]["tasks"]["tab-online-shoppers"]["status"], "completed")
             analysis = analyze_ab.analyze(out)
-            # The failed task finished its main loop, so its cost counts but it has no holdout.
+            # The failed task finished its main loop and recorded the failed holdout:
+            # its cost counts but it has no holdout score.
+            self.assertTrue(failure["holdout_failed"])
             failed_rows = [row for row in analysis["table"] if row["task_id"] == "tab-german-credit"]
             self.assertEqual(len(failed_rows), 2)
-            self.assertTrue(all(row["holdout_failed"] is False and row["holdout_score"] is None
+            self.assertTrue(all(row["holdout_failed"] is True and row["holdout_score"] is None
                                 for row in failed_rows))
 
 

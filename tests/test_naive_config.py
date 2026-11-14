@@ -20,6 +20,9 @@ class _Library:
     def brief(self, entries):
         return ""
 
+    def brief_entries(self, entries):
+        return list(entries)
+
 
 class _Tree:
     def all_nodes(self):

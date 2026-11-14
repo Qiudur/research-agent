@@ -264,11 +264,16 @@ def execute_run(*, project: Path, task_ids: list[str], label: str, rep: int, ins
                                 budget_limit=BUDGET_TOKENS, reserve_cost=RESERVE_TOKENS,
                                 audit_dir=run_dir / "tasks" / task_id / "model_responses")
             roles = RoleAgents(model, config, project_root=project)
-            execute_task(run_dir=run_dir, task_id=task_id, harness=guarded,
-                         baseline_solution=project / "tasks" / task_id / "workspace/original.py",
-                         roles=roles, test_only_budget=BUDGET_TOKENS,
-                         max_output_tokens=MAX_OUTPUT_TOKENS)
-            record["tasks"][task_id] = {"status": "completed"}
+            result = execute_task(run_dir=run_dir, task_id=task_id, harness=guarded,
+                                  baseline_solution=project / "tasks" / task_id / "workspace/original.py",
+                                  roles=roles, test_only_budget=BUDGET_TOKENS,
+                                  max_output_tokens=MAX_OUTPUT_TOKENS)
+            if result["task_end"].get("holdout_failed"):
+                # C now records a failed holdout instead of raising; the task still has no score.
+                record["tasks"][task_id] = {"status": "failed", "holdout_failed": True,
+                                            "error": "holdout scoring failed; see holdout_score.json"}
+            else:
+                record["tasks"][task_id] = {"status": "completed"}
         except Exception as exc:  # keep the other tasks and runs going; evidence stays on disk
             record["tasks"][task_id] = {"status": "failed", "error": _redact(str(exc))}
     if all(item["status"] == "completed" for item in record["tasks"].values()):
