@@ -178,6 +178,8 @@ def _auto_research_cost(study_dir: Path, project_root: Path, currency: str, test
     label = "TEST ONLY" if test_only else "FORMAL"
     if report.get("schema") != "auto_self_research/1" or plan.get("schema") != "auto_self_research_plan/1":
         raise ValueError("Expected an automatic self-research study")
+    if report.get("status", "complete") != "complete" or report.get("cost_complete") is False:
+        raise ValueError("Automatic self-research is partial or has unknown model usage")
     if report.get("label") != label or plan.get("label") != label or report.get("currency") != currency:
         raise ValueError("Research study price status does not match exam")
     if expected_tuned_config is not None:
@@ -229,6 +231,8 @@ def _auto_research_cost(study_dir: Path, project_root: Path, currency: str, test
     proposal = ProposalLedger(ledger_path, prices=prices,
                               price_sha256=plan["price_sha256"],
                               source_prompt_sha256=plan["source_prompt_sha256"], model=model)
+    if any(row.get("usage_status", "reported") != "reported" for row in proposal.events()):
+        raise ValueError("Proposal usage is unknown; research cost is a lower bound")
     proposal_cost = proposal.spent()
     expected = task_cost + proposal_cost
     stated_task = _finite(report.get("total_task_cost"), "stated task cost", True)

@@ -173,7 +173,7 @@ class Ledger:
     def llm_call(
         self, *, node_id: str | None, role: str, purpose: str, effort: str, model: str,
         usage: Usage, seconds: float, prompt_hash: str, ok: bool = True,
-        error: str | None = None,
+        error: str | None = None, usage_status: str = "reported",
     ) -> float:
         if model != self.manifest.get("model"):
             raise ValueError("Model differs from sealed run manifest")
@@ -185,6 +185,8 @@ class Ledger:
             raise ValueError("Invalid model effort")
         if not _HASH.fullmatch(prompt_hash.lower()):
             raise ValueError("prompt_hash must be SHA256")
+        if usage_status not in {"reported", "unknown"}:
+            raise ValueError("usage_status must be reported or unknown")
         duration = _nonnegative(seconds, "seconds")
         tokens = {key: getattr(usage, key) for key in TOKEN_BUCKETS}
         cost = price_usage(self.prices, model, usage)
@@ -192,6 +194,7 @@ class Ledger:
             "llm_call", node_id=node_id, role=role, purpose=purpose, effort=effort,
             model=model, tokens=tokens, cost=cost, seconds=duration,
             prompt_hash=prompt_hash.lower(), ok=bool(ok), error=error,
+            usage_status=usage_status,
         )
         return cost
 

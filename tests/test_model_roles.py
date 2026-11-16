@@ -118,8 +118,27 @@ class ModelTests(unittest.TestCase):
                 payload={}, schema=SCHEMAS["plan"],
             )
         self.assertEqual(ledger.calls[0]["usage"], TokenUsage())
+        self.assertEqual(ledger.calls[0]["usage_status"], "unknown")
         self.assertFalse(ledger.calls[0]["ok"])
         self.assertIn("transport unavailable", ledger.calls[0]["error"])
+
+    def test_successful_response_without_usage_is_not_recorded_as_free(self):
+        for missing in (None, {}):
+            with self.subTest(missing=missing), TemporaryDirectory() as temp:
+                ledger = FakeLedger()
+                supplied = response({"code": "pass", "notes": "ok"})
+                supplied.usage = missing
+                client = ModelClient("chosen-at-runtime", ledger,
+                                     client=FakeClient(supplied),
+                                     audit_dir=Path(temp), clock=lambda: 1.0)
+                with self.assertRaises(ModelCallError):
+                    client.call_json(role="executor", purpose="code", effort="low",
+                                     system_prompt="Code", payload={}, schema=SCHEMAS["code"])
+                self.assertEqual(ledger.calls[0]["usage_status"], "unknown")
+                self.assertFalse(ledger.calls[0]["ok"])
+                self.assertEqual(ledger.calls[0]["usage"], TokenUsage())
+                audit = json.loads(next(Path(temp).glob("response-*.json")).read_text())
+                self.assertEqual(audit["usage_status"], "unknown")
 
     def test_incomplete_response_books_returned_tokens(self):
         ledger = FakeLedger()

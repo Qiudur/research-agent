@@ -34,6 +34,7 @@ class ProposalLedger:
         self, *, node_id: str | None, role: str, purpose: str, effort: str,
         model: str, usage: Usage, seconds: float, prompt_hash: str,
         ok: bool = True, error: str | None = None,
+        usage_status: str = "reported",
     ) -> float:
         if node_id is not None or role != "planner" or purpose != "plan" or effort != "high":
             raise ValueError("Proposal calls must be planner/plan/high without a node")
@@ -41,6 +42,8 @@ class ProposalLedger:
             raise ValueError("Proposal model or round differs from the sealed study")
         if not isinstance(prompt_hash, str) or not _HASH.fullmatch(prompt_hash.lower()):
             raise ValueError("Proposal prompt hash must be SHA256")
+        if usage_status not in {"reported", "unknown"}:
+            raise ValueError("Proposal usage_status must be reported or unknown")
         if isinstance(seconds, bool) or not isinstance(seconds, (int, float)) or not math.isfinite(seconds) or seconds < 0:
             raise ValueError("Proposal duration must be nonnegative and finite")
         tokens = {key: getattr(usage, key) for key in TOKEN_BUCKETS}
@@ -65,6 +68,7 @@ class ProposalLedger:
                     "prompt_hash": prompt_hash.lower(),
                     "response_status": "completed" if ok else "failed",
                     "ok": bool(ok), "error": error,
+                    "usage_status": usage_status,
                 }
                 handle.seek(0, 2)
                 handle.write(json.dumps(event, ensure_ascii=False, separators=(",", ":")) + chr(10))
@@ -85,6 +89,8 @@ class ProposalLedger:
                     or row.get("model") != self.model
                     or row.get("response_status") not in {"completed", "failed"}):
                 raise ValueError("Corrupt proposal ledger provenance")
+            if row.get("usage_status", "reported") not in {"reported", "unknown"}:
+                raise ValueError("Corrupt proposal usage status")
             tokens = row.get("tokens")
             if not isinstance(tokens, dict) or set(tokens) != set(TOKEN_BUCKETS):
                 raise ValueError("Corrupt proposal token buckets")

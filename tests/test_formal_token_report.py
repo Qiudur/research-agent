@@ -7,7 +7,7 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
-from evaluation.report import task_report
+from evaluation.report import run_report, task_report
 
 
 class FormalTokenReportTests(unittest.TestCase):
@@ -97,6 +97,31 @@ class FormalTokenReportTests(unittest.TestCase):
                                side_effect=ValueError("Replay source changed")):
                         with self.assertRaisesRegex(ValueError, "Replay source changed"):
                             task_report(run, task_id)
+
+    def test_unknown_call_usage_marks_report_cost_incomplete(self):
+        with TemporaryDirectory() as temp:
+            run, task_id, ledger, node = self.report_fixture(Path(temp), cost=12_000,
+                                                              budget=40_000)
+            ledger._events()[1]["usage_status"] = "unknown"
+            with patch("evaluation.report.Ledger.open", return_value=ledger):
+                with patch("evaluation.report._latest_nodes", return_value={"n0000": node}):
+                    with patch("evaluation.report._verify_replay_context",
+                               return_value={"max_output_tokens": 2048}):
+                        task = task_report(run, task_id)
+            self.assertFalse(task["cost_complete"])
+            self.assertEqual(task["unknown_usage_call_seqs"], [2])
+            run_ledger = SimpleNamespace(
+                manifest={"phase": "self_research", "config": "default_lib", "rep": 1,
+                          "model": "qwen3.5-27b", "tasks": [task_id]},
+                prices=ledger.prices,
+                _events=lambda: [{"kind": "run_end", "seq": 3, "total_cost": 12_000}],
+                path=run / "ledger.jsonl",
+            )
+            with patch("evaluation.report.Ledger.open", return_value=run_ledger):
+                with patch("evaluation.report.task_report", return_value=task):
+                    report = run_report(run)
+            self.assertFalse(report["cost_complete"])
+            self.assertFalse(report["exact_token_accounting"])
 
 
 if __name__ == "__main__":

@@ -35,11 +35,15 @@ def digest(path: Path) -> str:
 class FormalOutputAuditTests(unittest.TestCase):
     def fixture(self, root: Path, *, admitted: bool = True,
                 second_candidate: bool = False,
-                over_unit: int | None = None) -> tuple[Path, Path, dict]:
+                over_unit: int | None = None,
+                new_policy: bool = False) -> tuple[Path, Path, dict]:
         """over_unit sets the per-task token cost of exam naive rep 1 (budget is 40,000)."""
         root = root.resolve()
         tasks = {tier: [f"spd-{tier}-{number}" for number in range(count)]
                  for tier, count in (("practice", 10), ("validation", 4), ("exam", 10))}
+        if new_policy:
+            tasks["practice"] = ([f"spd-practice-{number}" for number in range(5)]
+                                 + [f"tab-practice-{number}" for number in range(5)])
         bank_path = root / "tasks/bank.json"
         write_json(bank_path, {"schema": "bank/1", "version": "bank-v1", "frozen": True,
                                "tasks": [{"task_id": task_id, "tier": tier}
@@ -90,6 +94,7 @@ class FormalOutputAuditTests(unittest.TestCase):
             task_reports = []
             for task_id in ids:
                 task_dir = run / "tasks" / task_id
+                raw = 0.5 if task_id.startswith("tab-") else None
                 tokens = {"input": unit, "cached_input": 0, "output": 0,
                           "reasoning": 0}
                 rows = [
@@ -102,17 +107,19 @@ class FormalOutputAuditTests(unittest.TestCase):
                      "task_id": task_id, "kind": "stop", "reason": "ceiling"},
                     {"schema": "ledger/1", "seq": 4, "run_id": run_id,
                      "task_id": task_id, "kind": "task_end", "total_cost": float(unit),
-                     "holdout_score": score},
+                     "holdout_score": score, **({"holdout_raw": raw} if raw is not None else {})},
                 ]
                 write_jsonl(task_dir / "ledger.jsonl", rows)
                 write_json(task_dir / "holdout_attempt.json",
                            {"schema": "holdout_attempt/1"})
                 write_json(task_dir / "holdout_score.json",
-                           {"schema": "score/1", "split": "holdout", "score": score})
+                           {"schema": "score/1", "split": "holdout", "score": score,
+                            **({"raw": raw} if raw is not None else {})})
                 task_reports.append({
                     "schema": "task_report/1", "run_id": run_id,
                     "task_id": task_id, "currency": "TOKENS",
                     "holdout_score": score, "total_cost": float(unit),
+                    **({"holdout_raw": raw} if raw is not None else {}),
                     "holdout_failed": False,
                     "budget": 40_000.0, "budget_violation": unit > 40_000,
                     "budget_excess": max(0.0, unit - 40_000.0),
@@ -199,6 +206,7 @@ class FormalOutputAuditTests(unittest.TestCase):
         write_jsonl(proposal, proposal_rows)
         write_json(study_dir / "auto_plan.json", {
             "schema": "auto_self_research_plan/1", "label": "FORMAL",
+            **({"selection_policy": "paired-scenario-quality-v1"} if new_policy else {}),
             "rounds": len(proposal_rows), "max_output_tokens": 2048,
             "practice_tasks": tasks["practice"], "price_sha256": price_sha,
             "source_prompt_sha256": "b" * 64, "default_files": default,
@@ -213,8 +221,22 @@ class FormalOutputAuditTests(unittest.TestCase):
             for name, cost in [("default", 0.0),
                                *[(name, 7.0) for name, _ in candidates if name != "default"]]
         ]
+        if new_policy:
+            for row in ranking:
+                row.update({
+                    "paired_task_deltas": [
+                        {"task_id": task_id,
+                         "scenario": "tabular" if task_id.startswith("tab-") else "speedup",
+                         "paired_deltas": [0.0, 0.0, 0.0], "mean_delta": 0.0}
+                        for task_id in tasks["practice"]],
+                    "scenario_mean_delta": {"tabular": 0.0, "speedup": 0.0},
+                    "worst_scenario_mean_delta": 0.0,
+                    "balanced_mean_delta": 0.0,
+                })
         write_json(study_dir / "auto_self_research_report.json", {
             "schema": "auto_self_research/1", "label": "FORMAL",
+            **({"selection_policy": "paired-scenario-quality-v1",
+                "status": "complete", "cost_complete": True} if new_policy else {}),
             "currency": "TOKENS", "practice_tasks": tasks["practice"],
             "proposal_ledger_path": str(proposal),
             "proposal_ledger_sha256": digest(proposal),
@@ -285,6 +307,29 @@ class FormalOutputAuditTests(unittest.TestCase):
         })
         return batch_dir, study_dir, {"tasks": tasks, "study": study_dir,
                                       "batch": batch_dir, "root": root}
+
+    def test_new_paired_policy_is_independently_audited(self):
+        with TemporaryDirectory() as temp:
+            batch, study, info = self.fixture(Path(temp), new_policy=True)
+            self.assertTrue(audit_formal_outputs(batch, study)["ready"])
+            saved = _read(study / "auto_self_research_report.json")
+            saved["ranking"][1]["paired_task_deltas"][5]["mean_delta"] = 1.0
+            write_json(study / "auto_self_research_report.json", saved)
+            with self.assertRaisesRegex(ValueError, "ranking differs"):
+                audit_formal_outputs(batch, study)
+
+    def test_unknown_usage_is_rejected_by_independent_audit(self):
+        with TemporaryDirectory() as temp:
+            batch, study, info = self.fixture(Path(temp), new_policy=True)
+            ledger = study / "proposal_ledger.jsonl"
+            rows = [json.loads(line) for line in ledger.read_text().splitlines()]
+            rows[0]["usage_status"] = "unknown"
+            write_jsonl(ledger, rows)
+            saved = _read(study / "auto_self_research_report.json")
+            saved["proposal_ledger_sha256"] = digest(ledger)
+            write_json(study / "auto_self_research_report.json", saved)
+            with self.assertRaisesRegex(ValueError, "Proposal usage is unknown"):
+                audit_formal_outputs(batch, study)
 
     def carry_fixture(self, base: Path) -> tuple[Path, Path, dict]:
         """Clone saved synthetic outputs into an independent bank-v2 root."""

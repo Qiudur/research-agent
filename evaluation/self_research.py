@@ -89,6 +89,13 @@ _THINKING = ("unchanged", "on", "off")
 # Value a new key has when an older agent/1 config does not mention it.
 _NEW_DEFAULTS = {"ceiling_excludes_baseline": False, "planner_mode": "standard",
                  "failure_feedback": False, "experience_writer": "model"}
+_AUTO_SELECTION_POLICY = "paired-scenario-quality-v1"
+_AUTO_RANKING_POLICY = (
+    "Pair each practice task by repetition against default; compare tabular raw holdout "
+    "AUC and speedup holdout score clipped to [0,1]. Average three paired deltas "
+    "per task and then within each scenario. Rank by the worse scenario mean, "
+    "then the mean of both scenario means, then lower audited research cost."
+)
 
 
 def _object(properties: dict) -> dict:
@@ -246,6 +253,7 @@ def _proposal_practice_breakdown(root: Path, evaluations: Mapping[str, dict],
                     "tokens_to_reference": efficiency["tokens_to_reference"],
                     "tokens_after_best": efficiency["tokens_after_best"],
                     "score": float(task["holdout_score"]),
+                    "raw_holdout_auc": task.get("holdout_raw") if task["task_id"].startswith("tab-") else None,
                     "cost": float(task["total_cost"]),
                     "experiments": int(task["experiments"]),
                     "stop": stops[0]["reason"],
@@ -266,6 +274,10 @@ def _proposal_practice_breakdown(root: Path, evaluations: Mapping[str, dict],
                 "task_id": task_id, "runs": len(rows),
                 "budget": rows[0]["budget"],
                 "mean_holdout_score": mean(row["score"] for row in rows),
+                "mean_raw_holdout_auc": (mean(row["raw_holdout_auc"] for row in rows)
+                                         if task_id.startswith("tab-") and all(
+                                             row["raw_holdout_auc"] is not None for row in rows)
+                                         else None),
                 "holdout_score_range": [min(row["score"] for row in rows),
                                            max(row["score"] for row in rows)],
                 "mean_cost": mean(row["cost"] for row in rows),
@@ -279,6 +291,54 @@ def _proposal_practice_breakdown(root: Path, evaluations: Mapping[str, dict],
             })
         breakdown.append({"candidate": name, "tasks": tasks})
     return breakdown
+
+
+def _paired_practice_quality(candidate_reports: list[dict], default_reports: list[dict],
+                             task_ids: list[str]) -> dict:
+    """Compare like-for-like practice outcomes without reference-gap division."""
+    def index(reports: list[dict]) -> dict[int, dict]:
+        by_rep = {report["rep"]: report for report in reports}
+        if len(reports) != 3 or set(by_rep) != {1, 2, 3}:
+            raise ValueError("Paired quality needs exactly three distinct repetitions")
+        for report in by_rep.values():
+            if [task["task_id"] for task in report["tasks"]] != task_ids:
+                raise ValueError("Paired quality needs the same ordered practice tasks")
+        return by_rep
+
+    candidates, defaults = index(candidate_reports), index(default_reports)
+    task_deltas = []
+    scenario_deltas: dict[str, list[float]] = {"tabular": [], "speedup": []}
+    for task_id in task_ids:
+        if task_id.startswith("tab-"):
+            scenario, field = "tabular", "holdout_raw"
+        elif task_id.startswith("spd-"):
+            scenario, field = "speedup", "holdout_score"
+        else:
+            raise ValueError(f"Unknown practice scenario: {task_id}")
+        paired = []
+        for rep in (1, 2, 3):
+            left = next(task for task in candidates[rep]["tasks"] if task["task_id"] == task_id)
+            right = next(task for task in defaults[rep]["tasks"] if task["task_id"] == task_id)
+            values = [left.get(field), right.get(field)]
+            if any(type(value) not in (int, float) or not math.isfinite(value) for value in values):
+                raise ValueError(f"Missing finite {field} for paired practice task {task_id}")
+            if scenario == "tabular" and any(not 0 <= value <= 1 for value in values):
+                raise ValueError(f"Raw holdout AUC is outside [0,1]: {task_id}")
+            if scenario == "speedup":
+                values = [min(1.0, max(0.0, value)) for value in values]
+            paired.append(float(values[0]) - float(values[1]))
+        task_mean = mean(paired)
+        task_deltas.append({"task_id": task_id, "scenario": scenario,
+                            "paired_deltas": paired, "mean_delta": task_mean})
+        scenario_deltas[scenario].append(task_mean)
+    # Formal practice always has both scenarios; TEST-only pilot banks may have one.
+    scenario_mean = {scenario: mean(values) for scenario, values in scenario_deltas.items()
+                     if values}
+    if not scenario_mean:
+        raise ValueError("Paired quality needs scored practice tasks")
+    return {"paired_task_deltas": task_deltas, "scenario_mean_delta": scenario_mean,
+            "worst_scenario_mean_delta": min(scenario_mean.values()),
+            "balanced_mean_delta": mean(scenario_mean.values())}
 
 
 def _effective_settings(config: Mapping) -> dict:
@@ -578,6 +638,8 @@ def evaluate_candidates(
     }, ensure_ascii=False, indent=2) + chr(10), encoding="utf-8")
     attempts = []
     reports = []
+    reserved_runs: list[Path] = []
+    failed_runs: list[dict] = []
     ordered = (["default", *(name for name in candidates if name != "default")]
                if "default" in candidates else list(candidates))
     task_harness = (_SerializedHarness(harness, Lock()) if max_workers > 1 else harness)
@@ -589,6 +651,7 @@ def evaluate_candidates(
                 run_dir.mkdir(parents=True, exist_ok=False)
             except FileExistsError:
                 continue
+            reserved_runs.append(run_dir)
             return run_dir
         raise RuntimeError("Could not reserve an unused run ID")
 
@@ -617,6 +680,8 @@ def evaluate_candidates(
             task_executor(**kwargs)
         finish_run(run_dir)
         report = run_report(run_dir)
+        if not report["cost_complete"]:
+            raise ValueError("Self-research repetition has unknown model usage; cost is a lower bound")
         if report.get("holdout_failures"):
             # Candidate ranking needs every practice score; never rank on a partial mean.
             raise ValueError("Self-research repetition has failed holdout scoring: "
@@ -637,45 +702,112 @@ def evaluate_candidates(
                    "test_only": not formal}
         return report, attempt
 
-    for round_index, name in enumerate(ordered, 1):
-        jobs = [(rep, reserve_run()) for rep in (1, 2, 3)]
-        if max_workers == 1:
-            completed = [one_rep(round_index, name, rep, run_dir) for rep, run_dir in jobs]
-        else:
-            with ThreadPoolExecutor(max_workers=max_workers) as pool:
-                futures = [pool.submit(one_rep, round_index, name, rep, run_dir)
-                           for rep, run_dir in jobs]
-                completed = [future.result() for future in futures]
-        for report, attempt in completed:
-            reports.append(report)
-            attempts.append(attempt)
-    ranking = []
-    for name in ordered:
-        group = [attempt for attempt in attempts if attempt["candidate"] == name]
-        mean_score = mean(item["mean_score"] for item in group)
-        mean_cost = mean(item["total_cost"] for item in group)
-        if not math.isfinite(mean_score) or not math.isfinite(mean_cost) or mean_cost <= 0:
-            raise ValueError(f"Candidate {name} lacks a positive audited cost or finite score")
-        # A negative normalized score is worse than the reference. Dividing it
-        # by a larger cost would perversely reward extra spending.
-        ranking.append({"candidate": name, "mean_score": mean_score,
-                        "mean_cost": mean_cost,
-                        "score_per_currency": max(mean_score, 0.0) / mean_cost,
-                        "run_ids": [item["run_id"] for item in group]})
-    winner = max(ranking, key=lambda item: (item["score_per_currency"],
-                                            item["mean_score"], -item["mean_cost"]))
-    result = {"schema": "self_research/1", "label": "FORMAL" if formal else "TEST ONLY",
-              "ranking_policy": "max(mean_score, 0) / mean_cost; tie by higher score then lower cost",
-              "currency": prices["currency"], "bank_version": bank["version"],
-              "practice_tasks": task_ids, "candidates": descriptors,
-              "attempts": attempts, "reports": reports, "ranking": ranking,
-              "selection": {**winner, "config_path": str(config_paths[winner["candidate"]]),
-                            "config_sha256": descriptors[winner["candidate"]]["config"]["sha256"]},
-              "next_step": "Run selected config through batch validation admission before exam",
-              "budget_policy": "positive task budget" if formal else "TEST-only budget override"}
-    (study_dir / "self_research_report.json").write_text(
-        json.dumps(result, ensure_ascii=False, indent=2) + chr(10), encoding="utf-8")
-    return result
+    try:
+        for round_index, name in enumerate(ordered, 1):
+            jobs = [(rep, reserve_run()) for rep in (1, 2, 3)]
+            completed = []
+            first_error = None
+            if max_workers == 1:
+                for rep, run_dir in jobs:
+                    try:
+                        completed.append(one_rep(round_index, name, rep, run_dir))
+                    except BaseException as exc:
+                        failed_runs.append({"candidate": name, "rep": rep,
+                                            "run_id": run_dir.name,
+                                            "report_path": str(run_dir / "report.json")
+                                            if (run_dir / "report.json").is_file() else None,
+                                            "error_type": type(exc).__name__,
+                                            "error": str(exc)[:1000]})
+                        first_error = exc
+                        break
+            else:
+                with ThreadPoolExecutor(max_workers=max_workers) as pool:
+                    futures = [pool.submit(one_rep, round_index, name, rep, run_dir)
+                               for rep, run_dir in jobs]
+                    for (rep, run_dir), future in zip(jobs, futures):
+                        try:
+                            completed.append(future.result())
+                        except BaseException as exc:
+                            failed_runs.append({"candidate": name, "rep": rep,
+                                                "run_id": run_dir.name,
+                                                "report_path": str(run_dir / "report.json")
+                                                if (run_dir / "report.json").is_file() else None,
+                                                "error_type": type(exc).__name__,
+                                                "error": str(exc)[:1000]})
+                            if first_error is None:
+                                first_error = exc
+            for report, attempt in completed:
+                reports.append(report)
+                attempts.append(attempt)
+            if first_error is not None:
+                raise first_error
+        ranking = []
+        for name in ordered:
+            group = [attempt for attempt in attempts if attempt["candidate"] == name]
+            mean_score = mean(item["mean_score"] for item in group)
+            mean_cost = mean(item["total_cost"] for item in group)
+            if not math.isfinite(mean_score) or not math.isfinite(mean_cost) or mean_cost <= 0:
+                raise ValueError(f"Candidate {name} lacks a positive audited cost or finite score")
+            # A negative normalized score is worse than the reference. Dividing it
+            # by a larger cost would perversely reward extra spending.
+            ranking.append({"candidate": name, "mean_score": mean_score,
+                            "mean_cost": mean_cost,
+                            "score_per_currency": max(mean_score, 0.0) / mean_cost,
+                            "run_ids": [item["run_id"] for item in group]})
+        winner = max(ranking, key=lambda item: (item["score_per_currency"],
+                                                item["mean_score"], -item["mean_cost"]))
+        result = {"schema": "self_research/1", "status": "complete",
+                  "label": "FORMAL" if formal else "TEST ONLY",
+                  "ranking_policy": "max(mean_score, 0) / mean_cost; tie by higher score then lower cost",
+                  "currency": prices["currency"], "bank_version": bank["version"],
+                  "practice_tasks": task_ids, "candidates": descriptors,
+                  "attempts": attempts, "reports": reports, "ranking": ranking,
+                  "selection": {**winner, "config_path": str(config_paths[winner["candidate"]]),
+                                "config_sha256": descriptors[winner["candidate"]]["config"]["sha256"]},
+                  "next_step": "Run selected config through batch validation admission before exam",
+                  "budget_policy": "positive task budget" if formal else "TEST-only budget override"}
+        (study_dir / "self_research_report.json").write_text(
+            json.dumps(result, ensure_ascii=False, indent=2) + chr(10), encoding="utf-8")
+        return result
+    except BaseException as exc:
+        known_cost = 0.0
+        unknown_usage_calls = []
+        audit_errors = []
+        for run_dir in reserved_runs:
+            manifest_path = run_dir / "manifest.json"
+            if not manifest_path.is_file():
+                continue
+            try:
+                manifest = _json(manifest_path)
+                for task_id in manifest["tasks"]:
+                    path = run_dir / "tasks" / task_id / "ledger.jsonl"
+                    if not path.is_file():
+                        continue
+                    events = Ledger.open(run_dir, task_id)._events()
+                    for event in events:
+                        if event["kind"] == "llm_call":
+                            known_cost += float(event["cost"])
+                            if event.get("usage_status", "reported") == "unknown":
+                                unknown_usage_calls.append({"run_id": run_dir.name,
+                                                            "task_id": task_id, "seq": event["seq"]})
+            except Exception as audit_exc:
+                audit_errors.append({"run_id": run_dir.name,
+                                     "error": str(audit_exc)[:1000]})
+        partial = {"schema": "self_research/1", "status": "partial",
+                   "label": "FORMAL" if formal else "TEST ONLY",
+                   "currency": prices["currency"], "bank_version": bank["version"],
+                   "practice_tasks": task_ids, "candidates": descriptors,
+                   "attempts": attempts, "reports": reports,
+                   "failed_runs": failed_runs, "ranking": [], "selection": None,
+                   "known_task_cost": known_cost,
+                   "known_task_cost_is_lower_bound": True,
+                   "recorded_usage_complete": not (unknown_usage_calls or audit_errors),
+                   "unknown_usage_calls": unknown_usage_calls, "audit_errors": audit_errors,
+                   "aborted": f"{type(exc).__name__}: {exc}"[:1000],
+                   "next_step": "Inspect the failed run; do not rank or retry one-shot holdouts"}
+        (study_dir / "self_research_report.json").write_text(
+            json.dumps(partial, ensure_ascii=False, indent=2) + chr(10), encoding="utf-8")
+        raise
 
 
 def auto_evaluate_candidates(
@@ -744,6 +876,8 @@ def auto_evaluate_candidates(
         model=model)
     (study_dir / "auto_plan.json").write_text(json.dumps({
         "schema": "auto_self_research_plan/1", "label": "FORMAL" if formal else "TEST ONLY",
+        "selection_policy": _AUTO_SELECTION_POLICY,
+        "ranking_policy": _AUTO_RANKING_POLICY,
         "rounds": rounds, "max_output_tokens": max_output_tokens,
         "max_workers": max_workers,
         "practice_tasks": practice, "default_files": default_descriptor["default"],
@@ -773,109 +907,187 @@ def auto_evaluate_candidates(
         actual_cost = run_cost + proposal_cost
         if not math.isfinite(actual_cost) or actual_cost <= 0:
             raise ValueError(f"Candidate {name} has no auditable positive cost")
+        quality = _paired_practice_quality(result["reports"],
+                                           evaluations["default"]["reports"] if name != "default"
+                                           else result["reports"], practice)
         ranking.append({"candidate": name, "mean_score": row["mean_score"],
                         "mean_task_cost": row["mean_cost"],
                         "proposal_cost": proposal_cost, "research_cost": actual_cost,
                         "score_per_currency": 3 * max(row["mean_score"], 0.0) / actual_cost,
-                        "run_ids": row["run_ids"]})
+                        "run_ids": row["run_ids"], **quality})
 
-    evaluate_one("default", default_config, 0.0)
-    proposal_model = ModelClient(model, proposal_ledger, client=proposal_client,
-                                 max_output_tokens=max_output_tokens,
-                                 audit_dir=study_dir / "proposal_responses")
-    for round_number in range(1, rounds + 1):
-        if formal:
-            _verify_code_freeze(root, code_commit)
-        if any(_hash(Path(path)) != digest for path, digest in {**protected, **default_hashes}.items()):
-            raise ValueError("A protected or default proposal source changed")
-        proposal_ledger.round = round_number
-        prior_events = len(proposal_ledger.events())
-        response = None
-        payload = {
-            "practice_tasks": practice,
-            "default_settings": _effective_settings(_json(default_config)),
-            "prior_results": ranking,
-            "practice_breakdown": _proposal_practice_breakdown(root, evaluations, ranking),
-            "instruction": "Improve average practice score per recorded currency unit",
-        }
-        try:
-            response = proposal_model.call_json(
-                role="planner", purpose="plan", effort="high",
-                system_prompt=_PROPOSAL_PROMPT, payload=payload,
-                schema=_PROPOSAL_SCHEMA, node_id=None)
-            event = proposal_ledger.events()[-1]
-            if len(proposal_ledger.events()) != prior_events + 1:
-                raise ValueError("Proposal call did not append exactly one priced event")
-            name = f"auto-{round_number:02d}"
-            fingerprint = hashlib.sha256(json.dumps(
-                {key: response.data[key] for key in ("settings", "prompt_append")},
-                ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
-            if fingerprint in proposal_fingerprints:
-                raise ValueError("Duplicate generated candidate proposal")
-            candidate_path = _materialize_proposal(root, study_dir, round_number,
-                                                   default_config, response.data)
-            proposal_fingerprints.add(fingerprint)
-            _, descriptor = _candidate_files(root, {name: candidate_path})
-            proposal_attempts.append({"round": round_number, "status": "evaluated",
-                                      "candidate": name, "ledger_seq": event["seq"],
-                                      "cost": event["cost"], "rationale": response.data["rationale"],
-                                      "proposal_sha256": fingerprint,
-                                      "config_sha256": descriptor[name]["config"]["sha256"]})
-            evaluate_one(name, candidate_path, event["cost"])
-        except Exception as exc:
-            events = proposal_ledger.events()
-            event = events[-1] if len(events) > prior_events else None
-            if not proposal_attempts or proposal_attempts[-1].get("round") != round_number:
-                proposal_attempts.append({"round": round_number, "status": "rejected",
-                                          "candidate": None,
-                                          "ledger_seq": event["seq"] if event else None,
-                                          "cost": event["cost"] if event else 0.0,
-                                          "response_json_sha256": hashlib.sha256(json.dumps(
-                                              response.data, ensure_ascii=False, sort_keys=True).encode("utf-8")
-                                          ).hexdigest() if response is not None else None,
-                                          "error": str(exc)})
+    def run_auto() -> dict:
+        evaluate_one("default", default_config, 0.0)
+        proposal_model = ModelClient(model, proposal_ledger, client=proposal_client,
+                                     max_output_tokens=max_output_tokens,
+                                     audit_dir=study_dir / "proposal_responses")
+        for round_number in range(1, rounds + 1):
+            if formal:
+                _verify_code_freeze(root, code_commit)
+            if any(_hash(Path(path)) != digest for path, digest in {**protected, **default_hashes}.items()):
+                raise ValueError("A protected or default proposal source changed")
+            proposal_ledger.round = round_number
+            prior_events = len(proposal_ledger.events())
+            response = None
+            event = None
+            payload = {
+                "practice_tasks": practice,
+                "default_settings": _effective_settings(_json(default_config)),
+                "selection_policy": _AUTO_SELECTION_POLICY,
+                "prior_results": [{key: item[key] for key in (
+                    "candidate", "scenario_mean_delta", "worst_scenario_mean_delta",
+                    "balanced_mean_delta", "research_cost", "mean_score")}
+                                  for item in ranking],
+                "practice_breakdown": _proposal_practice_breakdown(root, evaluations, ranking),
+                "instruction": "Improve paired task outcomes in both scenarios; use raw AUC for tabular, clipped [0,1] holdout score for speedup, and reduce cost after quality",
+            }
+            try:
+                response = proposal_model.call_json(
+                    role="planner", purpose="plan", effort="high",
+                    system_prompt=_PROPOSAL_PROMPT, payload=payload,
+                    schema=_PROPOSAL_SCHEMA, node_id=None)
+                event = proposal_ledger.events()[-1]
+                if len(proposal_ledger.events()) != prior_events + 1:
+                    raise ValueError("Proposal call did not append exactly one priced event")
+                name = f"auto-{round_number:02d}"
+                fingerprint = hashlib.sha256(json.dumps(
+                    {key: response.data[key] for key in ("settings", "prompt_append")},
+                    ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
+                if fingerprint in proposal_fingerprints:
+                    raise ValueError("Duplicate generated candidate proposal")
+                candidate_path = _materialize_proposal(root, study_dir, round_number,
+                                                       default_config, response.data)
+                proposal_fingerprints.add(fingerprint)
+                _, descriptor = _candidate_files(root, {name: candidate_path})
+                proposal_attempts.append({"round": round_number, "status": "evaluated",
+                                          "candidate": name, "ledger_seq": event["seq"],
+                                          "cost": event["cost"], "rationale": response.data["rationale"],
+                                          "proposal_sha256": fingerprint,
+                                          "config_sha256": descriptor[name]["config"]["sha256"]})
+                evaluate_one(name, candidate_path, event["cost"])
+            except Exception as exc:
+                events = proposal_ledger.events()
+                event = events[-1] if len(events) > prior_events else None
+                if not proposal_attempts or proposal_attempts[-1].get("round") != round_number:
+                    proposal_attempts.append({"round": round_number, "status": "rejected",
+                                              "candidate": None,
+                                              "ledger_seq": event["seq"] if event else None,
+                                              "cost": event["cost"] if event else 0.0,
+                                              "response_json_sha256": hashlib.sha256(json.dumps(
+                                                  response.data, ensure_ascii=False, sort_keys=True).encode("utf-8")
+                                              ).hexdigest() if response is not None else None,
+                                              "error": str(exc)})
+                else:
+                    proposal_attempts[-1]["status"] = "evaluation_failed"
+                    proposal_attempts[-1]["error"] = str(exc)
+                    raise
+            if event is not None and event.get("usage_status", "reported") == "unknown":
+                raise ValueError("Proposal model usage is unknown; research cost is a lower bound")
+            if any(_hash(Path(path)) != digest for path, digest in {**protected, **default_hashes}.items()):
+                raise ValueError("A protected or default proposal source changed")
+        rank_key = lambda item: (item["worst_scenario_mean_delta"],
+                                 item["balanced_mean_delta"], -item["research_cost"])
+        overall_winner = max(ranking, key=rank_key)
+        generated = [item for item in ranking if item["candidate"] != "default"]
+        winner = max(generated, key=rank_key) if generated else None
+        all_reports = [report for result in evaluations.values() for report in result["reports"]]
+        task_cost = sum(report["total_cost"] for report in all_reports)
+        proposal_cost = proposal_ledger.spent()
+        selected = evaluations[winner["candidate"]] if winner is not None else None
+        result = {"schema": "auto_self_research/1", "status": "complete",
+                  "label": "FORMAL" if formal else "TEST ONLY",
+                  "selection_policy": _AUTO_SELECTION_POLICY,
+                  "ranking_policy": _AUTO_RANKING_POLICY,
+                  "cost_complete": True,
+                  "exact_token_accounting": formal and all(
+                      report["exact_token_accounting"] for report in all_reports),
+                  "currency": prices["currency"], "practice_tasks": practice,
+                  "proposal_ledger_path": str(proposal_ledger.path),
+                  "proposal_ledger_sha256": _hash(proposal_ledger.path),
+                  "proposal_attempts": proposal_attempts, "evaluations": evaluations,
+                  "reports": all_reports, "ranking": ranking,
+                  "overall_best_on_practice": overall_winner["candidate"],
+                  "selection": ({**winner, "config_path": selected["selection"]["config_path"],
+                                 "config_sha256": selected["selection"]["config_sha256"],
+                                 "beats_default_on_practice": rank_key(winner) > rank_key(ranking[0])}
+                                if winner is not None else None),
+                  "total_task_cost": task_cost, "total_proposal_cost": proposal_cost,
+                  "total_research_cost": task_cost + proposal_cost,
+                  "budget_policy": "no overall cap; positive inner task budgets"
+                  if formal else "no overall cap; TEST-only inner task budgets",
+                  "next_step": ("Verify the best generated candidate, then run validation admission once"
+                                if winner is not None else
+                                "No valid generated candidate; stop before validation and exam")}
+        (study_dir / "auto_self_research_report.json").write_text(
+            json.dumps(result, ensure_ascii=False, indent=2) + chr(10), encoding="utf-8")
+        return result
+
+    try:
+        return run_auto()
+    except BaseException as exc:
+        nested, audit_errors = {}, []
+        for path in sorted((study_dir / "studies").glob("*/self_research_report.json")):
+            try:
+                nested[path.parent.name] = _json(path)
+            except Exception as audit_exc:
+                audit_errors.append({"path": str(path), "error": str(audit_exc)[:1000]})
+        reports = [report for item in nested.values() for report in item.get("reports", [])]
+        known_task_cost = 0.0
+        unknown_task_usage_calls = []
+        for name, item in nested.items():
+            if item.get("status", "complete") == "partial":
+                known_task_cost += float(item.get("known_task_cost", 0.0))
+                unknown_task_usage_calls.extend(item.get("unknown_usage_calls", []))
+                audit_errors.extend({"candidate": name, **error}
+                                    for error in item.get("audit_errors", []))
             else:
-                proposal_attempts[-1]["status"] = "evaluation_failed"
-                proposal_attempts[-1]["error"] = str(exc)
-                raise
-        if any(_hash(Path(path)) != digest for path, digest in {**protected, **default_hashes}.items()):
-            raise ValueError("A protected or default proposal source changed")
-    rank_key = lambda item: (item["score_per_currency"], item["mean_score"],
-                             -item["research_cost"])
-    overall_winner = max(ranking, key=rank_key)
-    generated = [item for item in ranking if item["candidate"] != "default"]
-    winner = max(generated, key=rank_key) if generated else None
-    all_reports = [report for result in evaluations.values() for report in result["reports"]]
-    task_cost = sum(report["total_cost"] for report in all_reports)
-    proposal_cost = proposal_ledger.spent()
-    selected = evaluations[winner["candidate"]] if winner is not None else None
-    result = {"schema": "auto_self_research/1", "label": "FORMAL" if formal else "TEST ONLY",
-              "ranking_policy": "max(mean_score, 0) / amortized research cost; tie by higher score then lower cost",
-              "currency": prices["currency"], "practice_tasks": practice,
-              "proposal_ledger_path": str(proposal_ledger.path),
-              "proposal_ledger_sha256": _hash(proposal_ledger.path),
-              "proposal_attempts": proposal_attempts, "evaluations": evaluations,
-              "reports": all_reports, "ranking": ranking,
-              "overall_best_on_practice": overall_winner["candidate"],
-              "selection": ({**winner, "config_path": selected["selection"]["config_path"],
-                             "config_sha256": selected["selection"]["config_sha256"],
-                             "beats_default_on_practice": rank_key(winner) > rank_key(ranking[0])}
-                            if winner is not None else None),
-              "total_task_cost": task_cost, "total_proposal_cost": proposal_cost,
-              "total_research_cost": task_cost + proposal_cost,
-              "budget_policy": "no overall cap; positive inner task budgets"
-              if formal else "no overall cap; TEST-only inner task budgets",
-              "next_step": ("Verify the best generated candidate, then run validation admission once"
-                            if winner is not None else
-                            "No valid generated candidate; stop before validation and exam")}
-    (study_dir / "auto_self_research_report.json").write_text(
-        json.dumps(result, ensure_ascii=False, indent=2) + chr(10), encoding="utf-8")
-    return result
+                known_task_cost += sum(float(report["total_cost"])
+                                       for report in item.get("reports", []))
+        proposal_events = []
+        try:
+            proposal_events = proposal_ledger.events()
+        except Exception as audit_exc:
+            audit_errors.append({"path": str(proposal_ledger.path),
+                                 "error": str(audit_exc)[:1000]})
+        known_proposal_cost = sum(float(event["cost"]) for event in proposal_events)
+        unknown_proposal_usage_seqs = [event["seq"] for event in proposal_events
+                                       if event.get("usage_status", "reported") == "unknown"]
+        partial = {"schema": "auto_self_research/1", "status": "partial",
+                   "label": "FORMAL" if formal else "TEST ONLY",
+                   "selection_policy": _AUTO_SELECTION_POLICY,
+                   "ranking_policy": _AUTO_RANKING_POLICY,
+                   "currency": prices["currency"], "practice_tasks": practice,
+                   "proposal_ledger_path": str(proposal_ledger.path),
+                   "proposal_ledger_sha256": (_hash(proposal_ledger.path)
+                                              if proposal_ledger.path.is_file() else None),
+                   "proposal_attempts": proposal_attempts,
+                   "evaluations": evaluations, "partial_evaluations": {
+                       name: item for name, item in nested.items()
+                       if item.get("status") == "partial"},
+                   "reports": reports, "ranking": [],
+                   "overall_best_on_practice": None, "selection": None,
+                   "known_task_cost": known_task_cost,
+                   "known_proposal_cost": known_proposal_cost,
+                   "known_total_cost": known_task_cost + known_proposal_cost,
+                   "known_total_cost_is_lower_bound": True,
+                   "recorded_usage_complete": not (unknown_task_usage_calls
+                                                   or unknown_proposal_usage_seqs or audit_errors),
+                   "cost_complete": False, "exact_token_accounting": False,
+                   "unknown_task_usage_calls": unknown_task_usage_calls,
+                   "unknown_proposal_usage_seqs": unknown_proposal_usage_seqs,
+                   "audit_errors": audit_errors,
+                   "aborted": f"{type(exc).__name__}: {exc}"[:1000],
+                   "next_step": "Inspect partial evidence; do not promote or retry one-shot holdouts"}
+        (study_dir / "auto_self_research_report.json").write_text(
+            json.dumps(partial, ensure_ascii=False, indent=2) + chr(10), encoding="utf-8")
+        raise
 
 
 def verify_auto_selected(study_report: Mapping) -> Path:
     if study_report.get("schema") != "auto_self_research/1":
         raise ValueError("Expected auto_self_research/1")
+    if study_report.get("status", "complete") != "complete" or study_report.get("cost_complete") is False:
+        raise ValueError("Automatic self-research is partial or has unknown model usage")
     if not isinstance(study_report.get("selection"), Mapping):
         raise ValueError("Automatic self-research produced no valid tuned candidate")
     name = study_report["selection"]["candidate"]

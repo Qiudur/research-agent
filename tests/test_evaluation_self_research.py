@@ -13,7 +13,8 @@ import unittest
 import copy
 
 from evaluation.self_research import (_FORBIDDEN_NOTE, _PROPOSAL_SCHEMA, _effective_settings,
-                                      _materialize_proposal, _validate_proposal,
+                                      _materialize_proposal, _paired_practice_quality,
+                                      _validate_proposal,
                                       auto_evaluate_candidates, evaluate_candidates,
                                       verify_auto_selected, verify_selected)
 from evaluation.figures import _auto_research_cost
@@ -101,6 +102,29 @@ class HoldoutPilot(PilotHarness):
 
 
 class SelfResearchTests(unittest.TestCase):
+    def test_paired_quality_ignores_tiny_auc_reference_denominator(self):
+        tasks = ["tab-phishing", "tab-other", "spd-ceiling", "spd-other"]
+
+        def reports(phishing_auc, other_auc, speed_other, phishing_normalized):
+            return [{"rep": rep, "tasks": [
+                {"task_id": "tab-phishing", "holdout_raw": phishing_auc,
+                 "holdout_score": phishing_normalized},
+                {"task_id": "tab-other", "holdout_raw": other_auc,
+                 "holdout_score": 0.0},
+                {"task_id": "spd-ceiling", "holdout_score": 1.5},
+                {"task_id": "spd-other", "holdout_score": speed_other},
+            ]} for rep in (1, 2, 3)]
+
+        default = reports(.9910789, .80, .60, -229.69)
+        balanced = _paired_practice_quality(
+            reports(.9910790, .81, .62, -229.68), default, tasks)
+        distorted = _paired_practice_quality(
+            reports(.9920789, .79, .62, -137.11), default, tasks)
+        self.assertGreater(balanced["worst_scenario_mean_delta"],
+                           distorted["worst_scenario_mean_delta"])
+        self.assertEqual(balanced["paired_task_deltas"][2]["mean_delta"], 0.0)
+        self.assertAlmostEqual(balanced["scenario_mean_delta"]["tabular"], .00500005)
+
     def test_strategy_guard_distinguishes_validation_steps_from_private_tiers(self):
         self.assertIsNone(_FORBIDDEN_NOTE.search(
             "Preserve budget for critical validation steps and examine results."))
@@ -144,7 +168,9 @@ class SelfResearchTests(unittest.TestCase):
 
     def fake_executor(self, calls, *, tamper: Path | None = None,
                       default_score: float = .55, tuned_score: float = .60,
-                      tuned_tokens: int = 100, fail_holdout_task: str | None = None):
+                      tuned_tokens: int = 100, default_tokens: int = 300,
+                      fail_holdout_task: str | None = None,
+                      unknown_usage_rep: int | None = None):
         def execute(*, run_dir, task_id, harness, baseline_solution,
                     test_only_budget, **kwargs):
             self.assertEqual(test_only_budget, 1.0)
@@ -169,9 +195,12 @@ class SelfResearchTests(unittest.TestCase):
             ledger = Ledger.open(run_dir, task_id)
             ledger.emit("task_start", budget=1, wall_seconds=60)
             tuned = manifest["config"] == "tuned_lib"
+            usage_unknown = manifest["rep"] == unknown_usage_rep and task_id == PRACTICE[0]
             ledger.llm_call(node_id=None, role="planner", purpose="plan", effort="high",
-                            model="test-scripted", usage=Usage(input=tuned_tokens if tuned else 300),
-                            seconds=.1, prompt_hash="a" * 64)
+                            model="test-scripted", usage=Usage(input=0 if usage_unknown else
+                                                               tuned_tokens if tuned else default_tokens),
+                            seconds=.1, prompt_hash="a" * 64,
+                            usage_status="unknown" if usage_unknown else "reported")
             score = tuned_score if tuned else default_score
             tree = {"schema": "node/1", "node_id": "n0000", "parent": None,
                     "hypothesis": "Baseline", "status": "accepted", "score": {"dev": score},
@@ -207,6 +236,113 @@ class SelfResearchTests(unittest.TestCase):
                     code_commit="a" * 40, test_only_budget=1.0,
                     task_executor=self.fake_executor([], fail_holdout_task=PRACTICE[1]),
                 )
+
+    def test_parallel_failure_keeps_other_repetitions_and_known_cost(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            baselines, candidates, _ = self.setup_project(root)
+            ordinary = self.fake_executor([])
+
+            def fail_second_rep(**kwargs):
+                manifest = json.loads((kwargs["run_dir"] / "manifest.json").read_text())
+                if manifest["rep"] == 2 and kwargs["task_id"] == PRACTICE[0]:
+                    raise RuntimeError("synthetic second repetition failure")
+                return ordinary(**kwargs)
+
+            study = root / "batches/study"
+            with self.assertRaisesRegex(RuntimeError, "synthetic second repetition failure"):
+                evaluate_candidates(
+                    project_root=root, study_dir=study, harness=object(),
+                    candidates={"default": candidates["default"]},
+                    baseline_solutions=baselines,
+                    prices_path=root / "config/prices_test_only.json", model="test-scripted",
+                    code_commit="a" * 40, max_workers=3, test_only_budget=1.0,
+                    task_executor=fail_second_rep,
+                )
+            partial = json.loads((study / "self_research_report.json").read_text())
+            self.assertEqual(partial["status"], "partial")
+            self.assertEqual([row["rep"] for row in partial["attempts"]], [1, 3])
+            self.assertEqual(len(partial["reports"]), 2)
+            self.assertEqual([row["rep"] for row in partial["failed_runs"]], [2])
+            self.assertEqual(partial["selection"], None)
+            self.assertTrue(partial["known_task_cost_is_lower_bound"])
+            self.assertTrue(partial["recorded_usage_complete"])
+            self.assertAlmostEqual(partial["known_task_cost"],
+                                   sum(row["total_cost"] for row in partial["reports"]))
+
+    def test_unknown_task_usage_prevents_ranking_and_marks_lower_bound(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            baselines, candidates, _ = self.setup_project(root)
+            study = root / "batches/study"
+            with self.assertRaisesRegex(ValueError, "unknown model usage"):
+                evaluate_candidates(
+                    project_root=root, study_dir=study, harness=object(),
+                    candidates={"default": candidates["default"]},
+                    baseline_solutions=baselines,
+                    prices_path=root / "config/prices_test_only.json", model="test-scripted",
+                    code_commit="a" * 40, test_only_budget=1.0,
+                    task_executor=self.fake_executor([], unknown_usage_rep=1),
+                )
+            partial = json.loads((study / "self_research_report.json").read_text())
+            self.assertEqual(partial["status"], "partial")
+            self.assertEqual(len(partial["unknown_usage_calls"]), 1)
+            self.assertFalse(partial["recorded_usage_complete"])
+            self.assertTrue(partial["known_task_cost_is_lower_bound"])
+            self.assertIsNone(partial["selection"])
+
+    def test_post_run_ranking_error_still_writes_partial_report(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            baselines, candidates, _ = self.setup_project(root)
+            study = root / "batches/study"
+            with self.assertRaisesRegex(ValueError, "positive audited cost"):
+                evaluate_candidates(
+                    project_root=root, study_dir=study, harness=object(),
+                    candidates={"default": candidates["default"]},
+                    baseline_solutions=baselines,
+                    prices_path=root / "config/prices_test_only.json", model="test-scripted",
+                    code_commit="a" * 40, test_only_budget=1.0,
+                    task_executor=self.fake_executor([], default_tokens=0),
+                )
+            partial = json.loads((study / "self_research_report.json").read_text())
+            self.assertEqual(partial["status"], "partial")
+            self.assertEqual(len(partial["attempts"]), 3)
+            self.assertEqual(len(partial["reports"]), 3)
+            self.assertTrue(partial["known_task_cost_is_lower_bound"])
+            self.assertIsNone(partial["selection"])
+
+    def test_auto_default_failure_keeps_outer_partial_report(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            baselines, candidates, _ = self.setup_project(root)
+            ordinary = self.fake_executor([])
+
+            def fail_second_rep(**kwargs):
+                manifest = json.loads((kwargs["run_dir"] / "manifest.json").read_text())
+                if manifest["rep"] == 2 and kwargs["task_id"] == PRACTICE[0]:
+                    raise RuntimeError("default repetition failed")
+                return ordinary(**kwargs)
+
+            study = root / "batches/auto-study"
+            with self.assertRaisesRegex(RuntimeError, "default repetition failed"):
+                auto_evaluate_candidates(
+                    project_root=root, study_dir=study, harness=object(),
+                    default_config=candidates["default"], baseline_solutions=baselines,
+                    prices_path=root / "config/prices_test_only.json", model="test-scripted",
+                    code_commit="a" * 40, rounds=1, test_only_budget=1.0,
+                    proposal_client=SimpleNamespace(responses=FakeProposalResponses()),
+                    task_executor=fail_second_rep,
+                )
+            partial = json.loads((study / "auto_self_research_report.json").read_text())
+            self.assertEqual(partial["status"], "partial")
+            self.assertIn("default", partial["partial_evaluations"])
+            self.assertEqual(len(partial["reports"]), 1)
+            self.assertGreater(partial["known_task_cost"], 0)
+            self.assertTrue(partial["known_total_cost_is_lower_bound"])
+            self.assertIsNone(partial["selection"])
+            with self.assertRaisesRegex(ValueError, "partial"):
+                verify_auto_selected(partial)
 
     def test_test_only_practice_selection_and_candidate_provenance(self):
         with TemporaryDirectory() as temp:
@@ -371,6 +507,11 @@ class SelfResearchTests(unittest.TestCase):
                                  for group in first_breakdown for task in group["tasks"]))
             self.assertEqual(result["label"], "TEST ONLY")
             self.assertEqual(result["selection"]["candidate"], "auto-01")
+            self.assertEqual(result["selection_policy"], "paired-scenario-quality-v1")
+            plan = json.loads((root / "batches/auto-study/auto_plan.json").read_text())
+            self.assertEqual(plan["selection_policy"], result["selection_policy"])
+            self.assertEqual(result["ranking"][1]["scenario_mean_delta"].keys(),
+                             {"speedup"})
             self.assertEqual(len(result["reports"]), 6)
             self.assertEqual([item["status"] for item in result["proposal_attempts"]],
                              ["evaluated", "rejected", "rejected"])
@@ -403,6 +544,35 @@ class SelfResearchTests(unittest.TestCase):
             self.assertTrue(generated_prompt.startswith(original))
             self.assertIn("original safety and data-isolation rules", generated_prompt)
             self.assertFalse((root / "tasks/spd-validation-secret").exists())
+
+    def test_proposal_without_usage_yields_partial_cost_not_free_candidate(self):
+        class NoUsageResponses(FakeProposalResponses):
+            def create(self, **kwargs):
+                result = super().create(**kwargs)
+                result.usage = None
+                return result
+
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            baselines, candidates, _ = self.setup_project(root)
+            study = root / "batches/auto-study"
+            with self.assertRaisesRegex(ValueError, "usage is unknown"):
+                auto_evaluate_candidates(
+                    project_root=root, study_dir=study, harness=object(),
+                    default_config=candidates["default"], baseline_solutions=baselines,
+                    prices_path=root / "config/prices_test_only.json", model="test-scripted",
+                    code_commit="a" * 40, rounds=1, test_only_budget=1.0,
+                    proposal_client=SimpleNamespace(responses=NoUsageResponses()),
+                    task_executor=self.fake_executor([]),
+                )
+            partial = json.loads((study / "auto_self_research_report.json").read_text())
+            event = json.loads((study / "proposal_ledger.jsonl").read_text())
+            self.assertEqual(event["usage_status"], "unknown")
+            self.assertEqual(partial["unknown_proposal_usage_seqs"], [1])
+            self.assertEqual(partial["status"], "partial")
+            self.assertFalse(partial["recorded_usage_complete"])
+            self.assertTrue(partial["known_total_cost_is_lower_bound"])
+            self.assertIsNone(partial["selection"])
 
     def test_auto_round_and_output_caps_fail_before_spend(self):
         with TemporaryDirectory() as temp:

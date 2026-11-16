@@ -17,11 +17,17 @@ from scripts.run_token_self_research import (PRICE_NAME, PROJECT, TASKS,
 
 
 class TokenSelfResearchPilotTests(unittest.TestCase):
-    def _mocked_default_summary(self, root: Path, *, fail: bool) -> dict:
+    def _mocked_default_summary(self, root: Path, *, fail: bool,
+                                partial_report: bool = False) -> dict:
         def prepare(_source, campaign, **_kwargs):
             project = campaign / "project"
             project.mkdir(parents=True)
             pilot._write(campaign / "protocol.json", {"label": "TEST ONLY"})
+            if partial_report:
+                pilot._write(project / "runs/default-study/self_research_report.json", {
+                    "schema": "self_research/1", "status": "partial", "selection": None,
+                    "known_task_cost": 9.0, "unknown_usage_calls": [{"seq": 2}],
+                })
             return project
 
         fake_result = {"ranking": [{"candidate": "default"}],
@@ -63,6 +69,16 @@ class TokenSelfResearchPilotTests(unittest.TestCase):
             self.assertEqual(summary["started_utc"], "2026-11-14T01:00:00.000Z")
             self.assertEqual(summary["ended_utc"], "2026-11-14T01:00:01.500Z")
             self.assertEqual(summary["elapsed_seconds"], 1.5)
+
+    def test_failed_summary_links_partial_report_and_known_lower_bound(self):
+        with TemporaryDirectory() as temp:
+            summary = self._mocked_default_summary(Path(temp), fail=True,
+                                                   partial_report=True)
+            self.assertEqual(summary["status"], "partial")
+            self.assertTrue(Path(summary["study_report"]).is_file())
+            self.assertEqual(summary["known_total_tokens"], 9.0)
+            self.assertTrue(summary["known_total_tokens_is_lower_bound"])
+            self.assertEqual(summary["unknown_task_usage_calls"], [{"seq": 2}])
 
     def test_prepare_copies_only_practice_tasks_with_exact_token_units(self):
         with TemporaryDirectory() as temp:

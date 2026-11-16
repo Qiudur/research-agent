@@ -80,12 +80,14 @@ def token_usage_from_response(response: Any) -> TokenUsage:
     """Convert inclusive Responses API counters to disjoint ledger buckets."""
     usage = _field(response, "usage")
     if usage is None:
-        return TokenUsage()
-    input_total = int(_field(usage, "input_tokens", 0) or 0)
-    output_total = int(_field(usage, "output_tokens", 0) or 0)
-    cached = int(_field(_field(usage, "input_tokens_details", {}), "cached_tokens", 0) or 0)
-    reasoning = int(_field(_field(usage, "output_tokens_details", {}), "reasoning_tokens", 0) or 0)
-    if min(input_total, output_total, cached, reasoning) < 0 or cached > input_total or reasoning > output_total:
+        raise ModelCallError("Model returned no token usage")
+    input_total = _field(usage, "input_tokens")
+    output_total = _field(usage, "output_tokens")
+    cached = _field(_field(usage, "input_tokens_details", {}), "cached_tokens", 0) or 0
+    reasoning = _field(_field(usage, "output_tokens_details", {}), "reasoning_tokens", 0) or 0
+    if (any(type(value) is not int or value < 0 for value in
+            (input_total, output_total, cached, reasoning))
+            or cached > input_total or reasoning > output_total):
         raise ModelCallError("Invalid or inconsistent token usage returned by model")
     return TokenUsage(input_total - cached, cached, output_total - reasoning, reasoning)
 
@@ -362,11 +364,13 @@ class ModelClient:
         started = self.clock()
         response: Any | None = None
         usage = TokenUsage()
+        usage_status = "unknown"
         data: dict[str, Any] | None = None
         error: Exception | None = None
         try:
             response = self.client.responses.create(**request)
             usage = token_usage_from_response(response)
+            usage_status = "reported"
             status = _field(response, "status", "completed")
             if status != "completed":
                 reason = _field(_field(response, "incomplete_details", {}), "reason", status)
@@ -393,6 +397,7 @@ class ModelClient:
                 effort=effort,
                 model=self.model,
                 usage=_ledger_usage(usage),
+                usage_status=usage_status,
                 seconds=seconds,
                 prompt_hash=prompt_hash,
                 ok=error is None,
@@ -409,6 +414,7 @@ class ModelClient:
                 "output_text": _field(response, "output_text"),
                 "thinking": thinking, "max_output_tokens": output_cap,
                 "tokens": vars(usage), "cost": cost,
+                "usage_status": usage_status,
                 "error": str(error) if error is not None else None,
             }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         if error is not None:

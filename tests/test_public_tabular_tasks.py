@@ -47,7 +47,9 @@ class PublicTabularPackageTests(unittest.TestCase):
                 task = harness.load_task(task_id)
                 self.assertEqual(task["scenario"], "tabular")
                 self.assertEqual(task["deliverable"]["function"], "fit_predict")
-                expected_budget = 40_000 if bank["frozen"] and task_id in bank_ids else None
+                # These two bank-v2 candidate packages have explicit budgets before bank inclusion.
+                budgeted_candidates = {"tab-spambase", "tab-wine-quality"}
+                expected_budget = 40_000 if task_id in bank_ids or task_id in budgeted_candidates else None
                 self.assertEqual(task["budget"]["money"], expected_budget)
                 root = task["workspace"].parent
                 self.assertTrue((root / "SOURCE.md").is_file())

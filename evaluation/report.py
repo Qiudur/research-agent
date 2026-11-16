@@ -89,6 +89,11 @@ def task_report(run_dir: Path, task_id: str) -> dict:
             raise ValueError("Holdout score differs from task_end")
     raw_lift = _check_raw_lift(ending)
     model_events = [event for event in events if event["kind"] == "llm_call"]
+    usage_statuses = [event.get("usage_status", "reported") for event in model_events]
+    if any(status not in {"reported", "unknown"} for status in usage_statuses):
+        raise ValueError("Task ledger has an invalid usage status")
+    unknown_usage_seqs = [event["seq"] for event, status in zip(model_events, usage_statuses)
+                          if status == "unknown"]
     billed = sum(float(event["cost"]) for event in model_events)
     if not math.isclose(billed, float(ending["total_cost"]), rel_tol=1e-10, abs_tol=1e-12):
         raise ValueError("Task cost differs from sum of model calls")
@@ -139,6 +144,8 @@ def task_report(run_dir: Path, task_id: str) -> dict:
         "quote": quotes[0]["predicted"] if quotes else None,
         "quote_error": ending["quote_error"],
         "model_calls": len(model_events), "tokens": tokens, "cost_by_role": role_cost,
+        "unknown_usage_call_seqs": unknown_usage_seqs,
+        "cost_complete": not unknown_usage_seqs,
         "experiments": len([node for node in nodes.values() if node["node_id"] != "n0000"]),
         "accepted_nodes": [node["node_id"] for node in nodes.values() if node["node_id"] != "n0000" and node["status"] == "accepted"],
         "evidence": {
@@ -165,10 +172,13 @@ def run_report(run_dir: Path) -> dict:
         raise ValueError("Run total differs from task ledgers")
     violations = [task for task in tasks if task.get("budget_violation")]
     failures = [task for task in tasks if task.get("holdout_failed")]
+    cost_complete = all(task.get("cost_complete", True) for task in tasks)
     report = {"schema": "run_report/1", "run_id": run_dir.name,
               "phase": ledger.manifest["phase"], "config": ledger.manifest["config"],
               "rep": ledger.manifest["rep"], "currency": ledger.prices["currency"],
-              "exact_token_accounting": is_exact_token_accounting(ledger.prices, ledger.manifest["model"]),
+              "exact_token_accounting": (is_exact_token_accounting(ledger.prices, ledger.manifest["model"])
+                                         and cost_complete),
+              "cost_complete": cost_complete,
               "total_cost": total,
               "budget_violations": len(violations),
               "budget_violation_task_ids": [task["task_id"] for task in violations],

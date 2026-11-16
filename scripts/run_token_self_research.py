@@ -242,12 +242,33 @@ def main(argv: list[str] | None = None) -> int:
         _write(campaign / "summary.json", summary)
         print(json.dumps(summary, ensure_ascii=False), flush=True)
     except Exception as exc:
-        _write(campaign / "summary.json", {
+        summary = {
             "schema": "token_parallel_default_summary/1" if args.default_only else "token_self_research_summary/1",
             "label": protocol["label"], "campaign_dir": str(campaign),
             "error": str(exc),
             **_timing(started_utc, started_tick),
-        })
+        }
+        report_path = (project / "runs/default-study/self_research_report.json" if args.default_only
+                       else project / "runs/auto-study/auto_self_research_report.json")
+        if report_path.is_file():
+            summary["study_report"] = str(report_path)
+            try:
+                partial = json.loads(report_path.read_text(encoding="utf-8"))
+            except (OSError, ValueError) as report_exc:
+                summary["study_report_read_error"] = str(report_exc)
+            else:
+                if partial.get("status") == "partial":
+                    summary.update({"status": "partial",
+                                    "known_task_tokens": partial.get("known_task_cost"),
+                                    "known_proposal_tokens": partial.get("known_proposal_cost"),
+                                    "known_total_tokens": partial.get(
+                                        "known_total_cost", partial.get("known_task_cost")),
+                                    "known_total_tokens_is_lower_bound": True,
+                                    "unknown_task_usage_calls": partial.get(
+                                        "unknown_task_usage_calls", partial.get("unknown_usage_calls", [])),
+                                    "unknown_proposal_usage_seqs": partial.get(
+                                        "unknown_proposal_usage_seqs", [])})
+        _write(campaign / "summary.json", summary)
         raise
     return 0
 

@@ -226,6 +226,8 @@ def _audit_run(root: Path, run_id: str, *, phase: str, config: str, rep: int,
         usage = {key: 0 for key in BUCKETS}
         role_cost = {role: 0.0 for role in ROLES}
         for call in calls:
+            _require(call.get("usage_status", "reported") == "reported",
+                     f"Model usage is unknown: {run_id}/{task_id}")
             buckets = _tokens(call.get("tokens"), f"{run_id}/{task_id} call")
             cost = sum(buckets.values())
             _equal_cost(call.get("cost"), cost, f"{run_id}/{task_id} call")
@@ -262,6 +264,14 @@ def _audit_run(root: Path, run_id: str, *, phase: str, config: str, rep: int,
                  and type(result_score) in (int, float) and math.isfinite(result_score)
                  and math.isclose(result_score, ending_score, rel_tol=0, abs_tol=1e-12),
                  f"Task holdout score artifact differs: {run_id}/{task_id}")
+        if task.get("holdout_raw") is not None or ends[0].get("holdout_raw") is not None:
+            raw = saved_score.get("raw")
+            _require(type(raw) in (int, float) and math.isfinite(raw)
+                     and type(task.get("holdout_raw")) in (int, float)
+                     and type(ends[0].get("holdout_raw")) in (int, float)
+                     and math.isclose(task["holdout_raw"], raw, rel_tol=0, abs_tol=1e-12)
+                     and math.isclose(ends[0]["holdout_raw"], raw, rel_tol=0, abs_tol=1e-12),
+                     f"Task raw holdout differs from artifact: {run_id}/{task_id}")
         _require(task.get("schema") == "task_report/1" and task.get("run_id") == run_id
                  and task.get("currency") == "TOKENS" and task.get("tokens") == usage
                  and task.get("model_calls") == len(calls),
@@ -293,6 +303,44 @@ def _audit_run(root: Path, run_id: str, *, phase: str, config: str, rep: int,
     return report
 
 
+def _audited_paired_quality(candidate_reports: list[dict], default_reports: list[dict],
+                            tasks: list[str]) -> dict:
+    """Recompute the versioned selection rule independently from audited reports."""
+    candidate = {report["rep"]: report for report in candidate_reports}
+    default = {report["rep"]: report for report in default_reports}
+    _require(len(candidate_reports) == len(default_reports) == 3
+             and set(candidate) == set(default) == set(REPS),
+             "Paired selection needs three unique repetitions")
+    task_deltas = []
+    scenario_values = {"tabular": [], "speedup": []}
+    for task_id in tasks:
+        scenario = "tabular" if task_id.startswith("tab-") else "speedup"
+        field = "holdout_raw" if scenario == "tabular" else "holdout_score"
+        deltas = []
+        for rep in REPS:
+            observed = next(row for row in candidate[rep]["tasks"] if row["task_id"] == task_id)
+            baseline = next(row for row in default[rep]["tasks"] if row["task_id"] == task_id)
+            left, right = observed.get(field), baseline.get(field)
+            _require(type(left) in (int, float) and math.isfinite(left)
+                     and type(right) in (int, float) and math.isfinite(right),
+                     f"Paired selection has no finite {field}: {task_id}")
+            if scenario == "tabular":
+                _require(0 <= left <= 1 and 0 <= right <= 1,
+                         f"Paired raw AUC is invalid: {task_id}")
+            else:
+                left, right = min(1.0, max(0.0, left)), min(1.0, max(0.0, right))
+            deltas.append(float(left) - float(right))
+        task_mean = mean(deltas)
+        task_deltas.append({"task_id": task_id, "scenario": scenario,
+                            "paired_deltas": deltas, "mean_delta": task_mean})
+        scenario_values[scenario].append(task_mean)
+    scenario_mean = {name: mean(values) for name, values in scenario_values.items() if values}
+    _require(bool(scenario_mean), "Paired selection has no scored scenario")
+    return {"paired_task_deltas": task_deltas, "scenario_mean_delta": scenario_mean,
+            "worst_scenario_mean_delta": min(scenario_mean.values()),
+            "balanced_mean_delta": mean(scenario_mean.values())}
+
+
 def _audit_study(root: Path, study_dir: Path, tasks: list[str], bank_version: str,
                  commit: str, price_sha: str,
                  violations: list[dict] | None = None) -> tuple[Path, dict]:
@@ -300,11 +348,17 @@ def _audit_study(root: Path, study_dir: Path, tasks: list[str], bank_version: st
     study = _json(study_dir / "auto_self_research_report.json")
     _require(plan.get("schema") == "auto_self_research_plan/1"
              and study.get("schema") == "auto_self_research/1"
+             and study.get("status", "complete") == "complete"
+             and study.get("cost_complete", True) is True
              and plan.get("label") == study.get("label") == "FORMAL"
              and study.get("currency") == "TOKENS"
              and plan.get("practice_tasks") == study.get("practice_tasks") == tasks
              and plan.get("price_sha256") == price_sha,
              "Self-research plan or report differs from frozen practice")
+    policy = plan.get("selection_policy")
+    _require(policy in (None, "paired-scenario-quality-v1")
+             and study.get("selection_policy") == policy,
+             "Self-research selection policy differs from the pre-run plan")
     _require(type(plan.get("rounds")) is int and 1 <= plan["rounds"] <= 8
              and plan.get("max_output_tokens") == 2048,
              "Self-research proposal limits differ")
@@ -322,6 +376,8 @@ def _audit_study(root: Path, study_dir: Path, tasks: list[str], bank_version: st
     model = next(iter(proposal_models))
     proposal_cost = 0.0
     for seq, (row, attempt) in enumerate(zip(proposals, attempts), 1):
+        _require(row.get("usage_status", "reported") == "reported",
+                 f"Proposal usage is unknown: {seq}")
         cost = sum(_tokens(row.get("tokens"), f"proposal {seq}").values())
         _equal_cost(row.get("cost"), cost, f"proposal {seq}")
         _equal_cost(attempt.get("cost"), cost, f"proposal attempt {seq}")
@@ -407,17 +463,27 @@ def _audit_study(root: Path, study_dir: Path, tasks: list[str], bank_version: st
         mean_task_cost = mean(report["total_cost"] for report, _ in verified)
         research_cost = sum(report["total_cost"] for report, _ in verified) + cost_by_candidate[name]
         _require(research_cost > 0, f"Candidate has no positive research cost: {name}")
-        expected_ranking.append({
+        entry = {
             "candidate": name, "mean_score": mean_score,
             "mean_task_cost": mean_task_cost, "proposal_cost": cost_by_candidate[name],
             "research_cost": research_cost,
             "score_per_currency": 3 * max(mean_score, 0.0) / research_cost,
             "run_ids": [report["run_id"] for report, _ in verified],
-        })
+        }
+        if policy == "paired-scenario-quality-v1":
+            entry.update(_audited_paired_quality(
+                [report for report, _ in verified],
+                [report for report, _ in verified_by_candidate["default"]], tasks))
+        expected_ranking.append(entry)
     _require(study.get("ranking") == expected_ranking,
              "Self-research ranking differs from audited practice reports")
     _require(len(expected_ranking) > 1, "No selected generated candidate")
-    rank_key = lambda row: (row["score_per_currency"], row["mean_score"], -row["research_cost"])
+    if policy == "paired-scenario-quality-v1":
+        rank_key = lambda row: (row["worst_scenario_mean_delta"],
+                                row["balanced_mean_delta"], -row["research_cost"])
+    else:
+        rank_key = lambda row: (row["score_per_currency"], row["mean_score"],
+                                -row["research_cost"])
     overall = max(expected_ranking, key=rank_key)
     winner = max(expected_ranking[1:], key=rank_key)
     _require(study.get("overall_best_on_practice") == overall["candidate"],
