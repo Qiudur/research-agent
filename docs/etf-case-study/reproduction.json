@@ -1,0 +1,44 @@
+{
+  "schema": "etf_case_reproduction/1",
+  "implementation_revision": "5f1a7f60734a2cbe4cd2db2712df1952078d252a",
+  "protocol_registration_revision": "30884f0a63cd943b4830a035dcf2584b8f507b86",
+  "command": "python -m quant_research.etf_case --dataset-manifest runs/etf-case-data-v1/manifest.json --output-dir runs/etf-case-real-v1",
+  "tests": {
+    "command": "python -m unittest discover -s tests -p 'test_quant*.py' -q",
+    "passed": 112
+  },
+  "independent_arithmetic_check": {
+    "method": "Standard-library arithmetic from the local price CSV and recorded weights; did not rerun signals or backtest functions.",
+    "sequences": 30,
+    "daily_records": 15039,
+    "metrics_checked": 180,
+    "gross_net_equity_max_error": 0.0,
+    "turnover_max_error": 2.220446049250313e-16,
+    "metrics_max_error": 5.551115123125783e-17,
+    "checks": [
+      "equal weights and two-position weights",
+      "cash entry and drift turnover",
+      "5 bps per traded notional costs",
+      "daily compound equity and risk metrics",
+      "seven-candidate development ranking",
+      "three holdout series",
+      "input, source, raw-source and frozen-selection hashes"
+    ],
+    "result": "pass"
+  },
+  "artifacts": {
+    "study": "study.json",
+    "selection": "dev_selection.json",
+    "attempt": "holdout_attempt.json",
+    "protocol": "protocol.json",
+    "dataset_manifest": "dataset/manifest.json",
+    "report": "report.md"
+  },
+  "publication": "Study, selection, attempt, protocol and dataset manifest are copied byte-for-byte. No market price CSV is redistributed. Descriptor paths are logical labels.",
+  "reproduction_notes": [
+    "Re-download the pinned source locally. Normalized CSV SHA-256 should match the published manifest.",
+    "A new download changes retrieved_at_utc and therefore the manifest SHA-256; this is metadata, not a price change.",
+    "A fresh run has new timestamps and therefore new selection/study hashes. Check input/source hashes and numerical evidence separately.",
+    "The output-directory marker is a local rerun guard, not proof that an interval has never been inspected elsewhere."
+  ]
+}

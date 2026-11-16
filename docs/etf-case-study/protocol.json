@@ -1,0 +1,34 @@
+{
+  "schema": "etf_study_protocol/1",
+  "id": "etf-fixed-universe-v1",
+  "question": "Do simple ETF ranking signals remain competitive with daily equal weighting after stated transaction costs across several development periods?",
+  "symbols": ["EEM", "EFA", "GLD", "IEF", "IWM", "QQQ", "SPY", "TLT"],
+  "data_start": "2008-01-01",
+  "data_end": "2019-12-31",
+  "warmup_end": "2011-12-30",
+  "development_windows": [
+    {"id": "dev-2012-2013", "start": "2012-01-04", "end": "2013-12-31"},
+    {"id": "dev-2014-2015", "start": "2014-01-06", "end": "2015-12-31"},
+    {"id": "dev-2016-2017", "start": "2016-01-06", "end": "2017-12-29"}
+  ],
+  "holdout": {"start": "2018-01-04", "end": "2019-12-31"},
+  "label_horizon": 2,
+  "top_k": 2,
+  "fee_bps": 2.0,
+  "slippage_bps": 3.0,
+  "fixed_momentum_lookback": 63,
+  "candidates": [
+    {"id": "momentum-21", "kind": "momentum", "lookback": 21},
+    {"id": "momentum-63", "kind": "momentum", "lookback": 63},
+    {"id": "momentum-126", "kind": "momentum", "lookback": 126},
+    {"id": "reversal-5", "kind": "reversal", "lookback": 5},
+    {"id": "reversal-21", "kind": "reversal", "lookback": 21},
+    {"id": "low-vol-21", "kind": "low_volatility", "lookback": 21},
+    {"id": "low-vol-63", "kind": "low_volatility", "lookback": 63}
+  ],
+  "selection_rule": "max_min_dev_excess_then_mean_then_id",
+  "selection_notes": "Rank by highest worst-window net excess return, then highest mean-window net excess return, then lexicographically smallest candidate ID. Retain every candidate even if all excess returns are negative. Do not retune after the single holdout evaluation.",
+  "universe_notes": "Eight named, long-lived ETFs chosen by asset category, not observed backtest performance. Fixed research universe does not establish point-in-time membership or freedom from survivorship bias.",
+  "execution_notes": "Signals after t close trade at t+1 close and realize returns through t+2 close. Top two are equally weighted daily; the equal-weight benchmark rebalances daily across all eight. Each evaluation window starts from cash and pays entry costs.",
+  "qwen_comparison": "not_run; a future Agent comparison must use a newly frozen protocol and an unopened final interval"
+}

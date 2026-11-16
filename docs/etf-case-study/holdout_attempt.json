@@ -1,0 +1,22 @@
+{
+  "schema": "etf_holdout_attempt/1",
+  "status": "completed",
+  "started_at": "2026-11-16T14:40:04.699Z",
+  "selection_sha256": "6b906f71c7ac0067b5cc4c87b009dd57d49ab8ad2c7a829f0dc5f8943b3d0e93",
+  "selected_candidate": {
+    "id": "momentum-126",
+    "kind": "momentum",
+    "lookback": 126
+  },
+  "input_hashes": {
+    "dataset_manifest": "98d13d38635132c42fa0cdfe71058b2c57b8866a7af9cffd777a7cf584056eef",
+    "dataset_csv": "96f74920d5ba91890451599d16240a548bbc9aa186c73136818dff205d2f7444",
+    "protocol": "ee50dd2e5058dd930412c92f6abf8cc723fa0317d1dfa2d132a3bb20d9dd7106"
+  },
+  "series_ids": [
+    "equal_weight",
+    "fixed_momentum",
+    "selected_grid"
+  ],
+  "completed_at": "2026-11-16T14:40:04.854Z"
+}
