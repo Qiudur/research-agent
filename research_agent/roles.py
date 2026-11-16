@@ -60,7 +60,7 @@ REVIEW_SCHEMA = _object(
 _DRAFT = _object(
     {
         "scope": {"type": "string", "enum": ["domain", "method"]},
-        "scenario": {"type": "string", "enum": ["tabular", "speedup", "any"]},
+        "scenario": {"type": "string", "enum": ["tabular", "speedup", "quant", "any"]},
         "triggers": _STRINGS,
         "conditions": _STRING,
         "action": _STRING,

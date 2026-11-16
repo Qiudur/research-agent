@@ -22,7 +22,7 @@ Entry: TypeAlias = dict[str, Any]
 _ENTRY_ID = re.compile(r"^(exp|skl|tool)-\d{4,}$")
 _VERSION = re.compile(r"^lib-(0|[1-9]\d*)$")
 _KINDS = {"experience", "skill", "tool"}
-_SCENARIOS = {"tabular", "speedup", "any"}
+_SCENARIOS = {"tabular", "speedup", "quant", "any"}
 _OPS = {"write", "update", "narrow", "promote", "demote", "retire", "merge"}
 _ACTORS = {"online", "self_research", "human"}
 _STATUSES = {"active", "demoted", "retired"}
@@ -153,9 +153,9 @@ def _validate_entry(entry: Entry, triggers: dict[str, Any]) -> None:
         raise LibraryError("Invalid entry scenario or status")
     if not isinstance(entry["triggers"], list) or not all(isinstance(x, str) for x in entry["triggers"]):
         raise LibraryError("Entry triggers must be a string list")
-    allowed = set(triggers["tabular"] + triggers["speedup"])
+    allowed = set(triggers["tabular"] + triggers["speedup"] + triggers.get("quant", []))
     if entry["scenario"] != "any":
-        allowed = set(triggers[entry["scenario"]])
+        allowed = set(triggers.get(entry["scenario"], []))
     if any(item not in allowed for item in entry["triggers"]):
         raise LibraryError("Entry contains an unknown or out-of-scenario trigger")
     if not isinstance(entry["conditions"], str) or not isinstance(entry["action"], str):
@@ -260,9 +260,9 @@ class Library:
         self, scenario: str, features: list[str], k: int = 8,
         kinds: tuple = ("experience", "skill"),
     ) -> list[Entry]:
-        if scenario not in {"tabular", "speedup"}:
-            raise ValueError("scenario must be tabular or speedup")
-        if not isinstance(features, list) or any(x not in self._triggers[scenario] for x in features):
+        if scenario not in {"tabular", "speedup", "quant"}:
+            raise ValueError("scenario must be tabular, speedup or quant")
+        if not isinstance(features, list) or any(x not in self._triggers.get(scenario, []) for x in features):
             raise ValueError("features contain an unknown trigger")
         if k < 0:
             raise ValueError("k must be nonnegative")

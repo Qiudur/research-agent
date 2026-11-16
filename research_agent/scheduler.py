@@ -24,7 +24,7 @@ def _number(value: Any, name: str) -> float:
 
 # Optional agent/1 switches. Every key is absent in config/agent.json, and an
 # absent (or null) key keeps the original behavior.
-SCENARIO_KEYS = ("spd", "tab")  # task_id prefixes: spd-... and tab-...
+SCENARIO_KEYS = ("spd", "tab", "quant")  # task_id prefixes
 STOP_LOSS_KEYS = ("first_n_no_gain", "consecutive_no_gain")
 PLANNER_MODES = ("standard", "lean")
 SUMMARIZER_RESERVES = ("standard", "worst_case")
@@ -34,7 +34,7 @@ MAX_HYPOTHESES_PER_PLAN = 20
 
 
 def scenario_key(task_id: str | None) -> str | None:
-    """Return the settings key (spd or tab) for a published task id, else None."""
+    """Return the settings key (spd, tab or quant) for a task id, else None."""
     prefix = str(task_id or "").partition("-")[0]
     return prefix if prefix in SCENARIO_KEYS else None
 
@@ -91,7 +91,7 @@ def validate_options(config: Mapping[str, Any]) -> None:
 class Scheduler:
     """Rules-only scheduler: no manager model and no hidden budget changes.
 
-    task_id selects the per-scenario (spd/tab) entries of the optional
+    task_id selects the per-scenario (spd/tab/quant) entries of the optional
     stop_loss and cost_priors settings; without it they are ignored.
     """
 
@@ -124,7 +124,7 @@ class Scheduler:
 
     @property
     def scenario(self) -> str | None:
-        """spd or tab, taken from the task id prefix."""
+        """spd, tab or quant, taken from the task id prefix."""
         return scenario_key(self.task_id)
 
     def _scenario_setting(self, name: str) -> Any:

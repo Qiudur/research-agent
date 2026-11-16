@@ -97,8 +97,8 @@ class ExperimentTree:
     """One task's node snapshots; the last snapshot of each id is authoritative."""
 
     def __init__(self, run_dir: Path, task_id: str):
-        if not re.fullmatch(r"(?:tab|spd)-[a-z0-9]+(?:-[a-z0-9]+)*", task_id):
-            raise TreeError("Task id must follow the published tab-/spd- format")
+        if not re.fullmatch(r"(?:tab|spd|quant)-[a-z0-9]+(?:-[a-z0-9]+)*", task_id):
+            raise TreeError("Task id must follow the published tab-/spd-/quant- format")
         self.run_dir = Path(run_dir).resolve()
         self.run_id = self.run_dir.name
         self.task_id = task_id

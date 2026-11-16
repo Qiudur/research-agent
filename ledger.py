@@ -18,7 +18,7 @@ KINDS = frozenset({
     "review", "library", "stop", "task_end", "run_start", "run_end",
 })
 TOKEN_BUCKETS = ("input", "cached_input", "output", "reasoning")
-_TASK_ID = re.compile(r"^(tab|spd)-[a-z0-9][a-z0-9-]*$")
+_TASK_ID = re.compile(r"^(?:tab|spd|quant)-[a-z0-9]+(?:-[a-z0-9]+)*$")
 _HASH = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -33,6 +33,58 @@ def _nonnegative(value: Any, name: str) -> float:
     if not math.isfinite(number) or number < 0:
         raise ValueError(f"{name} must be a nonnegative finite number")
     return number
+
+
+def _sealed_quant_input(root: Path, manifest: dict, name: str, schema: str) -> None:
+    """Check a quant manifest's project-local, immutable JSON input."""
+    descriptor = manifest.get(name)
+    if not isinstance(descriptor, dict) or not isinstance(descriptor.get("path"), str):
+        raise ValueError(f"Quant run must identify {name}")
+    relative = Path(descriptor["path"])
+    expected = str(descriptor.get("sha256", "")).lower()
+    if relative.is_absolute() or not _HASH.fullmatch(expected):
+        raise ValueError(f"Quant run {name} needs a relative path and SHA-256")
+    path = (root / relative).resolve()
+    if not path.is_relative_to(root):
+        raise ValueError(f"Quant run {name} escapes project root")
+    raw = path.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != expected:
+        raise ValueError(f"Quant run {name} changed after sealing")
+    value = json.loads(raw)
+    if not isinstance(value, dict) or value.get("schema") != schema:
+        raise ValueError(f"Quant run {name} must have schema {schema}")
+
+
+def _validate_quant_manifest(manifest: dict, root: Path) -> None:
+    tasks = manifest.get("tasks")
+    if (not isinstance(tasks, list) or not tasks
+            or any(not isinstance(item, str) or not item.startswith("quant-")
+                   or not _TASK_ID.fullmatch(item) for item in tasks)
+            or len(set(tasks)) != len(tasks)):
+        raise ValueError("Quant run needs unique quant-* tasks")
+    if manifest.get("phase") != "dev":
+        raise ValueError("Quant run phase must be dev")
+    if not isinstance(manifest.get("model"), str) or not manifest["model"].strip():
+        raise ValueError("Quant run needs a model")
+    commit = manifest.get("code_commit")
+    if not isinstance(commit, str) or not re.fullmatch(r"[0-9a-f]{7,40}", commit):
+        raise ValueError("Quant run needs a code commit SHA")
+    library = manifest.get("library")
+    if (not isinstance(library, dict) or not isinstance(library.get("root"), str)
+            or not library["root"] or not isinstance(library.get("start_version"), str)
+            or not re.fullmatch(r"lib-(0|[1-9][0-9]*)", library["start_version"])
+            or not isinstance(library.get("frozen"), bool)):
+        raise ValueError("Quant run needs sealed library settings")
+    library_root = (root / library["root"]).resolve()
+    if Path(library["root"]).is_absolute() or not library_root.is_relative_to(root):
+        raise ValueError("Quant run library root escapes project")
+    hard_caps = manifest.get("hard_caps")
+    if (not isinstance(hard_caps, dict) or isinstance(hard_caps.get("budget_ratio"), bool)
+            or not isinstance(hard_caps.get("budget_ratio"), (int, float))
+            or not 0 < hard_caps["budget_ratio"] < 1):
+        raise ValueError("Quant run needs a valid hard cap ratio")
+    _sealed_quant_input(root, manifest, "dataset", "quant_dataset/1")
+    _sealed_quant_input(root, manifest, "agent_config", "agent/1")
 
 
 @dataclass(frozen=True)
@@ -95,8 +147,15 @@ class Ledger:
             raise ValueError("Invalid task_id")
         manifest_path = run_dir / "manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        if manifest.get("schema") != "run/1" or manifest.get("run_id") != run_dir.name:
+        schema = manifest.get("schema")
+        if schema not in {"run/1", "quant_run/1"} or manifest.get("run_id") != run_dir.name:
             raise ValueError("Run manifest schema or run_id mismatch")
+        project_root = run_dir.parent.parent
+        if schema == "quant_run/1":
+            _validate_quant_manifest(manifest, project_root)
+        elif any(isinstance(item, str) and item.startswith("quant-")
+                 for item in manifest.get("tasks", [])):
+            raise ValueError("Quant tasks require a quant_run/1 manifest")
         if task_id is not None and task_id not in manifest.get("tasks", []):
             raise ValueError("Task is absent from run manifest")
         descriptor = manifest.get("prices")
@@ -105,8 +164,9 @@ class Ledger:
         expected_hash = str(descriptor.get("sha256", "")).lower()
         if not _HASH.fullmatch(expected_hash):
             raise ValueError("Run manifest has no sealed price hash")
-        project_root = run_dir.parent.parent
         price_path = Path(descriptor["path"]).expanduser()
+        if schema == "quant_run/1" and price_path.is_absolute():
+            raise ValueError("Quant run prices need a project-relative path")
         price_path = (price_path if price_path.is_absolute() else project_root / price_path).resolve()
         if not price_path.is_relative_to(project_root):
             raise ValueError("Price file escapes project root")

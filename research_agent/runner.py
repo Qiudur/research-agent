@@ -94,9 +94,12 @@ class TaskRunner:
         self.tree = ExperimentTree.open(self.run_dir, task_id)
         manifest_path = self.run_dir / "manifest.json"
         if manifest_path.exists():
-            manifest = read_json(manifest_path, "run/1")
+            quant_task = task_id.startswith("quant-")
+            manifest = read_json(manifest_path, "quant_run/1" if quant_task else "run/1")
             if manifest.get("run_id") != self.run_id or task_id not in manifest.get("tasks", []):
                 raise ValueError("Manifest does not include this task/run")
+            if quant_task and manifest.get("phase") != "dev":
+                raise ValueError("Quant research runner only uses dev data")
             if manifest.get("phase") == "exam" and not getattr(library, "frozen", False):
                 raise ValueError("Exam phase must open the ability library frozen")
         self.started = self.clock()
@@ -124,16 +127,16 @@ class TaskRunner:
         profile = read_json(profile_path, "profile/1") if profile_path.exists() else {}
         features = list(field(self.task, "features", profile.get("features", [])) or [])
         scenario = field(self.task, "scenario")
-        if scenario not in {"tabular", "speedup"}:
+        if scenario not in {"tabular", "speedup", "quant"}:
             raise ValueError("Unknown task scenario")
         visible_sample = ""
-        sample_name = "original.py" if scenario == "speedup" else "train.csv"
+        sample_name = "original.py" if scenario in {"speedup", "quant"} else "train.csv"
         sample_path = workspace / sample_name
         if not sample_path.resolve().is_relative_to(workspace):
             raise ValueError("Task sample points outside the visible workspace")
         if sample_path.is_file():
             with sample_path.open("r", encoding="utf-8", errors="replace") as handle:
-                visible_sample = handle.read(12000 if scenario == "speedup" else 3500)
+                visible_sample = handle.read(12000 if scenario in {"speedup", "quant"} else 3500)
         return {
             "task_id": self.task_id,
             "scenario": scenario,
@@ -666,7 +669,7 @@ class TaskRunner:
         self._emit("task_start", budget=self.scheduler.budget, wall_seconds=self.scheduler.wall_seconds)
         self.tree.create_root(self.baseline_score, self.library.version)
         save_score(node_directory(self.run_dir, self.task_id, "n0000"), self.baseline_score)
-        if self.context["scenario"] == "speedup":
+        if self.context["scenario"] in {"speedup", "quant"}:
             original = Path(field(self.task, "workspace")) / "original.py"
             if original.is_file():
                 save_solution(node_directory(self.run_dir, self.task_id, "n0000"), original.read_text(encoding="utf-8"))

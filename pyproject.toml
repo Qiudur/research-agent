@@ -18,7 +18,7 @@ tabular = ["numpy>=1.24", "pandas>=2.0", "lightgbm>=4.0", "autogluon.tabular>=1.
 research-agent = "research_agent.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["research_agent*", "library*", "evaluation*", "dashboard*", "skill_layer*", "pilot*", "scripts*"]
+include = ["research_agent*", "library*", "evaluation*", "dashboard*", "skill_layer*", "pilot*", "scripts*", "quant_research*"]
 exclude = ["*.tests", "*.tests.*"]
 
 [tool.setuptools]

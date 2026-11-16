@@ -19,7 +19,7 @@ from library import Library, LibraryError, LibraryFrozen
 from research_agent.tree import ExperimentTree, TreeError
 
 _RUN = re.compile(r"^run-[a-zA-Z0-9-]+$")
-_TASK = re.compile(r"^(?:tab|spd)-[a-z0-9]+(?:-[a-z0-9]+)*$")
+_TASK = re.compile(r"^(?:tab|spd|quant)-[a-z0-9]+(?:-[a-z0-9]+)*$")
 _NODE = re.compile(r"^n[0-9]{4}$")
 
 
@@ -52,7 +52,8 @@ def _saved_win(lib: Library, exp_id: str, source: dict) -> bool:
         return False
     scenario = historical_entry["scenario"]
     if ((scenario == "tabular" and not task_id.startswith("tab-"))
-            or (scenario == "speedup" and not task_id.startswith("spd-"))):
+            or (scenario == "speedup" and not task_id.startswith("spd-"))
+            or (scenario == "quant" and not task_id.startswith("quant-"))):
         return False
     if (historical_entry["status"] != "active" or node["status"] != "accepted"
             or exp_id not in node["cites"]
