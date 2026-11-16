@@ -12,6 +12,24 @@
 
 ## 无密钥复现
 
+### 真实 ETF 基线案例
+
+研究问题是：**简单的 ETF 截面排序，在不同年份扣除交易成本后，能否稳定超过每日等权？** 固定 8 只 ETF，下载 2008—2019 年的公开历史快照；先在 2012—2017 年的三个开发窗口比较固定网格，再冻结选择并评估 2018—2019 年封存窗口。所有候选和负结果均保留，规则见运行绩效计算前提交的 [研究协议](config/etf_case_study.json)。
+
+```bash
+python3.11 -m venv .venv
+.venv/bin/python -m pip install -e .
+.venv/bin/python -m quant_research.etf_case
+```
+
+该命令不需要 API key，只为获取固定版本数据访问公开网络，不调用模型。输出 `runs/etf-case-*/report/index.html` 和 `report.md`；JSON 证据保留逐日持仓、费用后的回报、净值、换手和输入哈希。已有下载可用 `--dataset-manifest runs/etf-case-data-v1/manifest.json` 复用，输出目录必须是新目录。
+
+比较线是每日等权、预先固定的 63 日动量，以及 7 个固定候选中按“最差开发窗口净超额、平均净超额、候选 ID”依次排序的入选方案。每个窗口从现金起步，计入初次建仓成本，单边手续费 2 bps、滑点 3 bps。**这是零模型调用的固定规则研究，不是 Qwen 或 Agent 效果。** 后续模型对照需要另行冻结协议与尚未打开的最终区间。
+
+数据是 Kaggle 上传者提供的 Yahoo/yfinance 调整价快照，存在固定存续 ETF 池、事后复权和成交假设限制。原行情仅保存在本地被忽略的 `runs/`；上游权利未独立核验，仓库公开下载代码、来源哈希与派生研究结果。见 [数据来源与边界](docs/etf-data-sources.md)。
+
+### 合成数据的 Agent 闭环演示
+
 在 macOS、Python 3.11 环境从仓库根目录运行：
 
 ```bash
@@ -72,7 +90,9 @@ quant_data_args=(
 .venv/bin/python -m unittest tests.test_quant_data tests.test_quant_splits \
   tests.test_quant_backtest tests.test_quant_signals tests.test_quant_harness \
   tests.test_quant_core_compat tests.test_quant_provenance \
-  tests.test_quant_run tests.test_quant_finalize -v
+  tests.test_quant_run tests.test_quant_finalize \
+  tests.test_quant_etf_data tests.test_quant_etf_study \
+  tests.test_quant_etf_report tests.test_quant_etf_case -v
 ```
 
-脚本角色只验证工程闭环；当前没有可以据此报告的 Qwen 量化效果、真实市场超额收益或现金节省。
+脚本角色验证 Agent 工程闭环，ETF 案例验证固定规则在历史数据上的表现；当前没有可以据此报告的 Qwen 量化效果或现金节省。
