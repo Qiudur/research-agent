@@ -21,6 +21,7 @@ from research_agent.tree import ExperimentTree
 
 
 BASELINE = "def compute_signal(history):\n    return {symbol: 0.0 for symbol in history}\n"
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def put(path: Path, data: dict) -> None:
@@ -37,7 +38,7 @@ class QuantFinalizeTests(unittest.TestCase):
         self.temp = TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
-        workspace = self.root / "tasks/quant-demo/workspace"
+        workspace = self.root / "runs/run-test/task_package/quant-demo/workspace"
         workspace.mkdir(parents=True)
         (workspace / "original.py").write_text(BASELINE, encoding="utf-8")
         put(workspace / "profile.json", {
@@ -93,10 +94,26 @@ class QuantFinalizeTests(unittest.TestCase):
         tree.fail("n0003", "fixture", "no candidate generated")
         config = self.root / "config/quant_agent.json"
         prices = self.root / "config/prices.json"
-        put(config, {"schema": "agent/1"})
+        config.parent.mkdir(parents=True)
+        shutil.copyfile(ROOT / "config/quant_agent.json", config)
+        for name in ("hard_caps.json", "triggers.json"):
+            shutil.copyfile(ROOT / "config" / name, config.parent / name)
+        prompt_paths = {}
+        for role, relative in _read(config)["prompts"].items():
+            path = self.root / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / relative, path)
+            prompt_paths[f"prompt_{role}"] = path
         put(prices, {"schema": "prices/1", "currency": "TEST", "unit_tokens": 1,
                      "models": {"test-scripted": {"input": 1, "cached_input": 1,
                                                  "output": 1, "reasoning": 1}}})
+        self.input_paths = {
+            "agent_config": config, "prices": prices,
+            "hard_caps": config.parent / "hard_caps.json",
+            "triggers": config.parent / "triggers.json",
+            "task_original": workspace / "original.py",
+            "task_profile": workspace / "profile.json", **prompt_paths,
+        }
         self.manifest = {
             "schema": "quant_run/1", "run_id": self.run.name, "phase": "dev",
             "tasks": ["quant-demo"], "code_commit": "a" * 40,
@@ -116,11 +133,13 @@ class QuantFinalizeTests(unittest.TestCase):
                        "run_seconds": 10, "memory_mb": 512},
             "dataset": {"path": str(self.dataset.relative_to(self.root)), "sha256": sha(self.dataset)},
             "agent_config": {"path": str(config.relative_to(self.root)), "sha256": sha(config)},
-            "prices": {"path": str(prices.relative_to(self.root)), "sha256": sha(prices)}}
+            "prices": {"path": str(prices.relative_to(self.root)), "sha256": sha(prices)},
+            "inputs": {name: {"path": str(path.relative_to(self.root)), "sha256": sha(path)}
+                       for name, path in self.input_paths.items()}}
         put(self.run / "manifest.json", self.manifest)
         task_ledger = Ledger.open(self.run, "quant-demo")
         task_ledger.emit("task_start", budget=1000.0, wall_seconds=60)
-        task_ledger.emit("task_end", best_node="n0001", total_cost=0.0)
+        task_ledger.emit("task_end", best_node="n0001", total_cost=0.0, status="planner")
         run_ledger = Ledger.open(self.run)
         run_ledger.emit("run_start")
         run_ledger.emit("run_end", status="dev_complete", tasks_completed=1, total_cost=0.0)
@@ -155,6 +174,24 @@ class QuantFinalizeTests(unittest.TestCase):
         self.selection_path = self.run / "selection.json"
         put(self.selection_path, self.selection)
         self.final = self.run / "final"
+
+    def _reseal_manifest(self):
+        put(self.run / "manifest.json", self.manifest)
+        self.selection["manifest_sha256"] = sha(self.run / "manifest.json")
+        put(self.selection_path, self.selection)
+
+    def _reseal_ledgers(self):
+        self.selection["task_ledger_sha256"] = sha(self.run / "tasks/quant-demo/ledger.jsonl")
+        self.selection["run_ledger_sha256"] = sha(self.run / "ledger.jsonl")
+        put(self.selection_path, self.selection)
+
+    def _assert_preflight_refused(self):
+        with self.assertRaises((ValueError, FileNotFoundError)), patch(
+                "quant_research.finalize._score_candidate") as scorer:
+            finalize_holdout(self.harness, self.selection_path, self.final)
+        scorer.assert_not_called()
+        self.assertFalse((self.final / "attempt.json").exists())
+        self.assertFalse((self.final / "report.json").exists())
 
     def _fake_candidate_result(self):
         return run_backtest(
@@ -290,7 +327,7 @@ class QuantFinalizeTests(unittest.TestCase):
                     self.selection = original
                     put(self.selection_path, self.selection)
 
-    def test_unknown_usage_is_partial_not_a_reported_total(self):
+    def test_unknown_usage_is_rejected_before_sealed_attempt(self):
         task = Ledger.open(self.run, "quant-demo")
         run = Ledger.open(self.run)
         task.path.unlink()
@@ -302,23 +339,109 @@ class QuantFinalizeTests(unittest.TestCase):
         task.llm_call(node_id="n0001", role="planner", purpose="quote",
                       effort="low", model="test-scripted", usage=Usage(),
                       seconds=1.0, prompt_hash="c" * 64, usage_status="unknown")
-        task.emit("task_end", best_node="n0001", total_cost=10.0)
+        task.emit("task_end", best_node="n0001", total_cost=10.0, status="planner")
         run.emit("run_start")
         run.emit("run_end", status="dev_complete", tasks_completed=1, total_cost=10.0)
-        self.selection["task_ledger_sha256"] = sha(task.path)
-        self.selection["run_ledger_sha256"] = sha(run.path)
-        put(self.selection_path, self.selection)
-        with patch("quant_research.finalize._score_candidate",
-                   return_value=self._fake_candidate_result()):
-            result = finalize_holdout(self.harness, self.selection_path, self.final)
-        usage = result["dev_model_usage"]
-        self.assertEqual(usage["reported_token_buckets"]["input"], 10)
-        self.assertIsNone(usage["total_token_buckets"])
-        self.assertEqual(usage["model_calls_without_reported_usage"], 1)
-        self.assertFalse(usage["usage_complete"])
-        self.assertEqual(usage["reported_resource_cost"], 10.0)
-        self.assertIsNone(usage["resource_cost"])
-        self.assertIn("partial", result["warnings"][-1])
+        original = task.path.read_bytes()
+        for state in ("unknown", "estimated", None):
+            with self.subTest(usage_status=state):
+                events = [json.loads(line) for line in original.splitlines()]
+                unknown = next(event for event in events
+                               if event.get("usage_status") == "unknown")
+                if state is None:
+                    unknown.pop("usage_status")
+                else:
+                    unknown["usage_status"] = state
+                task.path.write_text("".join(json.dumps(event) + "\n" for event in events),
+                                     encoding="utf-8")
+                self._reseal_ledgers()
+                self._assert_preflight_refused()
+
+    def test_error_or_incomplete_dev_lifecycle_is_rejected_before_attempt(self):
+        task_path = self.run / "tasks/quant-demo/ledger.jsonl"
+        run_path = self.run / "ledger.jsonl"
+        task_original = task_path.read_bytes()
+        run_original = run_path.read_bytes()
+        cases = ("error task", "missing status", "invalid stop", "missing task end",
+                 "failed run", "missing run end")
+        for case in cases:
+            with self.subTest(case=case):
+                task_events = [json.loads(line) for line in task_original.splitlines()]
+                run_events = [json.loads(line) for line in run_original.splitlines()]
+                if case == "error task":
+                    task_events[-1]["status"] = "error"
+                elif case == "missing status":
+                    task_events[-1].pop("status")
+                elif case == "invalid stop":
+                    task_events[-1]["status"] = "incomplete"
+                elif case == "missing task end":
+                    task_events.pop()
+                elif case == "failed run":
+                    run_events[-1]["status"] = "failed"
+                else:
+                    run_events.pop()
+                for path, events in ((task_path, task_events), (run_path, run_events)):
+                    path.write_text("".join(json.dumps(event) + "\n" for event in events),
+                                    encoding="utf-8")
+                self._reseal_ledgers()
+                self._assert_preflight_refused()
+        task_path.write_bytes(task_original)
+        run_path.write_bytes(run_original)
+
+    def test_manifest_requires_every_sealed_input_before_attempt(self):
+        original = json.loads(json.dumps(self.manifest))
+        for name in ("inputs", *sorted(self.input_paths)):
+            with self.subTest(missing=name):
+                self.manifest = json.loads(json.dumps(original))
+                if name == "inputs":
+                    self.manifest.pop("inputs")
+                else:
+                    self.manifest["inputs"].pop(name)
+                self._reseal_manifest()
+                self._assert_preflight_refused()
+        self.manifest = original
+        self._reseal_manifest()
+
+    def test_sealed_inputs_must_match_config_and_prices_descriptors(self):
+        original = json.loads(json.dumps(self.manifest))
+        for name in ("agent_config", "prices"):
+            with self.subTest(name=name):
+                self.manifest = json.loads(json.dumps(original))
+                self.manifest["inputs"][name] = self.manifest["inputs"]["task_profile"]
+                self._reseal_manifest()
+                self._assert_preflight_refused()
+        self.manifest = original
+        self._reseal_manifest()
+
+    def test_all_sealed_inputs_are_immutable_before_attempt(self):
+        for name, path in self.input_paths.items():
+            with self.subTest(name=name):
+                original = path.read_bytes()
+                try:
+                    path.write_bytes(original + b"modified input")
+                    self._assert_preflight_refused()
+                finally:
+                    path.write_bytes(original)
+
+    def test_unexpected_input_is_rejected_before_attempt(self):
+        extra = self.root / "config/extra-evidence.txt"
+        extra.write_text("extra input\n", encoding="utf-8")
+        self.manifest["inputs"]["extra"] = {
+            "path": str(extra.relative_to(self.root)), "sha256": sha(extra)}
+        self._reseal_manifest()
+        self._assert_preflight_refused()
+
+    def test_sealed_task_inputs_cannot_be_substituted_from_another_run(self):
+        other_workspace = self.root / "runs/run-other/task_package/quant-demo/workspace"
+        other_workspace.mkdir(parents=True)
+        for name in ("task_original", "task_profile"):
+            source = self.input_paths[name]
+            target = other_workspace / source.name
+            shutil.copyfile(source, target)
+            self.manifest["inputs"][name] = {
+                "path": str(target.relative_to(self.root)), "sha256": sha(target)}
+        self._reseal_manifest()
+        self._assert_preflight_refused()
 
     def test_no_selection_and_abandoned_attempt_cannot_score(self):
         self.selection_path.unlink()

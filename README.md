@@ -7,8 +7,8 @@
 1. 数据清单声明 `source`、`license`、`price_basis` 和 CSV SHA-256。首版只接收完整的固定股票池，拒绝缺失、重复、非正和非有限价格。
 2. 训练／开发／封存时间切分留出标签跨度。信号在 `t` 收盘后只见历史，`t+1` 收盘交易，`t+2` 实现收益；回测计手续费、滑点、换手与最大回撤，并与等权比较。
 3. 候选 `compute_signal(history)` 在 macOS `sandbox-exec` 子进程执行。子进程逐日只收到截至信号日的价格前缀，没有 API key、数据文件路径或网络权限；无沙箱时拒绝评分。
-4. Agent 的每次尝试写入实验树、原始代码、开发期评分和账本；失败与负结果保留。最优开发期节点及数据／配置／账本哈希写入冻结选择记录。
-5. 独立 finalizer 校验冻结记录，在开始前创建排他尝试标记；成功或失败都不能重试同一封存期。旧提速／表格题与历史运行未被改写。
+4. Agent 的每次尝试写入实验树、原始代码、开发期评分和账本；失败与负结果保留。数据、全部角色提示词、预算规则、触发词和任务可见输入均记录哈希，运行结束时复核，再冻结最优开发期节点和账本。
+5. 用量缺失、运行错误或输入变更会记录失败终态并禁止生成选择记录。独立 finalizer 在评分前复核开发运行准入条件和冻结输入，再创建排他尝试标记；成功或失败都不能重试同一封存期。
 
 ## 无密钥复现
 
@@ -31,21 +31,48 @@ python3.11 -m venv .venv
 
 ## Qwen 开发实验
 
-安装模型依赖并在当前终端以环境变量提供 `OPENAI_API_KEY`，不要把密钥写进命令行、配置或 Git。`--mode qwen` 固定使用 `qwen3.5-27b`，默认网关是 `https://ai-gateway.theunifiedcare.com/v1`。真实调用要求工作树已提交且干净，使用每题 40,000 token 的默认预算；账本 `TOKENS` 是资源计量，**不是现金价格**。
+`--mode qwen` 固定使用 `qwen3.5-27b`，默认网关是 `https://ai-gateway.theunifiedcare.com/v1`。正常研究须显式提供数据清单和全部四个切分日期；自有数据在脚本模式下也需要四个日期，不会自动套用演示数据的位置。先预检数据类型、时间区间、各区间样本数和 token 预算，再启动模型调用。
+
+下面的清单路径和日期是命令格式示例，请按你的数据文件和实际交易日修改。预检只读取和校验本地输入，**不创建运行目录、不联网，也不需要 API key 或干净工作树**。
 
 ```bash
 .venv/bin/python -m pip install -e '.[llm]'
-.venv/bin/python -m quant_research.run --mode qwen
+quant_data_args=(
+  --dataset-manifest data/my-market/manifest.json
+  --train-end 2018-12-28
+  --dev-start 2019-01-04
+  --dev-end 2022-12-23
+  --holdout-start 2023-01-03
+)
+.venv/bin/python -m quant_research.run --mode qwen \
+  "${quant_data_args[@]}" --preflight-only
 ```
 
-若使用自有日收盘价，传入带许可和 SHA-256 的 `quant_dataset/1` 清单，并同时指定 `--dataset-manifest`、`--train-end`、`--dev-start`、`--dev-end`、`--holdout-start`。首版不处理退市、动态成分股、复权核查、真实成交与市场冲击，所以真实市场数据结果也只能作为研究演示。完整数据格式、方法与限制见 [量化研究 MVP 文档](docs/quant-research-mvp.md)。
+实际调用前，在当前终端通过环境变量提供 `OPENAI_API_KEY`，不要把密钥写进命令行、配置或 Git。真实调用要求工作树已提交且干净；每题默认预算为 40,000 token，启动时会再次显示运行摘要。账本 `TOKENS` 是资源计量，**不是现金价格**。
+
+```bash
+.venv/bin/python -m quant_research.run --mode qwen \
+  "${quant_data_args[@]}" --budget-tokens 40000
+```
+
+仅为检查真实网关与合成演示的接线时，可以明确允许模型消耗：
+
+```bash
+.venv/bin/python -m quant_research.run --mode qwen \
+  --allow-synthetic-paid-demo --preflight-only
+.venv/bin/python -m quant_research.run --mode qwen \
+  --allow-synthetic-paid-demo
+```
+
+这两种数据路径都会保留来源标签；合成演示调用不构成真实市场实证。自有日收盘价须有带许可和 SHA-256 的 `quant_dataset/1` 清单。首版不处理退市、动态成分股、复权核查、真实成交与市场冲击，所以真实市场数据结果也只能作为研究演示。完整数据格式、方法与限制见 [量化研究 MVP 文档](docs/quant-research-mvp.md)。
 
 ## 验证
 
 ```bash
 .venv/bin/python -m unittest tests.test_quant_data tests.test_quant_splits \
   tests.test_quant_backtest tests.test_quant_signals tests.test_quant_harness \
-  tests.test_quant_core_compat tests.test_quant_run tests.test_quant_finalize -v
+  tests.test_quant_core_compat tests.test_quant_provenance \
+  tests.test_quant_run tests.test_quant_finalize -v
 ```
 
 脚本角色只验证工程闭环；当前没有可以据此报告的 Qwen 量化效果、真实市场超额收益或现金节省。

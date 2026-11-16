@@ -21,11 +21,13 @@ from research_agent.tree import ExperimentTree
 from .backtest import equal_weight_signal, run_backtest
 from .data import load_dataset
 from .harness import QuantHarness, WORKER, _Protocol, _child_cpu_limit, _child_env
+from .provenance import REQUIRED_INPUTS, verify_inputs
 from .signal_worker import validate_source
 
 SHA = re.compile(r"[0-9a-f]{64}")
 NODE = re.compile(r"n[0-9]{4}")
 COMMIT = re.compile(r"[0-9a-f]{7,40}")
+SUCCESSFUL_STOPS = frozenset({"planner", "budget_cap", "time", "ceiling", "stop_loss"})
 SELECTION_FIELDS = {"schema", "task_id", "run_id", "candidate", "dev_score",
                     "dev_baseline_score", "dataset_manifest_sha256",
                     "agent_config_sha256", "prices_sha256", "manifest_sha256",
@@ -132,6 +134,7 @@ def _dev_usage(run_dir: Path, task_id: str, node_id: str) -> dict:
     run_ends = [event for event in run_events if event["kind"] == "run_end"]
     if (len(starts) != 1 or len(run_starts) != 1 or len(ends) != 1
             or len(run_ends) != 1 or ends[0].get("best_node") != node_id
+            or ends[0].get("status") not in SUCCESSFUL_STOPS
             or run_ends[0].get("status") != "dev_complete"
             or run_ends[0].get("tasks_completed") != 1):
         raise ValueError("Dev run has not completed the selected node")
@@ -141,30 +144,21 @@ def _dev_usage(run_dir: Path, task_id: str, node_id: str) -> dict:
             or not math.isclose(_number(run_ends[0].get("total_cost")), cost, abs_tol=1e-9)):
         raise ValueError("Dev cost differs from sealed ledger")
     tokens = {bucket: 0 for bucket in TOKEN_BUCKETS}
-    reported_cost = 0.0
-    unknown_calls = 0
     for event in calls:
         usage = event.get("tokens")
-        if not isinstance(usage, dict) or event.get("usage_status") not in {"reported", "unknown"}:
-            raise ValueError("Dev model usage is invalid")
-        reported = event["usage_status"] == "reported"
-        if reported:
-            reported_cost += _number(event["cost"])
-        else:
-            unknown_calls += 1
+        if not isinstance(usage, dict) or event.get("usage_status") != "reported":
+            raise ValueError("Sealed evaluation requires reported usage for every dev model call")
         for bucket in TOKEN_BUCKETS:
             amount = usage.get(bucket)
             if isinstance(amount, bool) or not isinstance(amount, int) or amount < 0:
                 raise ValueError("Dev token usage is invalid")
-            if reported:
-                tokens[bucket] += amount
-    complete = unknown_calls == 0
+            tokens[bucket] += amount
     return {"model_calls": len(calls), "reported_token_buckets": tokens,
-            "total_token_buckets": tokens if complete else None,
-            "model_calls_without_reported_usage": unknown_calls,
-            "usage_complete": complete,
-            "reported_resource_cost": reported_cost,
-            "resource_cost": cost if complete else None,
+            "total_token_buckets": tokens,
+            "model_calls_without_reported_usage": 0,
+            "usage_complete": True,
+            "reported_resource_cost": cost,
+            "resource_cost": cost,
             "currency": ledger.prices["currency"], "cash_cost": None}
 
 
@@ -226,6 +220,20 @@ def _preflight(harness: QuantHarness, selection_path: Path, output_dir: Path,
             or manifest.get("run_id") != run_dir.name
             or task_id not in manifest.get("tasks", [])):
         raise ValueError("Finalization requires a sealed quant dev manifest")
+    inputs = manifest.get("inputs")
+    if not isinstance(inputs, dict) or not REQUIRED_INPUTS.issubset(inputs):
+        raise ValueError("Dev manifest lacks complete sealed research inputs")
+    if (inputs["agent_config"] != manifest.get("agent_config")
+            or inputs["prices"] != manifest.get("prices")):
+        raise ValueError("Sealed inputs differ from manifest config or prices")
+    verify_inputs(root, inputs)
+    expected_workspace = run_dir / "task_package" / task_id / "workspace"
+    if harness.workspace != expected_workspace:
+        raise ValueError("Harness task workspace differs from the selected run")
+    for label, filename in (("task_original", "original.py"),
+                            ("task_profile", "profile.json")):
+        if (root / inputs[label]["path"]).resolve(strict=True) != expected_workspace / filename:
+            raise ValueError("Sealed task input belongs to another run")
     if (manifest.get("mode") not in {"scripted", "qwen"}
             or not isinstance(manifest.get("label"), str)
             or not manifest["label"].strip()):

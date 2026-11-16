@@ -4,13 +4,17 @@ from __future__ import annotations
 
 import argparse
 from datetime import date, datetime, timezone
+import json
+import math
 import os
 from pathlib import Path
 import secrets
 import shutil
 import subprocess
 import sys
+from tempfile import TemporaryDirectory
 from typing import Any
+from urllib.parse import urlsplit
 
 from ledger import Ledger
 from library import Library
@@ -25,6 +29,7 @@ from research_agent.tree import ExperimentTree
 from .data import load_dataset
 from .demo_data import write_demo_dataset
 from .harness import QuantHarness
+from .provenance import capture_inputs, verify_inputs
 from .splits import make_splits
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -40,6 +45,18 @@ SCRIPTED = (
     "    return {symbol: (prices[-1] / prices[-11] - 1.0) if len(prices) > 10 else 0.0\n"
     "            for symbol, prices in history.items()}\n"
 )
+
+SUCCESS_REASONS = frozenset({"planner", "budget_cap", "time", "ceiling", "stop_loss"})
+
+
+class QuantRunFailed(RuntimeError):
+    """A run retained its evidence but is not eligible for sealed evaluation."""
+
+
+class DevAdmissionError(RuntimeError):
+    def __init__(self, kind: str) -> None:
+        self.kind = kind
+        super().__init__(kind)
 
 
 class ScriptedRoles:
@@ -117,6 +134,106 @@ def _code_commit(project_root: Path) -> tuple[str, bool]:
     return commit, dirty
 
 
+def _usage_summary(events: list[dict]) -> dict:
+    calls = [event for event in events if event["kind"] == "llm_call"]
+    complete = all(event.get("usage_status") == "reported" for event in calls)
+    buckets = {key: sum(event["tokens"][key] for event in calls
+                        if event.get("usage_status") == "reported")
+               for key in ("input", "cached_input", "output", "reasoning")}
+    cost = math.fsum(event["cost"] for event in calls
+                     if event.get("usage_status") == "reported")
+    return {
+        "model_calls": len(calls), "usage_complete": complete,
+        "unknown_usage_calls": sum(event.get("usage_status") != "reported" for event in calls),
+        "reported_token_buckets": buckets,
+        "total_token_buckets": buckets if complete else None,
+        "reported_resource_cost": cost, "resource_cost": cost if complete else None,
+        "currency": "TOKENS",
+    }
+
+
+def _failure_report(run_dir: Path, exc: BaseException) -> None:
+    """Persist a failed terminal state without copying provider errors or secrets."""
+    kind = (exc.kind if isinstance(exc, DevAdmissionError) else
+            "interrupted" if isinstance(exc, (KeyboardInterrupt, SystemExit)) else "execution_error")
+    cause = exc.__cause__
+    while cause is not None:
+        if isinstance(cause, DevAdmissionError):
+            kind = cause.kind
+            break
+        cause = cause.__cause__
+    failure = {"kind": kind, "type": type(exc).__name__,
+               "message": "Development run failed; sealed evaluation is blocked"}
+    events: list[dict] = []
+    # Use already-created ledger files even if a changed input prevents Ledger.open().
+    if (run_dir / "manifest.json").is_file():
+        task_ledger = Ledger(run_dir, TASK_ID, {}, {})
+        run_ledger = Ledger(run_dir, None, {}, {})
+        events = task_ledger._events()
+        usage = _usage_summary(events)
+        if not any(event["kind"] == "task_end" for event in events):
+            task_ledger.emit("task_end", status="failed", best_node=None,
+                             total_cost=task_ledger.spent(), failure=failure)
+        if not any(event["kind"] == "run_end" and event.get("status") == "failed"
+                   for event in run_ledger._events()):
+            run_ledger.emit("run_end", status="failed", tasks_completed=0,
+                            total_cost=task_ledger.spent(), failure=failure)
+    else:
+        usage = _usage_summary(events)
+    (run_dir / "selection.json").unlink(missing_ok=True)
+    atomic_json(run_dir / "dev_report.json", {
+        "schema": "quant_dev_report/1", "run_id": run_dir.name, "status": "failed",
+        "selection": None, "selected_node": None, "holdout_scored": False,
+        "failure": failure, "evidence": {"task": "tasks/quant-demo/",
+                                             "run_ledger": "ledger.jsonl"}, **usage,
+    })
+
+
+def _verify_run_inputs(project_root: Path, inputs: dict) -> None:
+    try:
+        verify_inputs(project_root, inputs)
+    except (ValueError, OSError) as exc:
+        raise DevAdmissionError("input_changed") from exc
+
+
+class _CheckedRoles:
+    """Detect changed prompts and settings before dispatching another model call."""
+
+    def __init__(self, roles: Any, project_root: Path, inputs: dict) -> None:
+        self.roles, self.project_root, self.inputs = roles, project_root, inputs
+
+    def __getattr__(self, name: str) -> Any:
+        method = getattr(self.roles, name)
+        if not callable(method):
+            return method
+        def checked(*args: Any, **kwargs: Any) -> Any:
+            _verify_run_inputs(self.project_root, self.inputs)
+            result = method(*args, **kwargs)
+            _verify_run_inputs(self.project_root, self.inputs)
+            return result
+        return checked
+
+
+def _preview(panel: Any, boundaries: tuple[date, date, date, date], *,
+             mode: str, synthetic: bool, budget_tokens: int, wall_seconds: int,
+             max_output_tokens: int, top_k: int, fee_bps: float, slippage_bps: float) -> dict:
+    split = make_splits(panel.dates, train_end=boundaries[0], dev_start=boundaries[1],
+                        dev_end=boundaries[2], holdout_start=boundaries[3], label_horizon=2)
+    def window(dates: tuple[date, ...]) -> dict:
+        return {"start": dates[0].isoformat(), "end": dates[-1].isoformat(),
+                "sessions": len(dates)}
+    return {"schema": "quant_preflight/1", "mode": mode,
+            "data_type": "synthetic" if synthetic else "user_supplied",
+            "dataset_sha256": panel.csv_sha256, "symbols": len(panel.symbols),
+            "sessions": len(panel.dates), "train": window(split.train),
+            "dev": window(split.dev), "holdout": window(split.holdout),
+            "excluded_sessions": len(split.excluded), "label_horizon": 2,
+            "budget_tokens": budget_tokens, "wall_seconds": wall_seconds,
+            "max_output_tokens": max_output_tokens, "top_k": top_k,
+            "fee_bps": fee_bps, "slippage_bps": slippage_bps,
+            "will_call_model": mode == "qwen"}
+
+
 def run_quant_dev(
     *, project_root: Path = ROOT, run_dir: Path, dataset_manifest: Path | None = None,
     boundaries: tuple[date, date, date, date] | None = None, mode: str = "scripted",
@@ -124,9 +241,10 @@ def run_quant_dev(
     budget_tokens: int = 40000, wall_seconds: int = 900,
     max_output_tokens: int = 6000, top_k: int = 1,
     fee_bps: float = 2.0, slippage_bps: float = 3.0,
-    roles: Any | None = None,
-) -> Path:
-    """Run one dev-only experiment and freeze the best dev candidate."""
+    roles: Any | None = None, allow_synthetic_paid_demo: bool = False,
+    preflight_only: bool = False,
+) -> Path | dict:
+    """Validate the data choice, then run dev research or preview without model calls."""
     project_root = Path(project_root).expanduser().resolve(strict=True)
     run_dir = Path(run_dir).expanduser().resolve()
     if run_dir.parent != project_root / "runs" or run_dir.exists():
@@ -137,16 +255,74 @@ def run_quant_dev(
         raise ValueError("Budget and wall time must be positive integers")
     if type(max_output_tokens) is not int or max_output_tokens < 1:
         raise ValueError("max_output_tokens must be positive")
-    if mode == "qwen" and (model_name != "qwen3.5-27b" or not os.environ.get("OPENAI_API_KEY")):
-        raise ValueError("Qwen mode needs qwen3.5-27b and OPENAI_API_KEY in the environment")
-    if mode == "qwen" and not base_url.startswith("https://"):
-        raise ValueError("Live model base URL must use HTTPS")
+    if type(allow_synthetic_paid_demo) is not bool or type(preflight_only) is not bool:
+        raise ValueError("Preview and synthetic demo flags must be booleans")
+    if dataset_manifest is not None and boundaries is None:
+        raise ValueError("User-supplied data requires all four explicit split dates")
+    if dataset_manifest is not None and allow_synthetic_paid_demo:
+        raise ValueError("Synthetic demo flag cannot be used with a dataset manifest")
+    if mode == "qwen" and dataset_manifest is None and not allow_synthetic_paid_demo:
+        raise ValueError("Qwen requires a dataset manifest or explicit --allow-synthetic-paid-demo")
+    if boundaries is not None and (len(boundaries) != 4 or any(type(day) is not date for day in boundaries)):
+        raise ValueError("Pass all four split dates together")
+    if mode == "qwen":
+        url = urlsplit(base_url)
+        if url.scheme != "https" or not url.netloc or url.username or url.password or url.query or url.fragment:
+            raise ValueError("Live model base URL must use HTTPS without embedded credentials or query parameters")
+        if model_name != "qwen3.5-27b":
+            raise ValueError("Qwen mode requires qwen3.5-27b")
+    if dataset_manifest is None:
+        with TemporaryDirectory(prefix="quant-preview-") as temporary:
+            panel = load_dataset(write_demo_dataset(Path(temporary) / "data"))
+    else:
+        panel = load_dataset(dataset_manifest)
+    boundaries = _split_dates(panel, boundaries)
+    if type(top_k) is not int or not 1 <= top_k <= len(panel.symbols):
+        raise ValueError("top_k must be within the fixed universe")
+    if any(isinstance(value, bool) or not isinstance(value, (int, float))
+           or not math.isfinite(value) or value < 0 for value in (fee_bps, slippage_bps)):
+        raise ValueError("Trading costs must be finite and nonnegative")
+    preview = _preview(panel, boundaries, mode=mode, synthetic=dataset_manifest is None,
+                        budget_tokens=budget_tokens, wall_seconds=wall_seconds,
+                        max_output_tokens=max_output_tokens, top_k=top_k,
+                        fee_bps=fee_bps, slippage_bps=slippage_bps)
+    if preflight_only:
+        return {**preview, "will_call_model": False, "preflight_only": True}
+    print("Quant preflight: " + json.dumps(preview, ensure_ascii=False), flush=True)
+    if mode == "qwen" and not os.environ.get("OPENAI_API_KEY"):
+        raise ValueError("Qwen mode needs OPENAI_API_KEY in the environment")
     commit, dirty = _code_commit(project_root)
     if mode == "qwen" and dirty:
         raise ValueError("Commit or discard local source changes before a live model run")
-    source_panel = load_dataset(dataset_manifest) if dataset_manifest is not None else None
-    if source_panel is not None:
-        _split_dates(source_panel, boundaries)
+    run_dir.mkdir(parents=True, exist_ok=False)
+    try:
+        return _execute_quant_dev(
+            project_root=project_root, run_dir=run_dir, dataset_manifest=dataset_manifest,
+            boundaries=boundaries, mode=mode, base_url=base_url, model_name=model_name,
+            budget_tokens=budget_tokens, wall_seconds=wall_seconds,
+            max_output_tokens=max_output_tokens, top_k=top_k, fee_bps=fee_bps,
+            slippage_bps=slippage_bps, roles=roles, commit=commit, dirty=dirty,
+            expected_dataset_sha256=panel.csv_sha256)
+    except BaseException as exc:
+        try:
+            _failure_report(run_dir, exc)
+        finally:
+            if isinstance(exc, (KeyboardInterrupt, SystemExit)):
+                raise
+        raise QuantRunFailed(f"Development run failed; see {run_dir / 'dev_report.json'}") from exc
+
+
+def _execute_quant_dev(
+    *, project_root: Path = ROOT, run_dir: Path, dataset_manifest: Path | None = None,
+    boundaries: tuple[date, date, date, date] | None = None, mode: str = "scripted",
+    base_url: str = BASE_URL, model_name: str = "qwen3.5-27b",
+    budget_tokens: int = 40000, wall_seconds: int = 900,
+    max_output_tokens: int = 6000, top_k: int = 1,
+    fee_bps: float = 2.0, slippage_bps: float = 3.0,
+    roles: Any | None = None, commit: str, dirty: bool,
+    expected_dataset_sha256: str,
+) -> Path:
+    """Run one dev-only experiment and freeze the best dev candidate."""
     config_path = project_root / "config/quant_agent.json"
     prices_path = project_root / "config/prices_quant_dev.json"
     hard_caps_path = project_root / "config/hard_caps.json"
@@ -158,11 +334,12 @@ def run_quant_dev(
         raise ValueError("Quant MVP requires the test-only token price table")
     if model_name not in prices.get("models", {}):
         raise ValueError("No declared token rates for selected model")
-    run_dir.mkdir(parents=True, exist_ok=False)
     private = run_dir / "private"
     manifest_path = (write_demo_dataset(private) if dataset_manifest is None
                      else _snapshot_dataset(dataset_manifest, private))
     panel = load_dataset(manifest_path)
+    if panel.csv_sha256 != expected_dataset_sha256:
+        raise DevAdmissionError("input_changed")
     train_end, dev_start, dev_end, holdout_start = _split_dates(panel, boundaries)
     task_root = run_dir / "task_package" / TASK_ID
     workspace = task_root / "workspace"
@@ -174,6 +351,11 @@ def run_quant_dev(
                     "baseline_signal": "five-session trailing momentum",
                     "comparison": "equal weight"},
     })
+    inputs = capture_inputs(
+        project_root, config, agent_config=config_path, prices=prices_path,
+        hard_caps=hard_caps_path, triggers=triggers_path, task_workspace=workspace)
+    hard_caps = read_json(hard_caps_path, "hard_caps/1")
+    _verify_run_inputs(project_root, inputs)
     library_path = run_dir / "library"
     manifest = {
         "schema": "quant_run/1", "run_id": run_dir.name, "tasks": [TASK_ID],
@@ -186,6 +368,9 @@ def run_quant_dev(
         "dataset": _descriptor(project_root, manifest_path),
         "agent_config": _descriptor(project_root, config_path),
         "prices": _descriptor(project_root, prices_path),
+        "inputs": inputs,
+        "model_settings": {"max_output_tokens": max_output_tokens,
+                           "base_url": base_url if mode == "qwen" else None},
         "split": {"train_end": train_end.isoformat(), "dev_start": dev_start.isoformat(),
                   "dev_end": dev_end.isoformat(), "holdout_start": holdout_start.isoformat(),
                   "label_horizon": 2},
@@ -215,6 +400,7 @@ def run_quant_dev(
     if not baseline.get("ok") or not baseline.get("correct"):
         raise RuntimeError("Original signal failed development scoring")
     with selected_library_settings(config_path, triggers_path):
+        _verify_run_inputs(project_root, inputs)
         library = Library.open(library_path)
         if roles is None:
             if mode == "scripted":
@@ -231,11 +417,22 @@ def run_quant_dev(
                     audit_dir=run_dir / "model_audit",
                 ), config, project_root=project_root)
         from evaluation.quote import make_quote_callback
+        _verify_run_inputs(project_root, inputs)
         outcome = TaskRunner(
             run_dir=run_dir, task_id=TASK_ID, harness=harness, ledger=task_ledger,
-            roles=roles, library=library, baseline_score=baseline, config=config,
+            roles=_CheckedRoles(roles, project_root, inputs), library=library,
+            baseline_score=baseline, config=config,
             hard_caps=hard_caps, on_initial_plan=make_quote_callback(task_ledger),
         ).run()
+    _verify_run_inputs(project_root, inputs)
+    if (sha256_file(manifest_path) != manifest["dataset"]["sha256"]
+            or load_dataset(manifest_path).csv_sha256 != panel.csv_sha256):
+        raise DevAdmissionError("input_changed")
+    usage = _usage_summary(task_ledger._events())
+    if not usage["usage_complete"]:
+        raise DevAdmissionError("unknown_usage")
+    if outcome.reason not in SUCCESS_REASONS:
+        raise DevAdmissionError("agent_error")
     tree = ExperimentTree.open(run_dir, TASK_ID)
     best = tree.best_node()
     chosen = node_directory(run_dir, TASK_ID, best["node_id"])
@@ -279,16 +476,8 @@ def run_quant_dev(
     }
     atomic_json(run_dir / "selection.json", selection)
     events = task_ledger._events()
-    model_events = [event for event in events if event["kind"] == "llm_call"]
-    usage_complete = all(event.get("usage_status") == "reported"
-                         for event in model_events)
-    reported_buckets = {
-        key: sum(event["tokens"][key] for event in model_events
-                 if event.get("usage_status") == "reported")
-        for key in ("input", "cached_input", "output", "reasoning")
-    }
     atomic_json(run_dir / "dev_report.json", {
-        "schema": "quant_dev_report/1", "label": manifest["label"],
+        "schema": "quant_dev_report/1", "label": manifest["label"], "status": "dev_complete",
         "run_id": run_dir.name, "selection": "selection.json",
         "selected_node": outcome.best_node, "dev_score": outcome.dev_score,
         "original_dev_score": baseline["score"], "experiments": outcome.experiments,
@@ -303,14 +492,7 @@ def run_quant_dev(
                    "attempts": node["attempts"]} for node in tree.all_nodes()],
         "negative_or_failed_nodes": [n["node_id"] for n in tree.all_nodes()
                                      if n["status"] in {"rejected", "failed"}],
-        "model_calls": len(model_events),
-        "unknown_usage_calls": sum(event.get("usage_status") != "reported"
-                                   for event in model_events),
-        "usage_complete": usage_complete,
-        "reported_token_buckets": reported_buckets,
-        "total_token_buckets": reported_buckets if usage_complete else None,
-        "resource_cost": outcome.spent if usage_complete else None,
-        "reported_resource_cost": outcome.spent, "currency": "TOKENS",
+        **_usage_summary(events),
         "holdout_scored": False,
         "warning": "Development evidence only; no out-of-sample or live returns",
     })
@@ -323,6 +505,10 @@ def main(argv: list[str] | None = None) -> int:
                         help="Repository checkout containing config/ and runs/")
     parser.add_argument("--mode", choices=("scripted", "qwen"), default="scripted")
     parser.add_argument("--dataset-manifest", type=Path)
+    parser.add_argument("--allow-synthetic-paid-demo", action="store_true",
+                        help="Explicitly permit Qwen calls on synthetic demo prices")
+    parser.add_argument("--preflight-only", action="store_true",
+                        help="Inspect data windows and budgets without a run or model call")
     for name in ("train-end", "dev-start", "dev-end", "holdout-start"):
         parser.add_argument("--" + name, type=date.fromisoformat)
     parser.add_argument("--run-dir", type=Path)
@@ -349,11 +535,13 @@ def main(argv: list[str] | None = None) -> int:
                                wall_seconds=args.wall_seconds,
                                max_output_tokens=args.max_output_tokens,
                                top_k=args.top_k, fee_bps=args.fee_bps,
-                               slippage_bps=args.slippage_bps)
+                               slippage_bps=args.slippage_bps,
+                               allow_synthetic_paid_demo=args.allow_synthetic_paid_demo,
+                               preflight_only=args.preflight_only)
     except Exception as exc:
         print(f"quant development run failed: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1
-    print(report)
+    print(json.dumps(report, ensure_ascii=False, indent=2) if isinstance(report, dict) else report)
     return 0
 
 
