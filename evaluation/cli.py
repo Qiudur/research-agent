@@ -22,6 +22,10 @@ from .self_research import _practice_tasks, auto_evaluate_candidates
 
 
 ROOT = Path(__file__).resolve().parents[1]
+QWEN_STUDY_GATEWAYS = frozenset({
+    "https://ai-gateway.ailab.jiuan.com/v1",
+    "https://ai-gateway.theunifiedcare.com/v1",
+})
 
 
 def _default_project_root() -> Path:
@@ -102,7 +106,7 @@ def formal_preflight(
         blockers.append(f"Price table: {exc}")
     if (model == "qwen3.5-27b" and accounting_scope == "internal_token_study"
             and os.environ.get("OPENAI_BASE_URL", "").rstrip("/")
-            != "https://ai-gateway.ailab.jiuan.com/v1"):
+            not in QWEN_STUDY_GATEWAYS):
         blockers.append("OPENAI_BASE_URL must point to the authorized Qwen study gateway")
     try:
         bank = _json(root / "tasks/bank.json")

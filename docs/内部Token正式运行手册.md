@@ -41,7 +41,7 @@
 
     umask 077
     export MODEL='qwen3.5-27b'
-    export OPENAI_BASE_URL='https://ai-gateway.ailab.jiuan.com/v1'
+    export OPENAI_BASE_URL='https://ai-gateway.theunifiedcare.com/v1'
     read -rs 'OPENAI_API_KEY?Gateway API key (hidden): '
     print
     export OPENAI_API_KEY

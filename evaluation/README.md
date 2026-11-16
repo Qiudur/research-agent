@@ -26,7 +26,7 @@ evaluation.self_research.auto_evaluate_candidates 从 default 配置开始，自
 
 新研究在发起调用前把 `paired-scenario-quality-v1` 写入 auto_plan.json 的 selection_policy。每道练习题按同题、同遍与 default 配对：表格题使用原始 holdout AUC，提速题使用截断到 [0,1] 的 holdout 分数；三遍差值先按题平均，再按场景平均。选优先比两个场景中较差的平均改善，再比两场景平均改善，最后比已审计的总研究成本。原有 mean_score 与 score_per_currency 继续保存作诊断，不再决定新研究的胜者。旧报告没有 selection_policy 时，独立审计仍按旧规则复核，历史结论不回写。
 
-每次模型调用的 usage_status 为 reported 或 unknown；未得到完整 token 用量的响应即使有正文也视为失败，未知用量不解释为零成本。完整运行若包含未知用量，run_report 的 cost_complete 与 exact_token_accounting 均为 false，不能参加自研究选优。中途失败时，内层 self_research_report.json 和外层 auto_self_research_report.json 保存 status=partial、已完成运行、失败记录、已知成本下界及未知用量序号，selection=null；原异常仍向调用方抛出，不能据部分报告进入验证／考试。
+每次模型调用的 usage_status 为 reported 或 unknown；未得到完整 token 用量的响应即使有正文也视为失败，未知用量不解释为零成本。调用一旦出现未知用量，当前任务立即停止后续模型请求，不对该调用重试。完整运行若包含未知用量，run_report 的 cost_complete 与 exact_token_accounting 均为 false，不能参加自研究选优。中途失败时，内层 self_research_report.json 和外层 auto_self_research_report.json 保存 status=partial、已完成运行、失败记录、已知成本下界及未知用量序号，selection=null；原异常仍向调用方抛出，不能据部分报告进入验证／考试。
 
 自动研究没有整体货币上限，但每次内层任务仍保留正预算和 90% 硬闸；不能把它表述为“内层任务无预算”。正式自研究须有真实价目、API 凭据和冻结题库；TEST-only 使用 dev manifest 和 TEST 价目，只说明机制可运行。选中配置必须再通过 batch 的一次验证准入才能进正式考试。
 

@@ -45,6 +45,10 @@ class BudgetReserveError(ModelCallError):
     """A new model call would consume the reserved task budget."""
 
 
+class UnknownUsageError(ModelCallError):
+    """A dispatched call has no trustworthy token usage; do not retry it."""
+
+
 @dataclass(frozen=True)
 class TokenUsage:
     """Disjoint billing buckets expected by ledger/1.
@@ -418,6 +422,8 @@ class ModelClient:
                 "error": str(error) if error is not None else None,
             }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         if error is not None:
+            if usage_status == "unknown":
+                raise UnknownUsageError(str(error)) from error
             raise ModelCallError(str(error)) from error
         assert data is not None and response is not None
         return ModelResult(

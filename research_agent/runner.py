@@ -17,7 +17,7 @@ from library import LibraryConflict, LibraryError, LibraryFrozen
 
 from .artifacts import append_run_log, node_directory, save_score, save_solution
 from .io import append_jsonl, atomic_json, field, fields, read_json
-from .model import BudgetReserveError, ModelCallError
+from .model import BudgetReserveError, ModelCallError, UnknownUsageError
 from .scheduler import Scheduler
 from .tree import ExperimentTree
 
@@ -362,7 +362,7 @@ class TaskRunner:
             response = self._role("execute", payload, node_id=node_id, fix=attempt > 1)
             save_solution(node_dir, response.get("code", ""), parent_dir)
         except Exception as exc:
-            if isinstance(exc, BudgetReserveError):
+            if isinstance(exc, (BudgetReserveError, UnknownUsageError)):
                 raise
             self._note_failure(node_id, "executor", "exception")
             return None, f"Executor output failed: {exc}"
@@ -481,6 +481,9 @@ class TaskRunner:
                 result, error = self._run_attempt(node, attempt, error)
             except BudgetReserveError:
                 self.tree.fail(node_id, "budget", "Model call blocked before dispatch by budget reserve")
+                raise
+            except UnknownUsageError:
+                self.tree.fail(node_id, "exception", "Model call usage unknown; stopped before retry")
                 raise
             if result is not None:
                 self.tree.succeed(node_id, result)

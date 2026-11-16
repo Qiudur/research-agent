@@ -29,14 +29,17 @@ class EvaluationCliTests(unittest.TestCase):
             }), encoding="utf-8")
             args = dict(project_root=root, model="qwen3.5-27b", prices_path=prices,
                         code_commit=SHA, default_config=root / "config/missing.json")
-            with patch.dict(os.environ, {"OPENAI_API_KEY": "test-only",
-                                      "OPENAI_BASE_URL": "https://wrong.invalid/v1"}):
-                result = formal_preflight(**args)
-                self.assertTrue(any("OPENAI_BASE_URL" in item for item in result["blockers"]))
-            with patch.dict(os.environ, {"OPENAI_API_KEY": "test-only",
-                                      "OPENAI_BASE_URL": "https://ai-gateway.ailab.jiuan.com/v1"}):
-                result = formal_preflight(**args)
-                self.assertFalse(any("OPENAI_BASE_URL" in item for item in result["blockers"]))
+            allowed = ("https://ai-gateway.ailab.jiuan.com/v1",
+                       "https://ai-gateway.theunifiedcare.com/v1")
+            rejected = ("https://wrong.invalid/v1",
+                        "https://user:password@ai-gateway.theunifiedcare.com/v1",
+                        "https://ai-gateway.theunifiedcare.com/v1?token=test")
+            for url in (*allowed, *rejected):
+                with self.subTest(url=url), patch.dict(os.environ, {
+                        "OPENAI_API_KEY": "test-only", "OPENAI_BASE_URL": url}):
+                    result = formal_preflight(**args)
+                    gateway_blocked = any("OPENAI_BASE_URL" in item for item in result["blockers"])
+                    self.assertEqual(gateway_blocked, url in rejected)
 
     def test_formal_preflight_marks_valid_token_accounting_as_internal(self):
         with TemporaryDirectory() as temp:

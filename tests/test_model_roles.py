@@ -7,7 +7,8 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
-from research_agent.model import BudgetReserveError, ModelCallError, ModelClient, TokenUsage, token_usage_from_response
+from research_agent.model import (BudgetReserveError, ModelCallError, ModelClient,
+                                  TokenUsage, UnknownUsageError, token_usage_from_response)
 from research_agent.model import _validate_schema
 from research_agent.roles import RoleAgents, SCHEMAS
 
@@ -112,7 +113,7 @@ class ModelTests(unittest.TestCase):
         fake = FakeClient(error=RuntimeError("transport unavailable"))
         times = iter([0.0, 0.4])
         client = ModelClient("chosen-at-runtime", ledger, client=fake, clock=lambda: next(times))
-        with self.assertRaisesRegex(ModelCallError, "transport unavailable"):
+        with self.assertRaisesRegex(UnknownUsageError, "transport unavailable"):
             client.call_json(
                 role="planner", purpose="plan", effort="high", system_prompt="Plan",
                 payload={}, schema=SCHEMAS["plan"],
@@ -131,7 +132,7 @@ class ModelTests(unittest.TestCase):
                 client = ModelClient("chosen-at-runtime", ledger,
                                      client=FakeClient(supplied),
                                      audit_dir=Path(temp), clock=lambda: 1.0)
-                with self.assertRaises(ModelCallError):
+                with self.assertRaises(UnknownUsageError):
                     client.call_json(role="executor", purpose="code", effort="low",
                                      system_prompt="Code", payload={}, schema=SCHEMAS["code"])
                 self.assertEqual(ledger.calls[0]["usage_status"], "unknown")

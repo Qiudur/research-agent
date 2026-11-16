@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 from library import Library, LibraryConflict
 from research_agent.io import read_jsonl
-from research_agent.model import BudgetReserveError, ModelCallError
+from research_agent.model import BudgetReserveError, ModelCallError, UnknownUsageError
 from research_agent.replay import replay_node
 from research_agent.runner import TaskRunner
 
@@ -299,6 +299,36 @@ class RunnerTests(unittest.TestCase):
             self.assertEqual(latest["n0001"]["status"], "failed")
             self.assertEqual(latest["n0001"]["failure"]["kind"], "budget")
             self.assertEqual(latest["n0001"]["calls"], [])
+            self.assertEqual([event["kind"] for event in ledger.events].count("stop"), 1)
+
+    def test_unknown_executor_usage_stops_after_one_call(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            ledger = FakeLedger()
+            harness = FakeHarness(root)
+            library = Library.open(root / "runs/run-test/library")
+
+            class UnknownUsageExecutor(FakeRoles):
+                def execute(self, payload, *, fix=False, node_id=None):
+                    self.calls.append((node_id, fix))
+                    raise UnknownUsageError("Model returned no token usage")
+
+                def summarize(self, payload, *, node_id=None):
+                    raise AssertionError("No later model request is allowed")
+
+            roles = UnknownUsageExecutor(ledger, [idea("good")], draft=False)
+            result = self.make_runner(root, harness, roles, ledger, library).run()
+            self.assertEqual(result.reason, "error")
+            self.assertEqual(result.experiments, 0)
+            self.assertEqual(result.best_node, "n0000")
+            self.assertEqual(roles.calls, [("n0001", False)])
+            self.assertEqual(roles.plans, 1)
+            self.assertEqual(roles.diagnoses, 0)
+            latest = {node["node_id"]: node for node in read_jsonl(
+                root / "runs/run-test/tasks/tab-sample/tree.jsonl", "node/1")}
+            self.assertEqual(latest["n0001"]["status"], "failed")
+            self.assertEqual(latest["n0001"]["attempts"], 1)
+            self.assertEqual(latest["n0001"]["failure"]["kind"], "exception")
             self.assertEqual([event["kind"] for event in ledger.events].count("stop"), 1)
 
     def test_planner_model_error_keeps_baseline_and_stop_event(self):
