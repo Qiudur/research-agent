@@ -1,0 +1,130 @@
+{
+  "schema": "quant_published_decisions/1",
+  "run_id": "qwen-etf-dev-20261117-05",
+  "source": "Structured model output from local audit files; reasoning fields excluded.",
+  "model_claims_are_not_independent_evidence": true,
+  "proposed_directions": 4,
+  "executed_candidates": 3,
+  "unexecuted_direction": "Scale 5-day momentum by 10-day rolling volatility to reduce noise.",
+  "records": [
+    {
+      "role": "planner",
+      "purpose": "plan",
+      "source_audit_path": "runs/qwen-etf-dev-20261117-05/model_audit/response-694e6bedddd2e5b6.json",
+      "source_audit_sha256": "f445e50480e7c570daafb53905b49b756c7fa3c53a4ad880e7f7811d9446d3f2",
+      "output": {
+        "hypotheses": [
+          {
+            "hypothesis": "Extend momentum lookback window from 5 to 20 trading sessions.",
+            "rationale": "Current 5-day lookback shows significant drawdown (-0.22), indicating high noise sensitivity. A 20-day horizon reduces volatility of signal and may capture medium-term trends more effectively in this cross-asset universe.",
+            "estimate": {
+              "gain": 0.07,
+              "cost": 1000.0,
+              "seconds": 30.0
+            },
+            "cites": [
+              "visible_sample",
+              "recent_experiments"
+            ]
+          },
+          {
+            "hypothesis": "Invert baseline signal to implement short-term reversal strategy.",
+            "rationale": "Strong negative momentum performance suggests potential mean-reversion regime. Buying losers and selling winners (inverse momentum) explores whether counter-trend positioning yields positive alpha where trend following fails.",
+            "estimate": {
+              "gain": 0.07,
+              "cost": 1000.0,
+              "seconds": 30.0
+            },
+            "cites": [
+              "visible_sample",
+              "recent_experiments"
+            ]
+          }
+        ],
+        "predicted": {
+          "cost": 2000.0,
+          "score": -0.15,
+          "seconds": 60.0
+        },
+        "budget_allocation": [
+          {
+            "direction": "exploration",
+            "amount": 2000.0
+          }
+        ],
+        "expected_progress": [
+          {
+            "score": -0.15,
+            "spent_ratio": 0.05
+          }
+        ]
+      }
+    },
+    {
+      "role": "planner",
+      "purpose": "plan",
+      "source_audit_path": "runs/qwen-etf-dev-20261117-05/model_audit/response-807f5507985f5290.json",
+      "source_audit_sha256": "9579bf29acd2481307bb2649efe73381a3b51fd7bfb0f760eadc460d299a23db",
+      "output": {
+        "hypotheses": [
+          {
+            "hypothesis": "Implement cross-sectional ranking of 5-day momentum across all symbols.",
+            "rationale": "Ranking assets relative to peers may capture relative strength independent of market-wide moves, addressing limitations of absolute momentum observed in baseline.",
+            "estimate": {
+              "cost": 1000.0,
+              "gain": 0.04,
+              "seconds": 1000.0
+            },
+            "cites": []
+          },
+          {
+            "hypothesis": "Scale 5-day momentum by 10-day rolling volatility to reduce noise.",
+            "rationale": "Volatility adjustment mitigates erratic returns from high-volatility symbols, improving signal stability while retaining directional momentum exposure.",
+            "estimate": {
+              "cost": 1000.0,
+              "gain": 0.03,
+              "seconds": 900.0
+            },
+            "cites": []
+          }
+        ],
+        "predicted": {
+          "cost": 2000.0,
+          "score": -0.18,
+          "seconds": 1900.0
+        },
+        "budget_allocation": [
+          {
+            "direction": "cross_section_rank",
+            "amount": 1000.0
+          },
+          {
+            "direction": "vol_scale_momentum",
+            "amount": 1000.0
+          }
+        ],
+        "expected_progress": [
+          {
+            "spent_ratio": 0.24,
+            "score": -0.18
+          },
+          {
+            "spent_ratio": 0.265,
+            "score": -0.15
+          }
+        ]
+      }
+    },
+    {
+      "role": "planner",
+      "purpose": "review",
+      "source_audit_path": "runs/qwen-etf-dev-20261117-05/model_audit/response-4331a40988498b40.json",
+      "source_audit_sha256": "8c0895249a95e10ebddd9fe0c6b4513c44e1b9b71f39b8567674ef96ae7ee389",
+      "output": {
+        "decision": "stop",
+        "budget_moves": [],
+        "note": "Three orthogonal hypotheses tested: extended lookback (-0.26), signal inversion/reversal (-0.24), cross-sectional ranking (-0.37). All underperformed baseline (-0.22) by 4-15%. Pattern indicates baseline 5-session momentum is locally optimal; further explorations unlikely to yield improvements. Stopping per plateau protocol while preserving negative results for future reference."
+      }
+    }
+  ]
+}

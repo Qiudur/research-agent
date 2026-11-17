@@ -1,0 +1,237 @@
+{
+  "schema": "quant_published_evidence/1",
+  "run_id": "qwen-etf-dev-20261117-05",
+  "code_commit": "e4dff91ae7226543e2e61c04df98b85b1ee9e675",
+  "artifacts": [
+    {
+      "path": "report.json",
+      "source_path": "runs/qwen-etf-dev-20261117-05/final/report.json",
+      "sha256": "f56df831709c790e9895a55c511431ee712f1cf62ce6425d6f31e8bc3726cf46",
+      "bytes": 64222
+    },
+    {
+      "path": "holdout-attempt.json",
+      "source_path": "runs/qwen-etf-dev-20261117-05/final/attempt.json",
+      "sha256": "0e0ae52c97bdc9ebf3cf6ece6fc0e28aab64fe2d5e2b3ebc66c5917ca37fb302",
+      "bytes": 358
+    },
+    {
+      "path": "dev_report.json",
+      "source_path": "runs/qwen-etf-dev-20261117-05/dev_report.json",
+      "sha256": "f261dd14853d77c12ab74b2ef7bc1901cb71b118e9c682923a3feac5b31b28cf",
+      "bytes": 2736
+    },
+    {
+      "path": "selection.json",
+      "source_path": "runs/qwen-etf-dev-20261117-05/selection.json",
+      "sha256": "55157f404716796f623eaa6a5d0e3954208cd68b58445f577939974c831727fe",
+      "bytes": 3349
+    },
+    {
+      "path": "run-manifest.json",
+      "source_path": "runs/qwen-etf-dev-20261117-05/manifest.json",
+      "sha256": "44d56184247f05d88e682360d04baed1fb568f5df377fde14e559c28f002be3d",
+      "bytes": 3347
+    },
+    {
+      "path": "run-ledger.jsonl",
+      "source_path": "runs/qwen-etf-dev-20261117-05/ledger.jsonl",
+      "sha256": "90a0d93972f515378f7f0ad718059edd66f8a6fdfd6ee96083b758fd51c0cc6b",
+      "bytes": 385
+    },
+    {
+      "path": "task-ledger.jsonl",
+      "source_path": "runs/qwen-etf-dev-20261117-05/tasks/quant-demo/ledger.jsonl",
+      "sha256": "773a500da6be500daa12f03ac1c4af82b8c72d02cfb1318f0170ccd221713f27",
+      "bytes": 6774
+    },
+    {
+      "path": "tree.jsonl",
+      "source_path": "runs/qwen-etf-dev-20261117-05/tasks/quant-demo/tree.jsonl",
+      "sha256": "4e292f08c23beccc6cab792c245bf72e871f2a086cfe3dffb08159491ace8df0",
+      "bytes": 18607
+    },
+    {
+      "path": "dataset-manifest.json",
+      "source_path": "runs/qwen-etf-dev-20261117-05/private/manifest.json",
+      "sha256": "85c27ca02f0df99fcd4759b13d7094189afa803b7997616cafe22e9c83b101a7",
+      "bytes": 4729
+    },
+    {
+      "path": "nodes/n0000/solution.py",
+      "source_path": "runs/qwen-etf-dev-20261117-05/tasks/quant-demo/nodes/n0000/solution.py",
+      "sha256": "73eeda7c40197136d0984a634fd78cb8bd84712f2b19ad8c72117ed026fd6101",
+      "bytes": 160
+    },
+    {
+      "path": "nodes/n0000/score.json",
+      "source_path": "runs/qwen-etf-dev-20261117-05/tasks/quant-demo/nodes/n0000/score.json",
+      "sha256": "e3f45c61986f8e7aa06a18e61436cb88cd48808573039ceb8565b8f4cf4b2cc1",
+      "bytes": 1014
+    },
+    {
+      "path": "nodes/n0001/solution.py",
+      "source_path": "runs/qwen-etf-dev-20261117-05/tasks/quant-demo/nodes/n0001/solution.py",
+      "sha256": "3d3051dc94165adbabab518fb966c1cac1c6a06523a35df747e08ff28f8bde06",
+      "bytes": 162
+    },
+    {
+      "path": "nodes/n0001/score.json",
+      "source_path": "runs/qwen-etf-dev-20261117-05/tasks/quant-demo/nodes/n0001/score.json",
+      "sha256": "b2f96337ed3f153cba39083709fc4f99ee838e26bb614bfc72a4cd48e68881ad",
+      "bytes": 1017
+    },
+    {
+      "path": "nodes/n0002/solution.py",
+      "source_path": "runs/qwen-etf-dev-20261117-05/tasks/quant-demo/nodes/n0002/solution.py",
+      "sha256": "d1286fe74051ec1392ef817ec2555868e772aff7113626535c5df41c5fd7fdf3",
+      "bytes": 161
+    },
+    {
+      "path": "nodes/n0002/score.json",
+      "source_path": "runs/qwen-etf-dev-20261117-05/tasks/quant-demo/nodes/n0002/score.json",
+      "sha256": "016146a0c70bba808b2bb95a2abc4fe2fc168a968dc6bfd7a313a341e31920cd",
+      "bytes": 1012
+    },
+    {
+      "path": "nodes/n0003/solution.py",
+      "source_path": "runs/qwen-etf-dev-20261117-05/tasks/quant-demo/nodes/n0003/solution.py",
+      "sha256": "b1bf701fdd24c5f460429c684bcc648756cbaa99da6177f66bf36c07c3c78ad1",
+      "bytes": 330
+    },
+    {
+      "path": "nodes/n0003/score.json",
+      "source_path": "runs/qwen-etf-dev-20261117-05/tasks/quant-demo/nodes/n0003/score.json",
+      "sha256": "7f9f02af8807554acabde3496e41780fc06b605245d4c11d9f216aee67618d54",
+      "bytes": 1017
+    },
+    {
+      "path": "inputs/agent_config.json",
+      "source_path": "config/quant_agent.json",
+      "sha256": "47b9edcae0075832f55cdeb4db7f4656ac7ffdb91b76304027a4c02dd8b4d959",
+      "bytes": 866
+    },
+    {
+      "path": "inputs/prices.json",
+      "source_path": "config/prices_quant_dev.json",
+      "sha256": "1206c13d6919e6f8e9b6e7d60cafd10bdbf599a00ada95b133f867953462efb5",
+      "bytes": 334
+    },
+    {
+      "path": "inputs/hard_caps.json",
+      "source_path": "config/hard_caps.json",
+      "sha256": "58a21d156dfd99e3790ba33334d4e1c8e361ef3fc03a2d440f2c1042ee500958",
+      "bytes": 74
+    },
+    {
+      "path": "inputs/triggers.json",
+      "source_path": "config/triggers.json",
+      "sha256": "0112d40c8f82802a7bba9b69e05f264797d26765a65537e29a7d1c0547e2ee61",
+      "bytes": 521
+    },
+    {
+      "path": "inputs/task_original.py",
+      "source_path": "runs/qwen-etf-dev-20261117-05/task_package/quant-demo/workspace/original.py",
+      "sha256": "73eeda7c40197136d0984a634fd78cb8bd84712f2b19ad8c72117ed026fd6101",
+      "bytes": 160
+    },
+    {
+      "path": "inputs/task_profile.json",
+      "source_path": "runs/qwen-etf-dev-20261117-05/task_package/quant-demo/workspace/profile.json",
+      "sha256": "bbf0cefcee9bf0164c2eb48b5bf89c74e81919de32c9d5fe39925a15a14ec41a",
+      "bytes": 227
+    },
+    {
+      "path": "inputs/prompt_planner.md",
+      "source_path": "config/prompts/quant_planner.md",
+      "sha256": "62448753c4c118631513b7370bb9026dd5d5de28a6bd91a1cdde4a4a040039c1",
+      "bytes": 734
+    },
+    {
+      "path": "inputs/prompt_executor.md",
+      "source_path": "config/prompts/quant_executor.md",
+      "sha256": "9f3acdc8a3b32574d12be5f64b1ea8f66fb6dc19677c30308eaa78a4747d00e1",
+      "bytes": 1466
+    },
+    {
+      "path": "inputs/prompt_diagnoser.md",
+      "source_path": "config/prompts/quant_diagnoser.md",
+      "sha256": "4f4e9de642e7a493e7c9d9cf79d7450a5fd0d2fe1cd0b029c0bcc74921d665ad",
+      "bytes": 527
+    },
+    {
+      "path": "inputs/prompt_summarizer.md",
+      "source_path": "config/prompts/summarizer.md",
+      "sha256": "7a6ea00623497d61efc014c24fee1de19ce3131fa912883b4f0bc768854358de",
+      "bytes": 1194
+    },
+    {
+      "path": "protocols/qwen_etf_comparison.json",
+      "source_path": "config/qwen_etf_comparison.json",
+      "sha256": "4926ac6959e17aa7e34ba89524a7d7e9355ddfd2f894698052837007275d513d",
+      "bytes": 2022
+    },
+    {
+      "path": "protocols/qwen_etf_comparison_v2.json",
+      "source_path": "config/qwen_etf_comparison_v2.json",
+      "sha256": "21e72afd897373a73aba81cb970a558ead6a5f6b4dd6f464624a7b97981e1f50",
+      "bytes": 2519
+    },
+    {
+      "path": "protocols/qwen_etf_comparison_v3.json",
+      "source_path": "config/qwen_etf_comparison_v3.json",
+      "sha256": "62219b3c3ac0aa7130930e2aa2d814187430e54a94032c167beeef5d5b2caf10",
+      "bytes": 2884
+    },
+    {
+      "path": "prior-attempts/qwen-etf-dev-20261117-01/dev_report.json",
+      "source_path": "runs/qwen-etf-dev-20261117-01/dev_report.json",
+      "sha256": "716c4fcd390f2fb110c721d2a67e448f3b4cf84b0ee9f6ae5ab7241cbda76986",
+      "bytes": 709
+    },
+    {
+      "path": "prior-attempts/qwen-etf-dev-20261117-02/dev_report.json",
+      "source_path": "runs/qwen-etf-dev-20261117-02/dev_report.json",
+      "sha256": "deca6c587980becc3d5007909bc4ddbfabfe1f474a8fbec10bba7a23f5a62bb6",
+      "bytes": 709
+    },
+    {
+      "path": "prior-attempts/qwen-etf-dev-20261117-03/dev_report.json",
+      "source_path": "runs/qwen-etf-dev-20261117-03/dev_report.json",
+      "sha256": "3ff706f5fbefd089dc9f8f4894a737a043331dbfd88b50cc60f2bb50684022b2",
+      "bytes": 709
+    },
+    {
+      "path": "prior-attempts/qwen-etf-dev-20261117-04/dev_report.json",
+      "source_path": "runs/qwen-etf-dev-20261117-04/dev_report.json",
+      "sha256": "212c762dbb8289d95e9c54cf1003cb2caf91771e1cec76d2027193e84a305449",
+      "bytes": 709
+    }
+  ],
+  "generated": [
+    {
+      "path": "prior-attempts.json",
+      "sha256": "1fc35b958ec4d7a5740212e23aca26f771efb4b6b0c82cbb9e17e766dd26c542",
+      "bytes": 2497
+    },
+    {
+      "path": "research-decisions.json",
+      "sha256": "1b44b4205b6c5efb03d3e1b4d55d0431a61b846c5d9a4bb143e0fe9b1971aba8",
+      "bytes": 4867
+    },
+    {
+      "path": "report.md",
+      "sha256": "241a6c9c197b936ed2466cbd68cec160fe10244edbb324ed7576eb03c9f1ffe3",
+      "bytes": 6690
+    },
+    {
+      "path": "README.md",
+      "sha256": "fe35532818c09cd46d3facd9a79cca81de9f485a1089953be5817a05eebb0256",
+      "bytes": 363
+    }
+  ],
+  "raw_prices_published": false,
+  "raw_model_responses_published": false,
+  "source_path_semantics": "source_path refers to the project-local execution path; path identifies this published copy. Artifacts are exact copies.",
+  "local_only_price_sha256": "38f1025dfa0197c05fb8e631d1ac191fed831f5f6c3135ad2403e75983e069d5"
+}

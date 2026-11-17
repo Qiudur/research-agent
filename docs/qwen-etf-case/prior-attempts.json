@@ -1,0 +1,71 @@
+{
+  "schema": "quant_prior_attempts_summary/1",
+  "attempts": [
+    {
+      "run_id": "qwen-etf-dev-20261117-01",
+      "status": "failed",
+      "failure_kind": "unknown_usage",
+      "failure_class": "http_401",
+      "model_calls": 1,
+      "usage_complete": false,
+      "unknown_usage_calls": 1,
+      "total_tokens": null,
+      "call_seconds": [
+        0.20243016601307318
+      ],
+      "holdout_scored": false,
+      "report_sha256": "716c4fcd390f2fb110c721d2a67e448f3b4cf84b0ee9f6ae5ab7241cbda76986",
+      "local_task_ledger_sha256": "4f32e2e6b62a98b9db0c5d256ff5fefa8715b7ab662d3df8cb69992b929e684b"
+    },
+    {
+      "run_id": "qwen-etf-dev-20261117-02",
+      "status": "failed",
+      "failure_kind": "unknown_usage",
+      "failure_class": "http_401",
+      "model_calls": 1,
+      "usage_complete": false,
+      "unknown_usage_calls": 1,
+      "total_tokens": null,
+      "call_seconds": [
+        0.12410070799523965
+      ],
+      "holdout_scored": false,
+      "report_sha256": "deca6c587980becc3d5007909bc4ddbfabfe1f474a8fbec10bba7a23f5a62bb6",
+      "local_task_ledger_sha256": "236ff326517abdb53d15874e838c859fe3b743081a895c82942477c922ef7404"
+    },
+    {
+      "run_id": "qwen-etf-dev-20261117-03",
+      "status": "failed",
+      "failure_kind": "unknown_usage",
+      "failure_class": "request_timeout_180_seconds",
+      "model_calls": 1,
+      "usage_complete": false,
+      "unknown_usage_calls": 1,
+      "total_tokens": null,
+      "call_seconds": [
+        180.11168349999934
+      ],
+      "holdout_scored": false,
+      "report_sha256": "3ff706f5fbefd089dc9f8f4894a737a043331dbfd88b50cc60f2bb50684022b2",
+      "local_task_ledger_sha256": "7483b9e18b0285817a9fdded8c082df14d9f1441464b6cf54fac379adda5358f"
+    },
+    {
+      "run_id": "qwen-etf-dev-20261117-04",
+      "status": "failed",
+      "failure_kind": "unknown_usage",
+      "failure_class": "http_401",
+      "model_calls": 1,
+      "usage_complete": false,
+      "unknown_usage_calls": 1,
+      "total_tokens": null,
+      "call_seconds": [
+        0.11389395804144442
+      ],
+      "holdout_scored": false,
+      "report_sha256": "212c762dbb8289d95e9c54cf1003cb2caf91771e1cec76d2027193e84a305449",
+      "local_task_ledger_sha256": "9a01401b9eedcd791bdeeec912f408638880bb1b34ee5e27f736274af9c0573c"
+    }
+  ],
+  "campaign_total_tokens": null,
+  "note": "Earlier failed attempts have unknown usage. The successful development run used 17791 tokens; this is not a complete cost for all attempts."
+}

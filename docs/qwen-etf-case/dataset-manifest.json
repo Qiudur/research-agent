@@ -1,0 +1,129 @@
+{
+  "schema": "quant_dataset/1",
+  "source": "Kaggle jacksoncrow/stock-market-dataset version 2; uploader states Yahoo Finance via yfinance",
+  "license": "Kaggle uploader declares CC0: Public Domain; upstream Yahoo Finance rights and redistribution permission are not independently verified",
+  "price_basis": "source Adj Close: split- and dividend-adjusted, as described by uploader; snapshot as of April 2020, not point-in-time corporate-action data",
+  "universe_policy": "fixed_demo",
+  "data_kind": "market",
+  "limitations": [
+    "Fixed, retrospectively selected surviving ETF universe; not survivorship-bias-free.",
+    "Adjusted close is a later snapshot and is not point-in-time corporate-action data.",
+    "Source adjustments and completeness are declared by the uploader, not independently reconstructed.",
+    "Keep raw and normalized market data local; uploader license does not establish upstream rights."
+  ],
+  "csv": "prices.csv",
+  "csv_sha256": "38f1025dfa0197c05fb8e631d1ac191fed831f5f6c3135ad2403e75983e069d5",
+  "requested_universe": [
+    "SPY",
+    "QQQ",
+    "IWM",
+    "EFA",
+    "EEM",
+    "TLT",
+    "IEF",
+    "GLD"
+  ],
+  "requested_start_date": "2008-01-01",
+  "requested_end_date": "2020-04-01",
+  "actual_start_date": "2008-01-02",
+  "actual_end_date": "2020-04-01",
+  "date_count": 3084,
+  "row_count": 24672,
+  "source_snapshot": {
+    "dataset": "jacksoncrow/stock-market-dataset",
+    "version": 2,
+    "url": "https://www.kaggle.com/datasets/jacksoncrow/stock-market-dataset/versions/2",
+    "last_updated": "2020-04-02T10:55:57.307Z",
+    "metadata_url": "https://www.kaggle.com/api/v1/datasets/view/jacksoncrow/stock-market-dataset",
+    "metadata_path": "raw/kaggle-metadata.json",
+    "metadata_sha256": "956ccfe261785155db0a8a6913335ce822ce20b6250cdee881a0d2b056902dfa",
+    "retrieved_at_utc": "2026-11-16T14:33:02.750061+00:00",
+    "source_files": [
+      {
+        "symbol": "SPY",
+        "source_file": "etfs/SPY.csv",
+        "source_sha256": "7e904487406dfed06b87da8902f5387f1ea5a8d9ced8246c29a9e7e04f2459df",
+        "source_path": "raw/SPY.csv",
+        "observed_dates": 3084
+      },
+      {
+        "symbol": "QQQ",
+        "source_file": "etfs/QQQ.csv",
+        "source_sha256": "7f2d37ca67be31e40b58894406addd85ffd9b58bbb4cf6a72243ef511e4aec84",
+        "source_path": "raw/QQQ.csv",
+        "observed_dates": 3084
+      },
+      {
+        "symbol": "IWM",
+        "source_file": "etfs/IWM.csv",
+        "source_sha256": "a9ed6dbb096c62a7c6e65f58b13b09fe17a0ac493d1abf7dbdf38551621bca05",
+        "source_path": "raw/IWM.csv",
+        "observed_dates": 3084
+      },
+      {
+        "symbol": "EFA",
+        "source_file": "etfs/EFA.csv",
+        "source_sha256": "2d6d3aed6d88801d92866396c3231f26d0c13faa758a650ad0256d6b3a56ebd9",
+        "source_path": "raw/EFA.csv",
+        "observed_dates": 3084
+      },
+      {
+        "symbol": "EEM",
+        "source_file": "etfs/EEM.csv",
+        "source_sha256": "9b36d40bdd924ff612540a32cc26de935ab964e1092374718c99be8185c83c23",
+        "source_path": "raw/EEM.csv",
+        "observed_dates": 3084
+      },
+      {
+        "symbol": "TLT",
+        "source_file": "etfs/TLT.csv",
+        "source_sha256": "b48901861b05962ebc61d50871c3dad2bf5ebcec89ef056478a51ff20d2fa5a6",
+        "source_path": "raw/TLT.csv",
+        "observed_dates": 3084
+      },
+      {
+        "symbol": "IEF",
+        "source_file": "etfs/IEF.csv",
+        "source_sha256": "fb1935f038495d9c05224882b52cc66b419d7b1ff78f91e01651c84a6cb866e0",
+        "source_path": "raw/IEF.csv",
+        "observed_dates": 3084
+      },
+      {
+        "symbol": "GLD",
+        "source_file": "etfs/GLD.csv",
+        "source_sha256": "6d7593eb533c73dda019b64053453664cfd1dc468613b0716effc6a32264ba9f",
+        "source_path": "raw/GLD.csv",
+        "observed_dates": 3084
+      }
+    ]
+  },
+  "missing_date_policy": {
+    "method": "intersection of observed dates across the fixed universe; no forward/backfill",
+    "calendar_validation": "observed source dates only; no independent exchange calendar check",
+    "observed_union_date_count": 3084,
+    "discarded_date_count": 0,
+    "discarded_dates": [],
+    "missing_dates_by_symbol": {
+      "SPY": [],
+      "QQQ": [],
+      "IWM": [],
+      "EFA": [],
+      "EEM": [],
+      "TLT": [],
+      "IEF": [],
+      "GLD": []
+    },
+    "discarded_observations_by_symbol": {
+      "SPY": 0,
+      "QQQ": 0,
+      "IWM": 0,
+      "EFA": 0,
+      "EEM": 0,
+      "TLT": 0,
+      "IEF": 0,
+      "GLD": 0
+    }
+  },
+  "derived_from_manifest_sha256": "98d13d38635132c42fa0cdfe71058b2c57b8866a7af9cffd777a7cf584056eef",
+  "derived_from_raw_snapshot": "runs/etf-case-data-v1/raw; no raw files are copied into this output"
+}

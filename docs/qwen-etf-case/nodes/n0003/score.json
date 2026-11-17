@@ -1,0 +1,37 @@
+{
+  "schema": "score/1",
+  "ok": true,
+  "split": "dev",
+  "score": -0.37317266333510146,
+  "raw": -0.10821606788204619,
+  "spread": 0.0,
+  "correct": true,
+  "cheat_flags": [],
+  "error": null,
+  "seconds": {
+    "run": 6.225522959022783,
+    "queue": 0.0
+  },
+  "seed": 0,
+  "quant_metrics": {
+    "candidate": {
+      "total_return": -0.10821606788204619,
+      "annualized_return": -0.03755504145243038,
+      "volatility": 0.12052462603771516,
+      "sharpe": -0.25684782116296456,
+      "max_drawdown": 0.29432101945838207,
+      "mean_turnover": 0.7699936194465938
+    },
+    "equal_weight": {
+      "total_return": 0.2649565954530553,
+      "annualized_return": 0.08172149690971486,
+      "volatility": 0.08328983772988555,
+      "sharpe": 0.9849571194596898,
+      "max_drawdown": 0.12684420639438054,
+      "mean_turnover": 0.006459269631432682
+    },
+    "dataset_sha256": "38f1025dfa0197c05fb8e631d1ac191fed831f5f6c3135ad2403e75983e069d5",
+    "dev_start": "2015-01-05",
+    "dev_end": "2017-12-29"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "schema": "profile/1",
+  "features": [
+    "time_series"
+  ],
+  "summary": {
+    "frequency": "daily",
+    "universe_size": 8,
+    "baseline_signal": "five-session trailing momentum",
+    "comparison": "equal weight"
+  }
+}

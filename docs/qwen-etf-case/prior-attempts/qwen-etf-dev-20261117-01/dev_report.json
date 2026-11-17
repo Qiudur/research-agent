@@ -1,0 +1,30 @@
+{
+  "schema": "quant_dev_report/1",
+  "run_id": "qwen-etf-dev-20261117-01",
+  "status": "failed",
+  "selection": null,
+  "selected_node": null,
+  "holdout_scored": false,
+  "failure": {
+    "kind": "unknown_usage",
+    "type": "DevAdmissionError",
+    "message": "Development run failed; sealed evaluation is blocked"
+  },
+  "evidence": {
+    "task": "tasks/quant-demo/",
+    "run_ledger": "ledger.jsonl"
+  },
+  "model_calls": 1,
+  "usage_complete": false,
+  "unknown_usage_calls": 1,
+  "reported_token_buckets": {
+    "input": 0,
+    "cached_input": 0,
+    "output": 0,
+    "reasoning": 0
+  },
+  "total_token_buckets": null,
+  "reported_resource_cost": 0.0,
+  "resource_cost": null,
+  "currency": "TOKENS"
+}

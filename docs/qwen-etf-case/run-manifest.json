@@ -1,0 +1,103 @@
+{
+  "schema": "quant_run/1",
+  "run_id": "qwen-etf-dev-20261117-05",
+  "tasks": [
+    "quant-demo"
+  ],
+  "phase": "dev",
+  "model": "qwen3.5-27b",
+  "code_commit": "e4dff91ae7226543e2e61c04df98b85b1ee9e675",
+  "working_tree_dirty": false,
+  "mode": "qwen",
+  "started_ts": "2026-11-17T02:50:41.797065+00:00",
+  "library": {
+    "root": "runs/qwen-etf-dev-20261117-05/library",
+    "start_version": "lib-0",
+    "frozen": false
+  },
+  "hard_caps": {
+    "budget_ratio": 0.9
+  },
+  "dataset": {
+    "path": "runs/qwen-etf-dev-20261117-05/private/manifest.json",
+    "sha256": "85c27ca02f0df99fcd4759b13d7094189afa803b7997616cafe22e9c83b101a7"
+  },
+  "agent_config": {
+    "path": "config/quant_agent.json",
+    "sha256": "47b9edcae0075832f55cdeb4db7f4656ac7ffdb91b76304027a4c02dd8b4d959"
+  },
+  "prices": {
+    "path": "config/prices_quant_dev.json",
+    "sha256": "1206c13d6919e6f8e9b6e7d60cafd10bdbf599a00ada95b133f867953462efb5"
+  },
+  "inputs": {
+    "agent_config": {
+      "path": "config/quant_agent.json",
+      "sha256": "47b9edcae0075832f55cdeb4db7f4656ac7ffdb91b76304027a4c02dd8b4d959"
+    },
+    "prices": {
+      "path": "config/prices_quant_dev.json",
+      "sha256": "1206c13d6919e6f8e9b6e7d60cafd10bdbf599a00ada95b133f867953462efb5"
+    },
+    "hard_caps": {
+      "path": "config/hard_caps.json",
+      "sha256": "58a21d156dfd99e3790ba33334d4e1c8e361ef3fc03a2d440f2c1042ee500958"
+    },
+    "triggers": {
+      "path": "config/triggers.json",
+      "sha256": "0112d40c8f82802a7bba9b69e05f264797d26765a65537e29a7d1c0547e2ee61"
+    },
+    "task_original": {
+      "path": "runs/qwen-etf-dev-20261117-05/task_package/quant-demo/workspace/original.py",
+      "sha256": "73eeda7c40197136d0984a634fd78cb8bd84712f2b19ad8c72117ed026fd6101"
+    },
+    "task_profile": {
+      "path": "runs/qwen-etf-dev-20261117-05/task_package/quant-demo/workspace/profile.json",
+      "sha256": "bbf0cefcee9bf0164c2eb48b5bf89c74e81919de32c9d5fe39925a15a14ec41a"
+    },
+    "prompt_planner": {
+      "path": "config/prompts/quant_planner.md",
+      "sha256": "62448753c4c118631513b7370bb9026dd5d5de28a6bd91a1cdde4a4a040039c1"
+    },
+    "prompt_executor": {
+      "path": "config/prompts/quant_executor.md",
+      "sha256": "9f3acdc8a3b32574d12be5f64b1ea8f66fb6dc19677c30308eaa78a4747d00e1"
+    },
+    "prompt_diagnoser": {
+      "path": "config/prompts/quant_diagnoser.md",
+      "sha256": "4f4e9de642e7a493e7c9d9cf79d7450a5fd0d2fe1cd0b029c0bcc74921d665ad"
+    },
+    "prompt_summarizer": {
+      "path": "config/prompts/summarizer.md",
+      "sha256": "7a6ea00623497d61efc014c24fee1de19ce3131fa912883b4f0bc768854358de"
+    }
+  },
+  "model_settings": {
+    "max_output_tokens": 6000,
+    "request_timeout_seconds": 600,
+    "base_url": "https://ai-gateway.theunifiedcare.com/v1"
+  },
+  "split": {
+    "train_end": "2014-12-29",
+    "dev_start": "2015-01-05",
+    "dev_end": "2017-12-29",
+    "holdout_start": "2020-01-06",
+    "label_horizon": 2
+  },
+  "execution": {
+    "top_k": 2,
+    "fee_bps": 2.0,
+    "slippage_bps": 3.0
+  },
+  "protocol": {
+    "path": "config/qwen_etf_comparison_v3.json",
+    "sha256": "62219b3c3ac0aa7130930e2aa2d814187430e54a94032c167beeef5d5b2caf10"
+  },
+  "limits": {
+    "budget_tokens": 40000,
+    "wall_seconds": 3600,
+    "run_seconds": 20,
+    "memory_mb": 512
+  },
+  "label": "DEVELOPMENT ONLY / USER-SUPPLIED DATA"
+}

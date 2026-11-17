@@ -1,0 +1,104 @@
+{
+  "schema": "quant_dev_report/1",
+  "label": "DEVELOPMENT ONLY / USER-SUPPLIED DATA",
+  "status": "dev_complete",
+  "run_id": "qwen-etf-dev-20261117-05",
+  "selection": "selection.json",
+  "selected_node": "n0000",
+  "dev_score": -0.22293382209199675,
+  "original_dev_score": -0.22293382209199675,
+  "experiments": 3,
+  "development_backtest": {
+    "selected": {
+      "total_return": 0.04202277336105853,
+      "annualized_return": 0.013852734229633734,
+      "volatility": 0.12054094139380844,
+      "sharpe": 0.17482312548951218,
+      "max_drawdown": 0.14882709710087305,
+      "mean_turnover": 0.7037859580249523
+    },
+    "original": {
+      "total_return": 0.04202277336105853,
+      "annualized_return": 0.013852734229633734,
+      "volatility": 0.12054094139380844,
+      "sharpe": 0.17482312548951218,
+      "max_drawdown": 0.14882709710087305,
+      "mean_turnover": 0.7037859580249523
+    },
+    "equal_weight": {
+      "total_return": 0.2649565954530553,
+      "annualized_return": 0.08172149690971486,
+      "volatility": 0.08328983772988555,
+      "sharpe": 0.9849571194596898,
+      "max_drawdown": 0.12684420639438054,
+      "mean_turnover": 0.006459269631432682
+    }
+  },
+  "development_window": {
+    "train_end": "2014-12-29",
+    "dev_start": "2015-01-05",
+    "dev_end": "2017-12-29",
+    "holdout_start": "2020-01-06",
+    "label_horizon": 2
+  },
+  "trading_costs": {
+    "top_k": 2,
+    "fee_bps": 2.0,
+    "slippage_bps": 3.0
+  },
+  "dataset": {
+    "path": "runs/qwen-etf-dev-20261117-05/private/manifest.json",
+    "sha256": "85c27ca02f0df99fcd4759b13d7094189afa803b7997616cafe22e9c83b101a7"
+  },
+  "nodes": [
+    {
+      "node_id": "n0000",
+      "status": "accepted",
+      "dev_score": -0.22293382209199675,
+      "attempts": 0
+    },
+    {
+      "node_id": "n0001",
+      "status": "rejected",
+      "dev_score": -0.2624304273827973,
+      "attempts": 1
+    },
+    {
+      "node_id": "n0002",
+      "status": "rejected",
+      "dev_score": -0.24332100323024575,
+      "attempts": 1
+    },
+    {
+      "node_id": "n0003",
+      "status": "rejected",
+      "dev_score": -0.37317266333510146,
+      "attempts": 1
+    }
+  ],
+  "negative_or_failed_nodes": [
+    "n0001",
+    "n0002",
+    "n0003"
+  ],
+  "model_calls": 6,
+  "usage_complete": true,
+  "unknown_usage_calls": 0,
+  "reported_token_buckets": {
+    "input": 4774,
+    "cached_input": 0,
+    "output": 1359,
+    "reasoning": 11658
+  },
+  "total_token_buckets": {
+    "input": 4774,
+    "cached_input": 0,
+    "output": 1359,
+    "reasoning": 11658
+  },
+  "reported_resource_cost": 17791.0,
+  "resource_cost": 17791.0,
+  "currency": "TOKENS",
+  "holdout_scored": false,
+  "warning": "Development evidence only; no out-of-sample or live returns"
+}

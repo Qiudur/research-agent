@@ -1,0 +1,72 @@
+{
+  "schema": "quant_dev_selection/1",
+  "run_id": "qwen-etf-dev-20261117-05",
+  "task_id": "quant-demo",
+  "selected_at": "2026-11-17T03:11:26.577094+00:00",
+  "selection_rule": "highest accepted development score; ties keep earlier node",
+  "candidate": {
+    "path": "runs/qwen-etf-dev-20261117-05/tasks/quant-demo/nodes/n0000/solution.py",
+    "sha256": "73eeda7c40197136d0984a634fd78cb8bd84712f2b19ad8c72117ed026fd6101"
+  },
+  "dev_evidence": {
+    "path": "runs/qwen-etf-dev-20261117-05/tasks/quant-demo/nodes/n0000/score.json",
+    "sha256": "e3f45c61986f8e7aa06a18e61436cb88cd48808573039ceb8565b8f4cf4b2cc1"
+  },
+  "baseline_evidence": {
+    "path": "runs/qwen-etf-dev-20261117-05/tasks/quant-demo/nodes/n0000/score.json",
+    "sha256": "e3f45c61986f8e7aa06a18e61436cb88cd48808573039ceb8565b8f4cf4b2cc1"
+  },
+  "dev_score": -0.22293382209199675,
+  "dev_baseline_score": -0.22293382209199675,
+  "dataset_manifest_sha256": "85c27ca02f0df99fcd4759b13d7094189afa803b7997616cafe22e9c83b101a7",
+  "agent_config_sha256": "47b9edcae0075832f55cdeb4db7f4656ac7ffdb91b76304027a4c02dd8b4d959",
+  "prices_sha256": "1206c13d6919e6f8e9b6e7d60cafd10bdbf599a00ada95b133f867953462efb5",
+  "manifest_sha256": "44d56184247f05d88e682360d04baed1fb568f5df377fde14e559c28f002be3d",
+  "tree_sha256": "4e292f08c23beccc6cab792c245bf72e871f2a086cfe3dffb08159491ace8df0",
+  "node_artifacts": {
+    "n0000": {
+      "solution": {
+        "path": "runs/qwen-etf-dev-20261117-05/tasks/quant-demo/nodes/n0000/solution.py",
+        "sha256": "73eeda7c40197136d0984a634fd78cb8bd84712f2b19ad8c72117ed026fd6101"
+      },
+      "score": {
+        "path": "runs/qwen-etf-dev-20261117-05/tasks/quant-demo/nodes/n0000/score.json",
+        "sha256": "e3f45c61986f8e7aa06a18e61436cb88cd48808573039ceb8565b8f4cf4b2cc1"
+      }
+    },
+    "n0001": {
+      "solution": {
+        "path": "runs/qwen-etf-dev-20261117-05/tasks/quant-demo/nodes/n0001/solution.py",
+        "sha256": "3d3051dc94165adbabab518fb966c1cac1c6a06523a35df747e08ff28f8bde06"
+      },
+      "score": {
+        "path": "runs/qwen-etf-dev-20261117-05/tasks/quant-demo/nodes/n0001/score.json",
+        "sha256": "b2f96337ed3f153cba39083709fc4f99ee838e26bb614bfc72a4cd48e68881ad"
+      }
+    },
+    "n0002": {
+      "solution": {
+        "path": "runs/qwen-etf-dev-20261117-05/tasks/quant-demo/nodes/n0002/solution.py",
+        "sha256": "d1286fe74051ec1392ef817ec2555868e772aff7113626535c5df41c5fd7fdf3"
+      },
+      "score": {
+        "path": "runs/qwen-etf-dev-20261117-05/tasks/quant-demo/nodes/n0002/score.json",
+        "sha256": "016146a0c70bba808b2bb95a2abc4fe2fc168a968dc6bfd7a313a341e31920cd"
+      }
+    },
+    "n0003": {
+      "solution": {
+        "path": "runs/qwen-etf-dev-20261117-05/tasks/quant-demo/nodes/n0003/solution.py",
+        "sha256": "b1bf701fdd24c5f460429c684bcc648756cbaa99da6177f66bf36c07c3c78ad1"
+      },
+      "score": {
+        "path": "runs/qwen-etf-dev-20261117-05/tasks/quant-demo/nodes/n0003/score.json",
+        "sha256": "7f9f02af8807554acabde3496e41780fc06b605245d4c11d9f216aee67618d54"
+      }
+    }
+  },
+  "task_ledger_sha256": "773a500da6be500daa12f03ac1c4af82b8c72d02cfb1318f0170ccd221713f27",
+  "run_ledger_sha256": "90a0d93972f515378f7f0ad718059edd66f8a6fdfd6ee96083b758fd51c0cc6b",
+  "code_commit": "e4dff91ae7226543e2e61c04df98b85b1ee9e675",
+  "holdout_scored": false
+}

@@ -1,0 +1,57 @@
+{
+  "schema": "qwen_etf_comparison_protocol/1",
+  "id": "qwen-etf-comparison-v3-shell-credential",
+  "question": "Under the same ETF universe, cost model and development token budget, does a Qwen research agent produce a development-selected signal that beats the equal-weight benchmark on an unopened 2020 holdout?",
+  "model": "qwen3.5-27b",
+  "base_url": "https://ai-gateway.theunifiedcare.com/v1",
+  "dataset_manifest": "runs/etf-qwen-data-v1/manifest.json",
+  "dataset_sha256": "85c27ca02f0df99fcd4759b13d7094189afa803b7997616cafe22e9c83b101a7",
+  "symbols": [
+    "EEM",
+    "EFA",
+    "GLD",
+    "IEF",
+    "IWM",
+    "QQQ",
+    "SPY",
+    "TLT"
+  ],
+  "train_end": "2014-12-29",
+  "dev_start": "2015-01-05",
+  "dev_end": "2017-12-29",
+  "holdout_start": "2020-01-06",
+  "quarantined_interval": {
+    "start": "2018-01-04",
+    "end": "2019-12-31",
+    "reason": "Opened by the fixed-grid ETF case; excluded from this comparison."
+  },
+  "label_horizon": 2,
+  "top_k": 2,
+  "fee_bps": 2.0,
+  "slippage_bps": 3.0,
+  "baseline": "original five-session trailing momentum and daily equal weight",
+  "primary_metric": "holdout net excess return versus daily equal weight, with net excess versus original five-session momentum reported alongside it",
+  "budget_tokens": 40000,
+  "max_output_tokens": 6000,
+  "wall_seconds": 3600,
+  "request_timeout_seconds": 600,
+  "selection": "highest accepted development net excess return versus daily equal weight; ties keep the earlier node",
+  "holdout_rule": "One independent finalizer attempt after development selection; no retuning or replacement after seeing holdout.",
+  "repetitions": 1,
+  "aggregation": "single exploratory repetition; no best-of selection",
+  "failure_policy": "A failed or unknown-usage run remains failed and is not replaced or omitted from the report. Predecessor failed attempts must be disclosed alongside this new protocol.",
+  "prior_failed_runs": [
+    "qwen-etf-dev-20261117-01",
+    "qwen-etf-dev-20261117-02",
+    "qwen-etf-dev-20261117-03",
+    "qwen-etf-dev-20261117-04"
+  ],
+  "revision_reason": "V1 attempts failed before usable model responses. V2 request timeout and wall budget were registered, but its first attempt used a stale key in the agent process and received 401. This v3 keeps V2 model and research settings and starts from the user terminal with the updated key. No holdout was opened.",
+  "holdout_unopened_before_run": true,
+  "prior_exposure": "The 2018-2019 interval was previously opened by the deterministic study and is quarantined. The 2020-01-06 through 2020-04-01 interval was not scored or used for selection before this protocol.",
+  "qwen_comparison_status": "registered_after_credential_environment_failure",
+  "supersedes_protocol": {
+    "path": "config/qwen_etf_comparison_v2.json",
+    "sha256": "21e72afd897373a73aba81cb970a558ead6a5f6b4dd6f464624a7b97981e1f50"
+  }
+}

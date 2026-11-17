@@ -1,0 +1,9 @@
+{
+  "schema": "quant_holdout_attempt/1",
+  "run_id": "qwen-etf-dev-20261117-05",
+  "task_id": "quant-demo",
+  "started_at": "2026-11-17T03:13:29.987Z",
+  "selection_sha256": "55157f404716796f623eaa6a5d0e3954208cd68b58445f577939974c831727fe",
+  "candidate_sha256": "73eeda7c40197136d0984a634fd78cb8bd84712f2b19ad8c72117ed026fd6101",
+  "status": "attempted"
+}
