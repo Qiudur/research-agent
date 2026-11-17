@@ -139,7 +139,8 @@ def _protocol_descriptor(project_root: Path, protocol_path: Path | None,
                         *, mode: str, dataset_manifest: Path | None,
                         boundaries: tuple[date, date, date, date] | None,
                         model_name: str, base_url: str, budget_tokens: int,
-                        max_output_tokens: int, wall_seconds: int, top_k: int,
+                        max_output_tokens: int, wall_seconds: int,
+                        request_timeout_seconds: int, top_k: int,
                         fee_bps: float, slippage_bps: float) -> dict | None:
     """Validate and hash the frozen Qwen comparison protocol before a call."""
     if protocol_path is None:
@@ -169,6 +170,9 @@ def _protocol_descriptor(project_root: Path, protocol_path: Path | None,
     for key, value in expected.items():
         if protocol.get(key) != value:
             raise ValueError(f"Protocol {key} does not match the run arguments")
+    # The original registered protocol predates this field and used 180 seconds.
+    if protocol.get("request_timeout_seconds", 180) != request_timeout_seconds:
+        raise ValueError("Protocol request_timeout_seconds does not match the run arguments")
     if dataset_manifest is None or protocol.get("dataset_manifest") != str(
             dataset_manifest.resolve().relative_to(project_root)):
         raise ValueError("Protocol dataset_manifest does not match the run")
@@ -296,6 +300,7 @@ def run_quant_dev(
     boundaries: tuple[date, date, date, date] | None = None, mode: str = "scripted",
     base_url: str = BASE_URL, model_name: str = "qwen3.5-27b",
     budget_tokens: int = 40000, wall_seconds: int = 900,
+    request_timeout_seconds: int = 180,
     max_output_tokens: int = 6000, top_k: int = 1,
     fee_bps: float = 2.0, slippage_bps: float = 3.0,
     roles: Any | None = None, allow_synthetic_paid_demo: bool = False,
@@ -312,6 +317,8 @@ def run_quant_dev(
         raise ValueError("Budget and wall time must be positive integers")
     if type(max_output_tokens) is not int or max_output_tokens < 1:
         raise ValueError("max_output_tokens must be positive")
+    if type(request_timeout_seconds) is not int or request_timeout_seconds < 1:
+        raise ValueError("request_timeout_seconds must be a positive integer")
     if type(allow_synthetic_paid_demo) is not bool or type(preflight_only) is not bool:
         raise ValueError("Preview and synthetic demo flags must be booleans")
     if dataset_manifest is not None and boundaries is None:
@@ -338,7 +345,8 @@ def run_quant_dev(
         project_root, protocol_path, mode=mode, dataset_manifest=dataset_manifest,
         boundaries=boundaries, model_name=model_name, base_url=base_url,
         budget_tokens=budget_tokens, max_output_tokens=max_output_tokens,
-        wall_seconds=wall_seconds, top_k=top_k, fee_bps=fee_bps,
+        wall_seconds=wall_seconds, request_timeout_seconds=request_timeout_seconds,
+        top_k=top_k, fee_bps=fee_bps,
         slippage_bps=slippage_bps)
     if type(top_k) is not int or not 1 <= top_k <= len(panel.symbols):
         raise ValueError("top_k must be within the fixed universe")
@@ -363,6 +371,7 @@ def run_quant_dev(
             project_root=project_root, run_dir=run_dir, dataset_manifest=dataset_manifest,
             boundaries=boundaries, mode=mode, base_url=base_url, model_name=model_name,
             budget_tokens=budget_tokens, wall_seconds=wall_seconds,
+            request_timeout_seconds=request_timeout_seconds,
             max_output_tokens=max_output_tokens, top_k=top_k, fee_bps=fee_bps,
             slippage_bps=slippage_bps, roles=roles, commit=commit, dirty=dirty,
             expected_dataset_sha256=panel.csv_sha256, protocol=protocol,
@@ -381,6 +390,7 @@ def _execute_quant_dev(
     boundaries: tuple[date, date, date, date] | None = None, mode: str = "scripted",
     base_url: str = BASE_URL, model_name: str = "qwen3.5-27b",
     budget_tokens: int = 40000, wall_seconds: int = 900,
+    request_timeout_seconds: int = 180,
     max_output_tokens: int = 6000, top_k: int = 1,
     fee_bps: float = 2.0, slippage_bps: float = 3.0,
     roles: Any | None = None, commit: str, dirty: bool,
@@ -435,6 +445,7 @@ def _execute_quant_dev(
         "prices": _descriptor(project_root, prices_path),
         "inputs": inputs,
         "model_settings": {"max_output_tokens": max_output_tokens,
+                           "request_timeout_seconds": request_timeout_seconds,
                            "base_url": base_url if mode == "qwen" else None},
         "split": {"train_end": train_end.isoformat(), "dev_start": dev_start.isoformat(),
                   "dev_end": dev_end.isoformat(), "holdout_start": holdout_start.isoformat(),
@@ -474,7 +485,8 @@ def _execute_quant_dev(
             else:
                 from openai import OpenAI
                 client = OpenAI(api_key=os.environ["OPENAI_API_KEY"],
-                                base_url=base_url, timeout=180.0, max_retries=0)
+                                base_url=base_url,
+                                timeout=float(request_timeout_seconds), max_retries=0)
                 roles = RoleAgents(ModelClient(
                     model_name, task_ledger, client=client,
                     max_output_tokens=max_output_tokens,
@@ -491,7 +503,9 @@ def _execute_quant_dev(
                     dataset_manifest=dataset_manifest, boundaries=boundaries,
                     model_name=model_name, base_url=base_url,
                     budget_tokens=budget_tokens, max_output_tokens=max_output_tokens,
-                    wall_seconds=wall_seconds, top_k=top_k, fee_bps=fee_bps,
+                    wall_seconds=wall_seconds,
+                    request_timeout_seconds=request_timeout_seconds,
+                    top_k=top_k, fee_bps=fee_bps,
                     slippage_bps=slippage_bps)
 
         outcome = TaskRunner(
@@ -593,6 +607,7 @@ def main(argv: list[str] | None = None) -> int:
                         help="Frozen Qwen comparison protocol required for market runs")
     parser.add_argument("--budget-tokens", type=int, default=40000)
     parser.add_argument("--wall-seconds", type=int, default=900)
+    parser.add_argument("--request-timeout-seconds", type=int, default=180)
     parser.add_argument("--max-output-tokens", type=int, default=6000)
     parser.add_argument("--top-k", type=int, default=1)
     parser.add_argument("--fee-bps", type=float, default=2.0)
@@ -611,6 +626,7 @@ def main(argv: list[str] | None = None) -> int:
                                mode=args.mode, base_url=args.base_url,
                                budget_tokens=args.budget_tokens,
                                wall_seconds=args.wall_seconds,
+                               request_timeout_seconds=args.request_timeout_seconds,
                                max_output_tokens=args.max_output_tokens,
                                top_k=args.top_k, fee_bps=args.fee_bps,
                                slippage_bps=args.slippage_bps,

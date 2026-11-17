@@ -107,14 +107,51 @@ class QuantDevRunTests(unittest.TestCase):
                 patch("quant_research.run._code_commit", return_value=("b" * 40, False)):
             report_path = run_quant_dev(
                 project_root=self.root, run_dir=self.run_dir, mode="qwen",
-                roles=LedgerFixtureRoles(self.run_dir), allow_synthetic_paid_demo=True)
+                roles=LedgerFixtureRoles(self.run_dir), allow_synthetic_paid_demo=True,
+                request_timeout_seconds=600)
         report = json.loads(report_path.read_text(encoding="utf-8"))
+        manifest = json.loads((self.run_dir / "manifest.json").read_text(encoding="utf-8"))
+        self.assertEqual(manifest["model_settings"]["request_timeout_seconds"], 600)
         self.assertEqual(report["model_calls"], 1)
         self.assertTrue(report["usage_complete"])
         self.assertEqual(report["total_token_buckets"], {
             "input": 80, "cached_input": 20, "output": 40, "reasoning": 10})
         self.assertEqual(report["resource_cost"], 150)
         self.assertNotIn("test-not-a-live-key", report_path.read_text(encoding="utf-8"))
+
+    def test_qwen_protocol_checks_request_timeout_before_a_model_call(self) -> None:
+        supplied = write_demo_dataset(self.root / "provided")
+        panel = load_dataset(supplied)
+        boundaries = (panel.dates[50], panel.dates[55],
+                      panel.dates[95], panel.dates[100])
+        protocol = {
+            "schema": "qwen_etf_comparison_protocol/1",
+            "model": "qwen3.5-27b",
+            "base_url": "https://ai-gateway.theunifiedcare.com/v1",
+            "dataset_manifest": str(supplied.relative_to(self.root)),
+            "dataset_sha256": hashlib.sha256(supplied.read_bytes()).hexdigest(),
+            "train_end": boundaries[0].isoformat(),
+            "dev_start": boundaries[1].isoformat(),
+            "dev_end": boundaries[2].isoformat(),
+            "holdout_start": boundaries[3].isoformat(),
+            "budget_tokens": 40000, "max_output_tokens": 6000,
+            "wall_seconds": 3600, "request_timeout_seconds": 600,
+            "top_k": 1, "fee_bps": 2.0, "slippage_bps": 3.0,
+            "label_horizon": 2, "holdout_unopened_before_run": True,
+        }
+        protocol_path = self.root / "config/qwen_protocol.json"
+        protocol_path.write_text(json.dumps(protocol), encoding="utf-8")
+        kwargs = dict(
+            project_root=self.root, run_dir=self.run_dir,
+            dataset_manifest=supplied, boundaries=boundaries, mode="qwen",
+            protocol_path=protocol_path, wall_seconds=3600,
+            preflight_only=True,
+        )
+        with self.assertRaisesRegex(ValueError, "request_timeout_seconds"):
+            run_quant_dev(**kwargs)
+        preview = run_quant_dev(**kwargs, request_timeout_seconds=600)
+        self.assertFalse(preview["will_call_model"])
+        self.assertFalse(self.run_dir.exists())
 
     def test_user_dataset_is_snapshotted_before_research(self) -> None:
         supplied = write_demo_dataset(self.root / "provided")
