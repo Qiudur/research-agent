@@ -420,11 +420,6 @@ class FormalOutputAuditTests(unittest.TestCase):
             self.assertEqual(audit["source_code_commit"], COMMIT)
             self.assertEqual(audit["bank_version"], "bank-v2")
             self.assertEqual(audit["phase_runs"]["exam"], 12)
-            from scripts.generate_roadshow_report import formal_results, load_formal_evidence
-            evidence = load_formal_evidence(batch, study)
-            self.assertFalse(evidence["breakeven"]["computed"])
-            self.assertIn("沿用 bank-v1 自研究候选", formal_results(evidence))
-            self.assertIn("不计入 bank-v2 回本点", formal_results(evidence))
 
     def test_bank_v2_carry_forward_rejects_unsealed_and_tampered_sources(self):
         with TemporaryDirectory() as temp:

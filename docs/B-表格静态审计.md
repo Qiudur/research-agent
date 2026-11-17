@@ -42,7 +42,7 @@ AutoGluon 统一为 `medium_quality`、180 秒上限；切分种子统一为 202
 
 ## 需要说明的个案
 
-- **Mushroom**：清单的 `excluded` 去掉了 18 个特征，只保留 4 个。特征少导致完全相同的特征向量很多、分组很大，实际切分比例为 64.7 / 17.0 / 18.3，正例率 train 与 dev 相差 2.7 个百分点。这是分组切分的正常结果。B-决策记录已说明它的特征选择受早期 dev 反馈影响，只放练习层，本审计同意。
+- **Mushroom**：清单的 `excluded` 去掉了 18 个特征，只保留 4 个。特征少导致完全相同的特征向量很多、分组很大，实际切分比例为 64.7 / 17.0 / 18.3，正例率 train 与 dev 相差 2.7 个百分点。这是分组切分的正常结果。[历史开发验证记录](legacy-dev-findings.md)已说明它的特征选择受早期 dev 反馈影响，只放练习层，本审计同意。
 - **WDBC**：`excluded` 只去掉了 `sample_id`，属于正常去除编号列。
 - **Bank Marketing**：清单没有 `strategy` 或 `split_method` 字段，`SOURCE.md` 第 20 行写明是“固定的类别分层 60/20/20 随机切分”，没有提到按特征向量分组；但清单 `feature_hash_overlap=0`，本审计也没有发现 train/dev 重复行。
 
@@ -59,7 +59,7 @@ AutoGluon 统一为 `medium_quality`、180 秒上限；切分种子统一为 202
 
 ## 待总指挥决定
 
-1. **弱 gap 题的分层**。B-决策记录以“单次 dev 差异过小”为由，把 Online Shoppers（0.000133）和 Phishing（0.000011）只放在练习层；按同样的理由，考试层的 Bank Marketing（0.004065）和验证层的 WDBC（0.001677）也偏弱。Adult Income（0.001023）在迁移复评中出现过 −2.53 的 holdout 归一化分数，说明这一量级的 gap 会让分数大幅摆动。是否调整分层、或在报告中对这两题加注，需要在冻结 bank-v1 之前定。
+1. **弱 gap 题的分层**。[历史开发验证记录](legacy-dev-findings.md)以“单次 dev 差异过小”为由，把 Online Shoppers（0.000133）和 Phishing（0.000011）只放在练习层；按同样的理由，考试层的 Bank Marketing（0.004065）和验证层的 WDBC（0.001677）也偏弱。Adult Income（0.001023）在迁移复评中出现过 −2.53 的 holdout 归一化分数，说明这一量级的 gap 会让分数大幅摆动。是否调整分层、或在报告中对这两题加注，需要在冻结 bank-v1 之前定。
 2. **清单格式统一**（可选）：两个准备脚本的切分字段名不同，Bank 的清单缺少方法字段。不影响评分，但统一后更便于机器核对。
 3. **基线和上限原始分对 agent 可见**（见下节），是否按接口约定移出 agent 可见的 `task.json`。
 4. **`xlrd` 未声明**（可选）：Default Credit 的准备脚本需要 `xlrd` 读 Excel，`pyproject.toml` 没有列出。只影响重新生成题包，不影响评分与校准。

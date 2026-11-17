@@ -6,7 +6,7 @@
 
 ## English
 
-An auditable workflow for factor research and out-of-sample evaluation. Given daily closing prices with documented provenance, the Agent proposes a limited set of cross-sectional ranking signals, tests them on development data, freezes the selected code, and scores a sealed holdout once. The project tests whether the research process is trustworthy; it does not establish live trading performance or promise returns. Forked from [QZTnb/research-agent](https://github.com/QZTnb/research-agent), it retains the original experiment tree, budgets, ledger, and capability library. The original system documentation is archived in [legacy-project-readme.md](docs/legacy-project-readme.md).
+An auditable workflow for factor research and out-of-sample evaluation. Given daily closing prices with documented provenance, the Agent proposes a limited set of cross-sectional ranking signals, tests them on development data, freezes the selected code, and scores a sealed holdout once. The project tests whether the research process is trustworthy; it does not establish live trading performance or promise returns. Forked from [QZTnb/research-agent](https://github.com/QZTnb/research-agent), it retains the original experiment tree, budgets, ledger, and capability library. See the [upstream architecture and historical research index](docs/legacy-project-readme.md) for the inherited components and earlier studies.
 
 ### Auditable research workflow
 
@@ -142,7 +142,7 @@ Scripted roles verify the Agent workflow; the ETF baseline checks fixed rules on
 
 ## 中文｜量化因子研究与样本外验证
 
-一个可审计的研究工作流：给定有来源声明的日收盘价，Agent 提出有限的截面排序信号，在开发期逐一证伪，冻结入选代码后仅对封存期评分一次。目标是检验研究流程是否可信，**不是自动选股、实盘交易或收益承诺**。本项目从 [QZTnb/research-agent](https://github.com/QZTnb/research-agent) 分叉，保留原有实验树、预算、账本与能力库；原系统说明归档在 [legacy-project-readme.md](docs/legacy-project-readme.md)。
+一个可审计的研究工作流：给定有来源声明的日收盘价，Agent 提出有限的截面排序信号，在开发期逐一证伪，冻结入选代码后仅对封存期评分一次。目标是检验研究流程是否可信，**不是自动选股、实盘交易或收益承诺**。本项目从 [QZTnb/research-agent](https://github.com/QZTnb/research-agent) 分叉，保留原有实验树、预算、账本与能力库；上游组件与早期研究见[上游架构与历史研究索引](docs/legacy-project-readme.md)。
 
 ### 已实现的闭环
 
