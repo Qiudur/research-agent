@@ -12,14 +12,14 @@ This release packages the factor-research workflow, development selection, indep
 
 A fresh remote clone of commit `f57fef8ceec352cebc45f0e1e424a60847adfa2b`, installed in a new virtual environment with Python **3.11.16**, passed **113 core quant tests**, with no failures, errors, or skips. A new synthetic scripted run completed development and its single finalizer evaluation with **zero model calls**. The 267 runtime/configuration/package-definition files matched this release preparation; all **38 Qwen evidence hashes** and **17 fixed-ETF checksums** were verified. See [the reproduction record](reproduction.json) for environment details and checks.
 
-The [macOS CI workflow](https://github.com/Qiudur/research-agent/actions/workflows/quant-regression.yml) runs the core tests and synthetic smoke check on pushes, pull requests, and manual dispatches. Local equivalent checks passed; hosted CI has not yet been verified in this validation record.
+The [macOS CI workflow](https://github.com/Qiudur/research-agent/actions/workflows/quant-regression.yml) runs the core tests and synthetic smoke check on pushes, pull requests, and manual dispatches. The [hosted run for commit `4c4e6c3`](https://github.com/Qiudur/research-agent/actions/runs/44070880173) passed the sandbox check, core tests, and synthetic smoke check; its exact commit and result are recorded in the reproduction record.
 
 ### Reproduce from a fresh clone
 
 Run on macOS with Python 3.11 available:
 
 ```bash
-git clone --branch codex/quant-research-mvp https://github.com/Qiudur/research-agent.git
+git clone --branch v0.1.0 https://github.com/Qiudur/research-agent.git
 cd research-agent
 python3.11 -m venv .venv
 .venv/bin/python -m pip install -e .
@@ -55,14 +55,14 @@ A project-wide code license has not been selected. See [license status](../../..
 
 从远端重新克隆提交 `f57fef8ceec352cebc45f0e1e424a60847adfa2b`，使用 Python **3.11.16** 建立全新虚拟环境后，**113 项核心量化测试**全部通过，没有失败、错误或跳过。新的合成数据脚本运行完成开发及唯一一次 finalizer 评分，**模型调用为零**。267 份运行代码、配置和包定义文件与本次发布准备一致；**38 项 Qwen 证据哈希**及 **17 项固定 ETF 校验和**全部核对通过。环境与检查明细见[复现记录](reproduction.json)。
 
-[macOS CI](https://github.com/Qiudur/research-agent/actions/workflows/quant-regression.yml) 在推送、PR 和手动触发时执行核心测试及合成流程检查。本地等价检查已通过；这份验证记录尚未确认远端 CI 结果。
+[macOS CI](https://github.com/Qiudur/research-agent/actions/workflows/quant-regression.yml) 在推送、PR 和手动触发时执行核心测试及合成流程检查。[提交 `4c4e6c3` 的远端运行](https://github.com/Qiudur/research-agent/actions/runs/44070880173)已通过真实沙箱、核心测试及合成流程检查；复现记录保存了受测提交和结果。
 
 ### 从干净克隆复现
 
 在已安装 Python 3.11 的 macOS 上运行：
 
 ```bash
-git clone --branch codex/quant-research-mvp https://github.com/Qiudur/research-agent.git
+git clone --branch v0.1.0 https://github.com/Qiudur/research-agent.git
 cd research-agent
 python3.11 -m venv .venv
 .venv/bin/python -m pip install -e .

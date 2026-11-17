@@ -50,5 +50,14 @@
     "path_and_sha256_list_digest": "e1c6abf935d573da765b941e01017dbc34254231fc99addc70012082667ba5b2",
     "tested_runtime_matches_release_preparation": true,
     "note": "Python sources, tracked config files and pyproject.toml are byte-identical between the fresh remote clone and this release preparation. Workflow and documentation are separate changes."
+  },
+  "hosted_ci": {
+    "id": 44070880173,
+    "head_sha": "4c4e6c3787e9a2bfdb701a2424fadb4f540ad1ec",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/Qiudur/research-agent/actions/runs/44070880173",
+    "updated_at": "2026-11-17T11:06:30Z",
+    "checked_at_utc": "2026-11-17T11:07:30.274447+00:00"
   }
 }
