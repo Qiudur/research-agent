@@ -1,12 +1,14 @@
 # Quant Research Agent
 
+[![Quant regression](https://github.com/Qiudur/research-agent/actions/workflows/quant-regression.yml/badge.svg?branch=codex%2Fquant-research-mvp)](https://github.com/Qiudur/research-agent/actions/workflows/quant-regression.yml)
+
 [English](#english) · [简体中文](#中文)
 
 <a id="english"></a>
 
 ## English
 
-An auditable workflow for factor research and out-of-sample evaluation. Given daily closing prices with documented provenance, the Agent proposes a limited set of cross-sectional ranking signals, tests them on development data, freezes the selected code, and scores a sealed holdout once. The project tests whether the research process is trustworthy; it does not establish live trading performance or promise returns. Forked from [QZTnb/research-agent](https://github.com/QZTnb/research-agent), it retains the original experiment tree, budgets, ledger, and capability library. See the [upstream architecture and historical research index](docs/legacy-project-readme.md) for the inherited components and earlier studies.
+An auditable workflow for factor research and out-of-sample evaluation. Given daily closing prices with documented provenance, the Agent proposes a limited set of cross-sectional ranking signals, tests them on development data, freezes the selected code, and scores a sealed holdout once. The project tests whether the research process is trustworthy; it does not establish live trading performance or promise returns. The workflow builds on an existing research engine with an experiment tree, budgets, ledger, and capability library. See the [core architecture and historical research index](docs/legacy-project-readme.md) for those components and earlier studies.
 
 ### Auditable research workflow
 
@@ -125,6 +127,8 @@ Both data paths retain their source labels; model calls on synthetic data are no
 
 ### Verification
 
+Supported scoring environment: **macOS, Python 3.11, and `sandbox-exec`**. A fresh remote clone and new virtual environment passed all **113 core quant tests**, followed by synthetic development and one-shot finalization with zero model calls. The [reproduction receipt](docs/releases/v0.1.0/reproduction.json) records the tested commit, environment, and evidence checks. [GitHub Actions](https://github.com/Qiudur/research-agent/actions/workflows/quant-regression.yml) runs these checks on macOS for pushes and pull requests; see its run history for the remote result.
+
 ```bash
 .venv/bin/python -m unittest tests.test_quant_data tests.test_quant_splits \
   tests.test_quant_backtest tests.test_quant_signals tests.test_quant_harness \
@@ -136,13 +140,15 @@ Both data paths retain their source labels; model calls on synthetic data are no
 
 Scripted roles verify the Agent workflow; the ETF baseline checks fixed rules on historical data. The real Qwen experiment is complete, and none of its three executed candidates beat the original signal. It provides auditable negative evidence, without establishing model improvement, stable returns, or cash savings.
 
+[v0.1.0 release notes and clean reproduction](docs/releases/v0.1.0/README.md) · [Code, data, and dependency licensing status](LICENSE_STATUS.md)
+
 ---
 
 <a id="中文"></a>
 
 ## 中文｜量化因子研究与样本外验证
 
-一个可审计的研究工作流：给定有来源声明的日收盘价，Agent 提出有限的截面排序信号，在开发期逐一证伪，冻结入选代码后仅对封存期评分一次。目标是检验研究流程是否可信，**不是自动选股、实盘交易或收益承诺**。本项目从 [QZTnb/research-agent](https://github.com/QZTnb/research-agent) 分叉，保留原有实验树、预算、账本与能力库；上游组件与早期研究见[上游架构与历史研究索引](docs/legacy-project-readme.md)。
+一个可审计的研究工作流：给定有来源声明的日收盘价，Agent 提出有限的截面排序信号，在开发期逐一证伪，冻结入选代码后仅对封存期评分一次。目标是检验研究流程是否可信，**不是自动选股、实盘交易或收益承诺**。研究流程沿用已有研究引擎的实验树、预算、账本与能力库；组件与早期研究见[核心架构与历史研究索引](docs/legacy-project-readme.md)。
 
 ### 已实现的闭环
 
@@ -261,6 +267,8 @@ quant_data_args=(
 
 ### 验证
 
+支持的评分环境为 **macOS、Python 3.11 和 `sandbox-exec`**。从远端全新克隆并创建独立虚拟环境后，**113 项量化核心测试全部通过**，随后完成零模型调用的合成开发及单次封存评分。[复现记录](docs/releases/v0.1.0/reproduction.json) 包含受测提交、环境和证据检查结果。[GitHub Actions](https://github.com/Qiudur/research-agent/actions/workflows/quant-regression.yml) 在推送和拉取请求时于 macOS 执行这些检查，远端结果以运行记录为准。
+
 ```bash
 .venv/bin/python -m unittest tests.test_quant_data tests.test_quant_splits \
   tests.test_quant_backtest tests.test_quant_signals tests.test_quant_harness \
@@ -271,3 +279,5 @@ quant_data_args=(
 ```
 
 脚本角色验证 Agent 工程闭环，ETF 基线案例验证固定规则在历史数据上的表现。真实 Qwen 实验已完成，3 个候选均未超过原始信号；它提供可审计的负结果，不构成模型提升、稳定收益或现金节省的证据。
+
+[v0.1.0 发布说明与干净环境复现](docs/releases/v0.1.0/README.md) · [代码、数据与依赖的许可状态](LICENSE_STATUS.md)

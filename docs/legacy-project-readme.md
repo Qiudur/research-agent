@@ -1,4 +1,4 @@
-# Upstream architecture and historical research index
+# Core architecture and historical research index
 
 [English](#english) · [中文](#中文)
 
@@ -6,7 +6,7 @@
 
 ## English
 
-This project is derived from [QZTnb/research-agent](https://github.com/QZTnb/research-agent). The upstream system supplies the experiment tree, resource budgeting, versioned capability library, task scoring and audit trail used by the current quant research workflow. This page is a curated architecture and research index, rather than a verbatim copy of an earlier README.
+The research engine supplies the experiment tree, resource budgeting, versioned capability library, task scoring and audit trail used by the current quant research workflow. This page collects the core architecture references and earlier studies.
 
 ### Architecture and technical references
 
@@ -40,9 +40,9 @@ The historical `TOKENS` units measure resources, not cash or official competitio
 
 <a id="中文"></a>
 
-## 中文｜上游架构与历史研究索引
+## 中文｜核心架构与历史研究索引
 
-本项目派生自 [QZTnb/research-agent](https://github.com/QZTnb/research-agent)。上游系统提供了当前量化研究流程沿用的实验树、资源预算、版本化能力库、任务评分与审计链。本页是整理后的架构与研究索引，不是旧版 README 的逐字副本。
+研究引擎提供了当前量化研究流程沿用的实验树、资源预算、版本化能力库、任务评分与审计链。本页汇总核心架构说明与早期研究。
 
 ### 架构与技术入口
 

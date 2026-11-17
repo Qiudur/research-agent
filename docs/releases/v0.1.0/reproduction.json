@@ -1,0 +1,54 @@
+{
+  "schema": "quant_release_validation/1",
+  "checked_at_utc": "2026-11-17T10:21:03.918280+00:00",
+  "source": {
+    "repository": "https://github.com/Qiudur/research-agent",
+    "branch": "codex/quant-research-mvp",
+    "tested_commit": "f57fef8ceec352cebc45f0e1e424a60847adfa2b",
+    "fresh_remote_clone": true,
+    "working_tree_clean_after_smoke": true
+  },
+  "environment": {
+    "os": "macOS",
+    "os_version": "26.6.2",
+    "architecture": "arm64",
+    "python": "3.11.16",
+    "fresh_virtual_environment": true,
+    "optional_dependencies_installed": false,
+    "model_credentials_removed": true
+  },
+  "installation": {
+    "command": "python -m pip install --index-url https://pypi.org/simple -e .",
+    "result": "passed",
+    "initial_host_index_attempt": "The host configured a custom package index without the required build dependency. Installation passed using the public PyPI index with host pip configuration disabled."
+  },
+  "core_tests": {
+    "command": "python -m unittest discover -s tests -p 'test_quant*.py' -v",
+    "tests_run": 113,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "result": "passed"
+  },
+  "synthetic_smoke": {
+    "dev_status": "dev_complete",
+    "holdout_status": "scored",
+    "model_calls": 0,
+    "label": "DEVELOPMENT ONLY / SYNTHETIC DATA",
+    "exclusive_attempt_marker_present": true,
+    "dev_report_sha256": "b0255ae0da1bbd3bf4aef87f73705dbbefaafa66280a969d0250ff8807322eaa",
+    "holdout_report_sha256": "951da744454a7cdb70e9d9cd05e776db6cd2de20b7609c920be16531ec13755f",
+    "description": "New synthetic engineering run only; no market holdout or existing experiment was rerun."
+  },
+  "published_evidence": {
+    "qwen_exact_and_generated_hashes_verified": 38,
+    "fixed_etf_checksums_verified": 17,
+    "fixed_etf_html_present": true
+  },
+  "runtime_identity": {
+    "files_compared": 267,
+    "path_and_sha256_list_digest": "e1c6abf935d573da765b941e01017dbc34254231fc99addc70012082667ba5b2",
+    "tested_runtime_matches_release_preparation": true,
+    "note": "Python sources, tracked config files and pyproject.toml are byte-identical between the fresh remote clone and this release preparation. Workflow and documentation are separate changes."
+  }
+}

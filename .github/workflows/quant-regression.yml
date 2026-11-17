@@ -1,0 +1,68 @@
+name: Quant regression
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - "codex/**"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quant-regression-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quant:
+    name: Python 3.11 / macOS sandbox
+    runs-on: macos-latest
+    timeout-minutes: 15
+    env:
+      OPENAI_API_KEY: ""
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.11"
+      - name: Require the real macOS sandbox
+        run: |
+          command -v sandbox-exec
+          sandbox-exec -p '(version 1)(allow default)' /usr/bin/true
+          python -c 'import sys; assert sys.platform == "darwin"'
+      - name: Install the core package in a clean environment
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install --disable-pip-version-check -e .
+      - name: Run all core quant tests without model calls
+        run: .venv/bin/python -m unittest discover -s tests -p 'test_quant*.py' -v
+      - name: Run the key-free synthetic Agent and one-shot finalizer
+        run: |
+          .venv/bin/python -m quant_research.run \
+            --project-root . --mode scripted --run-dir runs/ci-scripted
+          .venv/bin/python -m quant_research.finalize_cli \
+            --run-dir runs/ci-scripted --evaluate-sealed-once
+          .venv/bin/python - <<'PY'
+          import json
+          from pathlib import Path
+
+          run = Path("runs/ci-scripted")
+          dev = json.loads((run / "dev_report.json").read_text())
+          final = json.loads((run / "final/report.json").read_text())
+          assert dev["status"] == "dev_complete"
+          assert dev["model_calls"] == 0 and dev["usage_complete"] is True
+          assert dev["holdout_scored"] is False
+          assert final["status"] == "scored"
+          assert final["mode"] == "scripted" and "SYNTHETIC DATA" in final["label"]
+          assert final["dev_model_usage"]["model_calls"] == 0
+          assert (run / "final/attempt.json").is_file()
+          print("Synthetic development and one-shot evaluation passed with zero model calls.")
+          PY
