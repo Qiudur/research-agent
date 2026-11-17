@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from datetime import date, datetime, timezone
+import hashlib
 import json
 import math
 import os
@@ -134,6 +135,57 @@ def _code_commit(project_root: Path) -> tuple[str, bool]:
     return commit, dirty
 
 
+def _protocol_descriptor(project_root: Path, protocol_path: Path | None,
+                        *, mode: str, dataset_manifest: Path | None,
+                        boundaries: tuple[date, date, date, date] | None,
+                        model_name: str, base_url: str, budget_tokens: int,
+                        max_output_tokens: int, wall_seconds: int, top_k: int,
+                        fee_bps: float, slippage_bps: float) -> dict | None:
+    """Validate and hash the frozen Qwen comparison protocol before a call."""
+    if protocol_path is None:
+        if mode == "qwen" and dataset_manifest is not None:
+            raise ValueError("Qwen market runs require --protocol")
+        return None
+    path = Path(protocol_path).expanduser().resolve(strict=True)
+    if not path.is_file() or not path.is_relative_to(project_root):
+        raise ValueError("Protocol must be a project-local file")
+    raw = path.read_bytes()
+    try:
+        protocol = json.loads(raw)
+    except (UnicodeError, ValueError) as exc:
+        raise ValueError("Protocol is not valid JSON") from exc
+    if not isinstance(protocol, dict) or protocol.get("schema") != "qwen_etf_comparison_protocol/1":
+        raise ValueError("Expected qwen_etf_comparison_protocol/1")
+    if mode != "qwen":
+        return {"path": str(path.relative_to(project_root)),
+                "sha256": hashlib.sha256(raw).hexdigest()}
+    expected = {
+        "model": model_name, "base_url": base_url,
+        "budget_tokens": budget_tokens, "max_output_tokens": max_output_tokens,
+        "wall_seconds": wall_seconds, "top_k": top_k,
+        "fee_bps": fee_bps, "slippage_bps": slippage_bps,
+        "label_horizon": 2,
+    }
+    for key, value in expected.items():
+        if protocol.get(key) != value:
+            raise ValueError(f"Protocol {key} does not match the run arguments")
+    if dataset_manifest is None or protocol.get("dataset_manifest") != str(
+            dataset_manifest.resolve().relative_to(project_root)):
+        raise ValueError("Protocol dataset_manifest does not match the run")
+    if protocol.get("dataset_sha256") != hashlib.sha256(
+            dataset_manifest.read_bytes()).hexdigest():
+        raise ValueError("Protocol dataset SHA-256 does not match the run")
+    if not isinstance(boundaries, tuple) or len(boundaries) != 4:
+        raise ValueError("Protocol validation needs four split dates")
+    for key, value in zip(("train_end", "dev_start", "dev_end", "holdout_start"), boundaries):
+        if protocol.get(key) != value.isoformat():
+            raise ValueError(f"Protocol {key} does not match the run boundaries")
+    if protocol.get("holdout_unopened_before_run") is not True:
+        raise ValueError("Protocol must declare the holdout unopened before the run")
+    return {"path": str(path.relative_to(project_root)),
+            "sha256": hashlib.sha256(raw).hexdigest()}
+
+
 def _usage_summary(events: list[dict]) -> dict:
     calls = [event for event in events if event["kind"] == "llm_call"]
     complete = all(event.get("usage_status") == "reported" for event in calls)
@@ -199,8 +251,9 @@ def _verify_run_inputs(project_root: Path, inputs: dict) -> None:
 class _CheckedRoles:
     """Detect changed prompts and settings before dispatching another model call."""
 
-    def __init__(self, roles: Any, project_root: Path, inputs: dict) -> None:
-        self.roles, self.project_root, self.inputs = roles, project_root, inputs
+    def __init__(self, roles: Any, project_root: Path, inputs: dict,
+                 extra_check: Any | None = None) -> None:
+        self.roles, self.project_root, self.inputs, self.extra_check = roles, project_root, inputs, extra_check
 
     def __getattr__(self, name: str) -> Any:
         method = getattr(self.roles, name)
@@ -208,8 +261,12 @@ class _CheckedRoles:
             return method
         def checked(*args: Any, **kwargs: Any) -> Any:
             _verify_run_inputs(self.project_root, self.inputs)
+            if self.extra_check is not None:
+                self.extra_check()
             result = method(*args, **kwargs)
             _verify_run_inputs(self.project_root, self.inputs)
+            if self.extra_check is not None:
+                self.extra_check()
             return result
         return checked
 
@@ -242,7 +299,7 @@ def run_quant_dev(
     max_output_tokens: int = 6000, top_k: int = 1,
     fee_bps: float = 2.0, slippage_bps: float = 3.0,
     roles: Any | None = None, allow_synthetic_paid_demo: bool = False,
-    preflight_only: bool = False,
+    preflight_only: bool = False, protocol_path: Path | None = None,
 ) -> Path | dict:
     """Validate the data choice, then run dev research or preview without model calls."""
     project_root = Path(project_root).expanduser().resolve(strict=True)
@@ -277,6 +334,12 @@ def run_quant_dev(
     else:
         panel = load_dataset(dataset_manifest)
     boundaries = _split_dates(panel, boundaries)
+    protocol = _protocol_descriptor(
+        project_root, protocol_path, mode=mode, dataset_manifest=dataset_manifest,
+        boundaries=boundaries, model_name=model_name, base_url=base_url,
+        budget_tokens=budget_tokens, max_output_tokens=max_output_tokens,
+        wall_seconds=wall_seconds, top_k=top_k, fee_bps=fee_bps,
+        slippage_bps=slippage_bps)
     if type(top_k) is not int or not 1 <= top_k <= len(panel.symbols):
         raise ValueError("top_k must be within the fixed universe")
     if any(isinstance(value, bool) or not isinstance(value, (int, float))
@@ -302,7 +365,8 @@ def run_quant_dev(
             budget_tokens=budget_tokens, wall_seconds=wall_seconds,
             max_output_tokens=max_output_tokens, top_k=top_k, fee_bps=fee_bps,
             slippage_bps=slippage_bps, roles=roles, commit=commit, dirty=dirty,
-            expected_dataset_sha256=panel.csv_sha256)
+            expected_dataset_sha256=panel.csv_sha256, protocol=protocol,
+            protocol_path=protocol_path)
     except BaseException as exc:
         try:
             _failure_report(run_dir, exc)
@@ -320,7 +384,8 @@ def _execute_quant_dev(
     max_output_tokens: int = 6000, top_k: int = 1,
     fee_bps: float = 2.0, slippage_bps: float = 3.0,
     roles: Any | None = None, commit: str, dirty: bool,
-    expected_dataset_sha256: str,
+    expected_dataset_sha256: str, protocol: dict | None = None,
+    protocol_path: Path | None = None,
 ) -> Path:
     """Run one dev-only experiment and freeze the best dev candidate."""
     config_path = project_root / "config/quant_agent.json"
@@ -376,6 +441,7 @@ def _execute_quant_dev(
                   "label_horizon": 2},
         "execution": {"top_k": top_k, "fee_bps": fee_bps,
                        "slippage_bps": slippage_bps},
+        "protocol": protocol,
         "limits": {"budget_tokens": budget_tokens, "wall_seconds": wall_seconds,
                    "run_seconds": 20, "memory_mb": 512},
         "label": "DEVELOPMENT ONLY / SYNTHETIC DATA" if dataset_manifest is None
@@ -418,9 +484,19 @@ def _execute_quant_dev(
                 ), config, project_root=project_root)
         from evaluation.quote import make_quote_callback
         _verify_run_inputs(project_root, inputs)
+        def protocol_guard() -> None:
+            if protocol is not None and protocol_path is not None:
+                _protocol_descriptor(
+                    project_root, protocol_path, mode=mode,
+                    dataset_manifest=dataset_manifest, boundaries=boundaries,
+                    model_name=model_name, base_url=base_url,
+                    budget_tokens=budget_tokens, max_output_tokens=max_output_tokens,
+                    wall_seconds=wall_seconds, top_k=top_k, fee_bps=fee_bps,
+                    slippage_bps=slippage_bps)
+
         outcome = TaskRunner(
             run_dir=run_dir, task_id=TASK_ID, harness=harness, ledger=task_ledger,
-            roles=_CheckedRoles(roles, project_root, inputs), library=library,
+            roles=_CheckedRoles(roles, project_root, inputs, protocol_guard), library=library,
             baseline_score=baseline, config=config,
             hard_caps=hard_caps, on_initial_plan=make_quote_callback(task_ledger),
         ).run()
@@ -513,6 +589,8 @@ def main(argv: list[str] | None = None) -> int:
         parser.add_argument("--" + name, type=date.fromisoformat)
     parser.add_argument("--run-dir", type=Path)
     parser.add_argument("--base-url", default=BASE_URL)
+    parser.add_argument("--protocol", type=Path,
+                        help="Frozen Qwen comparison protocol required for market runs")
     parser.add_argument("--budget-tokens", type=int, default=40000)
     parser.add_argument("--wall-seconds", type=int, default=900)
     parser.add_argument("--max-output-tokens", type=int, default=6000)
@@ -537,7 +615,8 @@ def main(argv: list[str] | None = None) -> int:
                                top_k=args.top_k, fee_bps=args.fee_bps,
                                slippage_bps=args.slippage_bps,
                                allow_synthetic_paid_demo=args.allow_synthetic_paid_demo,
-                               preflight_only=args.preflight_only)
+                               preflight_only=args.preflight_only,
+                               protocol_path=args.protocol)
     except Exception as exc:
         print(f"quant development run failed: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1

@@ -238,6 +238,11 @@ def _preflight(harness: QuantHarness, selection_path: Path, output_dir: Path,
             or not isinstance(manifest.get("label"), str)
             or not manifest["label"].strip()):
         raise ValueError("Dev manifest lacks an explicit run mode and data label")
+    if manifest.get("mode") == "qwen":
+        protocol = manifest.get("protocol")
+        if (not isinstance(protocol, dict) or set(protocol) != {"path", "sha256"}):
+            raise ValueError("Qwen dev manifest lacks its frozen protocol descriptor")
+        _check_file(root, protocol, protocol["sha256"], "comparison protocol")
     commit = selection["code_commit"]
     if not isinstance(commit, str) or not COMMIT.fullmatch(commit) or manifest.get("code_commit") != commit:
         raise ValueError("Code commit differs from dev selection")
@@ -367,7 +372,8 @@ def finalize_holdout(harness: QuantHarness, selection_path: Path, output_dir: Pa
             "source": source["source"], "license": source["license"],
             "price_basis": source["price_basis"], "universe_policy": source["universe_policy"],
             "agent_config_sha256": selected["agent_config_sha256"],
-            "prices_sha256": selected["prices_sha256"], "code_commit": selected["code_commit"]},
+            "prices_sha256": selected["prices_sha256"], "code_commit": selected["code_commit"],
+            "protocol": manifest.get("protocol")},
         "assumptions": {
             "execution": "signal after t close, trade at t+1 close, realize through t+2 close",
             "fee_bps": harness.fee_bps, "slippage_bps": harness.slippage_bps,
@@ -422,7 +428,12 @@ def finalize_holdout(harness: QuantHarness, selection_path: Path, output_dir: Pa
             "candidate": dict(candidate_result.metrics),
             "original": dict(original_result.metrics),
             "equal_weight": dict(baseline.metrics),
-            "observations": len(candidate_result.return_dates)}
+            "observations": len(candidate_result.return_dates),
+            "daily_evidence": {
+                "candidate": candidate_result.to_dict(),
+                "original": original_result.to_dict(),
+                "equal_weight": baseline.to_dict(),
+            }}
         report["status"] = "scored"
     except Exception as exc:
         # Worker exception text may carry private data, so persist only generic diagnostics.

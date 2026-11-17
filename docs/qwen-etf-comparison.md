@@ -19,6 +19,7 @@
 ```bash
 PYTHON=.venv/bin/python
 $PYTHON -m quant_research.run --project-root . --mode qwen \
+  --protocol config/qwen_etf_comparison.json \
   --dataset-manifest runs/etf-qwen-data-v1/manifest.json \
   --train-end 2014-12-29 --dev-start 2015-01-05 \
   --dev-end 2017-12-29 --holdout-start 2020-01-06 \

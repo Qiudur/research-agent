@@ -11,6 +11,7 @@ import argparse
 from datetime import date
 import hashlib
 import json
+import math
 from pathlib import Path
 import csv
 
@@ -35,22 +36,34 @@ def prepare(source_dir: Path, output_dir: Path, source_manifest: Path) -> Path:
     source = json.loads(source_manifest.read_text(encoding="utf-8"))
     if source.get("schema") != "quant_dataset/1" or source.get("source_snapshot", {}).get("version") != 2:
         raise ValueError("Expected the pinned Kaggle v2 ETF manifest")
+    expected_hashes = {
+        item.get("symbol"): item.get("sha256")
+        for item in source.get("source_snapshot", {}).get("source_files", [])
+        if isinstance(item, dict)
+    }
     prices: dict[str, dict[date, float]] = {}
     source_files = []
     for symbol in SYMBOLS:
         path = source_dir / f"{symbol}.csv"
         raw = path.read_bytes()
+        digest = hashlib.sha256(raw).hexdigest()
+        if expected_hashes.get(symbol) != digest:
+            raise ValueError(f"{symbol}: raw CSV does not match the pinned source hash")
         with path.open(encoding="utf-8-sig", newline="") as handle:
             reader = csv.DictReader(handle)
             expected = ["Date", "Open", "High", "Low", "Close", "Adj Close", "Volume"]
             if reader.fieldnames != expected:
                 raise ValueError(f"{symbol}: unexpected raw CSV columns")
             values: dict[date, float] = {}
+            previous: date | None = None
             for row in reader:
                 day = date.fromisoformat(row["Date"])
+                if previous is not None and day < previous:
+                    raise ValueError(f"{symbol}: raw dates must be increasing")
+                previous = day
                 if START <= day <= END:
                     value = float(row["Adj Close"])
-                    if value <= 0:
+                    if not math.isfinite(value) or value <= 0:
                         raise ValueError(f"{symbol}: adjusted close must be positive")
                     if day in values:
                         raise ValueError(f"{symbol}: duplicate date {day}")
@@ -60,7 +73,7 @@ def prepare(source_dir: Path, output_dir: Path, source_manifest: Path) -> Path:
         prices[symbol] = values
         source_files.append({
             "symbol": symbol, "source_file": f"etfs/{symbol}.csv",
-            "source_sha256": _sha(path), "source_path": f"raw/{symbol}.csv",
+            "source_sha256": digest, "source_path": f"raw/{symbol}.csv",
             "observed_dates": len(values),
         })
 
