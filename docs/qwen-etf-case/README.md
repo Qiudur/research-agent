@@ -1,3 +1,17 @@
+# Qwen ETF experiment
+
+[English](#english) · [中文](#中文)
+
+<a id="english"></a>
+
+[Findings and all results](report.md) · [Original holdout JSON](report.json) · [Evidence and hash index](evidence-index.json)
+
+Qwen found no development candidate that beat the original signal and retained the original five-session momentum rule. The model research produced no improvement over that rule. The successful run made six calls and used 17,791 tokens; total token usage for the four earlier failed attempts is unknown.
+
+---
+
+<a id="中文"></a>
+
 # Qwen ETF 实验
 
 [实验结论与全部结果](report.md) · [原始封存 JSON](report.json) · [证据与哈希索引](evidence-index.json)

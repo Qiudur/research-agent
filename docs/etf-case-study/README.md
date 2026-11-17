@@ -1,3 +1,65 @@
+# Real ETF case study: development selection failed out of sample
+
+[English](#english) · [中文](#中文)
+
+<a id="english"></a>
+
+This study tests whether fixed rules can consistently outperform daily equal weighting across different years. **It used no Qwen or other model calls and does not establish the Agent's quantitative research ability.**
+
+## Results
+
+The preregistered selection rule chose 126-session momentum from seven candidates. Its net excess returns in the three development windows were −0.58, −10.37 and +13.51 percentage points: a worst-window result of −10.37 percentage points and a mean of +0.86 percentage points. All seven candidates had negative excess returns in their worst development window.
+
+After selection was frozen, the holdout covered 501 return observations from 2018-01-04 to 2019-12-31. The figures below are historical returns over the whole interval after fees and slippage.
+
+| Strategy | Net period return | Annualized return | Maximum drawdown | Net excess over equal weight |
+| --- | ---: | ---: | ---: | ---: |
+| Daily equal weight (8 ETFs) | 14.06% | 6.84% | 12.90% | +0.00 pp |
+| Fixed 63-session momentum (Top 2) | 16.25% | 7.87% | 10.73% | +2.19 pp |
+| Development-selected 126-session momentum (Top 2) | -0.49% | -0.25% | 14.92% | -14.56 pp |
+
+The selected rule lagged equal weight by **14.56 percentage points** in the holdout and did not sustain its development performance. The fixed 63-session momentum rule was a preregistered comparator; it did not replace the selected rule after the holdout was viewed. These results do not support a claim that development selection wins consistently. This holdout has been opened; future model comparisons need a new protocol and an unopened final interval.
+
+![Holdout net equity](holdout-net-equity.svg)
+
+![Holdout drawdown](holdout-drawdown.svg)
+
+## Inspect the evidence
+
+- [Full research report, readable on GitHub](report.md): all development windows, negative results, three comparison lines and source declarations.
+- [Static HTML](index.html): download and open locally; charts are inline, with no CDN or model calls.
+- [Original study JSON](study.json): 30 window series containing 15,039 daily records of positions, returns, turnover and equity.
+- [Development selection frozen before holdout](dev_selection.json) and [holdout attempt record](holdout_attempt.json): published byte for byte so the SHA chain can be checked.
+- [Frozen protocol](protocol.json), [dataset manifest](dataset/manifest.json), [reproduction and validation record](reproduction.json), and [file checksums](SHA256SUMS).
+
+Published JSON files are exact copies of the run artifacts. Evidence paths use stable logical labels; actual file paths were used only for local verification during execution. The raw price CSV is not distributed with the repository, so this dataset manifest is an evidence manifest. Loading it directly will fail without the price file; download the data as described below first.
+
+## Reproduce from source
+
+From the repository root, using Python 3.11:
+
+```bash
+python3.11 -m venv .venv
+.venv/bin/python -m pip install -e .
+.venv/bin/python -m quant_research.etf_case
+```
+
+The command downloads the fixed Kaggle v2 historical snapshot and writes a new `runs/etf-case-*/report/` directory. Data downloads require network access but no key. Reuse existing data with `--dataset-manifest runs/etf-case-data-v1/manifest.json`. Each run must use a fresh output directory.
+
+A fresh download changes the acquisition timestamp, so its manifest SHA may differ. Check the source-data and normalized-price hashes against this case. New selection and study files also have different SHAs because their timestamps differ; compare the numerical evidence separately. Verify the published files from this directory with `shasum -a 256 -c SHA256SUMS`.
+
+## Method and limitations
+
+The fixed universe is EEM, EFA, GLD, IEF, IWM, QQQ, SPY and TLT. The years 2008–2011 provide historical feature context; 2012–2017 is divided into three development windows. Selection ranks candidates by worst-window net excess return, then mean net excess return, then candidate ID. The final evaluation scores only the three preregistered holdout lines. Signals are generated after the t close, traded at the t+1 close and realize returns at t+2. Each window starts from cash, with fees of 2 bps and slippage of 3 bps charged on traded value; the equal-weight benchmark also rebalances daily.
+
+The data is a 2020 Yahoo/yfinance adjusted-price snapshot supplied by a Kaggle uploader. A fixed universe of surviving ETFs has survivorship bias, and retrospective adjustments do not provide a point-in-time guarantee. Assumed closing fills and fixed costs do not establish achievable fills, capacity or market impact. The uploader declares CC0, but upstream redistribution rights have not been independently verified, so raw prices remain local. See [data sources](../etf-data-sources.md).
+
+The case records 112 passing quantitative tests. An independent arithmetic check recomputed all returns, drift-adjusted turnover and metrics from the CSV and recorded positions, without rerunning signals, and found agreement. This verifies consistency between the implementation and evidence; it does not prove strategy effectiveness.
+
+---
+
+<a id="中文"></a>
+
 # 真实 ETF 研究案例：开发期选优没有通过样本外验证
 
 这次研究检验固定规则能否在不同年份稳定超过每日等权。**它没有调用 Qwen 或其他模型，也不代表 Agent 的量化能力。**

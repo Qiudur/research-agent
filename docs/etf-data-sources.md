@@ -1,4 +1,49 @@
-# 固定 ETF 历史数据来源
+# Historical ETF data sources｜固定 ETF 历史数据来源
+
+[English](#english) · [中文](#中文)
+
+<a id="english"></a>
+
+## English
+
+The assets and dates for the fixed-rule historical case were fixed before running strategies: SPY, QQQ, IWM, EFA, EEM, TLT, IEF and GLD, from 2008-01-01 through 2019-12-31. These surviving ETFs form a demonstration universe, not a complete point-in-time investable universe; the case does not eliminate survivorship bias.
+
+## Public source and snapshot
+
+Data comes from [Kaggle Stock Market Dataset v2](https://www.kaggle.com/datasets/jacksoncrow/stock-market-dataset/versions/2), uploaded by jacksoncrow. Public metadata lists the last update as 2020-04-02 and daily observations through 2020-04-01. The source description says historical prices were obtained from Yahoo Finance through yfinance: `Close` is split-adjusted, while `Adj Close` is adjusted for dividends and splits.
+
+The project uses `Adj Close`, retaining the precision of every original row and emitting the engine's `date,symbol,close` format. These are adjusted prices in a 2020 snapshot, not corporate-action data reconstructed as of each historical date. They do not establish full point-in-time data guarantees. They support a research-workflow demonstration and evaluation of fixed candidates, not evidence of executable trading performance.
+
+Downloading requires no API key, login or payment. It uses the public metadata API and the fixed-version single-file GET endpoint, for example:
+
+```text
+https://www.kaggle.com/api/v1/datasets/view/jacksoncrow/stock-market-dataset
+https://www.kaggle.com/api/v1/datasets/download/jacksoncrow/stock-market-dataset/etfs%2FSPY.csv?datasetVersionNumber=2
+```
+
+HEAD and GET may behave differently on this service; the downloader uses GET. Each response is limited to 5 MB, with a 30-second timeout per request and up to three attempts for transient errors only. Changes to the remote interface cause an error, never a fallback to synthetic data. The downloader checks that public metadata still identifies v2; if the uploader changes the current version, it requires a source review instead of silently accepting the change.
+
+## Local reproduction
+
+Run from the repository root:
+
+```bash
+python -m quant_research.etf_data --output-dir runs/etf-case-data-v1
+```
+
+The output directory must not already exist, so earlier research evidence cannot be overwritten. On success, the command returns `runs/etf-case-data-v1/manifest.json`, which can be passed directly to `quant_research.data.load_dataset()`. It records the fixed assets, requested and actual date windows, row counts, snapshot version, SHA-256 of metadata and every source CSV, and SHA-256 of the normalized CSV. Raw responses remain in `raw/` for local checks.
+
+Only dates observed for all eight assets within the window are retained. There is no forward fill, backward fill or interpolation. The manifest records dates missing for each asset, dates removed by the intersection and the resulting dropped observations per asset. This check uses dates present in the source, without an independent exchange-calendar check: a date missing from every source file cannot be detected by intersection. Duplicate dates, incorrect columns, non-positive or non-finite adjusted prices fail immediately. A failed directory may retain downloaded source material, but no loadable success manifest is written; choose a new directory for a retry.
+
+## Rights and redistribution
+
+The Kaggle uploader declares **CC0: Public Domain**. This is the uploader's declaration only. The project has not independently verified upstream Yahoo Finance rights or redistribution permission, so the declaration does not establish that permission has been verified. Raw and normalized market CSV files remain in the Git-ignored local `runs/` directory and are not redistributed in the repository. The repository publishes download code, source links, data hashes and derived strategy-research results, so users can reproduce the case after checking the applicable data terms themselves.
+
+---
+
+<a id="中文"></a>
+
+## 中文
 
 真实案例的标的与时间窗口在运行策略前固定：SPY、QQQ、IWM、EFA、EEM、TLT、IEF、GLD，2008-01-01 至 2019-12-31。这是一组用于演示的存续 ETF，不代表历史时点可投资全集，也不能声称消除了幸存者偏差。
 

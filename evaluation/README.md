@@ -1,3 +1,75 @@
+[English](#english) · [中文](#中文)
+
+<a id="english"></a>
+
+# Evaluation module (C track)
+
+## Internal research with a chosen token budget
+
+When a task has no official cash budget, authorized internal research can use an isolated copy of the frozen task bank: select a model that can be deployed locally, a token budget per task, and a four-bucket metering table (`currency=TOKENS`, `test_only=false`). Under this protocol, `budget.money` is measured in token pricing units, not cash; `TOKENS` is a metering label, not an official competition result. Formal internal research requires `unit_tokens=1` and all four bucket rates equal to 1; otherwise the preflight, batch and self-research entry points reject it. Only then is recorded consumption the sum of ordinary input, cached input, visible output and reasoning output. Retain the existing task-bank freeze, code freeze, one-shot validation/exam rules and audit gates. A `test_only=true` development pilot does not qualify as formal internal research, and the original `tasks/bank.json` and `config/prices.json` must not be overwritten. Reports and dashboards identify internal research and state that its units are neither cash nor official scores.
+
+## Formal operation commands
+
+First provide the actual model name, a complete non-TEST price table in `config/prices.json`, and a positive budget for every task; freeze the task bank and commit the code. Install the project's `llm`, `speedup` and `tabular` dependencies, and set `OPENAI_API_KEY` on a machine with macOS `sandbox-exec`. These commands accept formal inputs only, with no fake TEST-data option; use a fresh directory name each time:
+
+```bash
+export MODEL='actual-model-name'
+export CODE_COMMIT="$(git rev-parse HEAD)"
+python3 -m evaluation.cli auto-research --model "$MODEL" --prices config/prices.json --code-commit "$CODE_COMMIT" --study-dir batches/auto-v1 --rounds 3
+export TUNED_CONFIG="$(python3 -c 'import json; from pathlib import Path; from evaluation.self_research import verify_auto_selected; print(verify_auto_selected(json.loads(Path("batches/auto-v1/auto_self_research_report.json").read_text())))')"
+python3 -m evaluation.cli preflight --model "$MODEL" --prices config/prices.json --code-commit "$CODE_COMMIT" --tuned-config "$TUNED_CONFIG" --exam
+python3 -m evaluation.cli batch --model "$MODEL" --prices config/prices.json --code-commit "$CODE_COMMIT" --tuned-config "$TUNED_CONFIG" --batch-dir batches/formal-v1 --exam
+python3 -m evaluation.cli figures --batch-dir batches/formal-v1 --auto-study-dir batches/auto-v1 --output batches/formal-v1/study.html
+```
+
+For practice and a single validation attempt only, omit `--exam` from the first batch command. This entry point does not open another batch to repeat validation and add an exam after the validation marker has been consumed. Preflight does not modify files: it returns exit code 1 and `blockers` when prerequisites are missing, or 2 for execution errors. Without a real model, prices, budgets or frozen task bank, stop at preflight. TEST-only smoke checks inject test roles and prices through the Python API; the formal CLI cannot launch them.
+
+## Self-research on practice tasks
+
+`evaluation.self_research.evaluate_candidates` accepts named `agent/1` configurations, each of which may reference its own prompt files; a comparison of multiple candidates must include the `default` control. Each candidate runs independently three times on the practice partition in fixed task order. The result includes all audited `run_report/1` records, costs per repetition, mean score, mean spending, score-to-spending ratio and the selected candidate. Each candidate configuration and prompt file has a SHA-256 record; `verify_selected` rechecks the hashes before validation admission. This entry point opens practice packages only, never validation or exam tasks; critical price, bank and hard-cap files are checked before and after each repetition.
+
+`evaluation.self_research.auto_evaluate_candidates` starts from `default` and automatically proposes up to eight rounds of candidates. Each model response may contain only bounded `agent/1` settings and short strategy appendices for the four roles; the original prompts remain unchanged prefixes. Proposal calls use `ModelClient`. A separate `proposal_ledger/1` records the four token buckets, price-table SHA, source-prompt SHA, response status and any reported usage from failed calls. Candidate ranking includes that candidate's proposal cost; total research cost also includes rejected candidates and failed calls. Output uses `auto_self_research/1`: `selection` identifies the best **generated** candidate, while `overall_best_on_practice` also records the overall winner including `default`. Even if `default` scores better in practice, a generated candidate must pass validation admission before it can enter the exam. If there is no valid generated candidate, `selection=null` and the workflow stops at practice. Use `verify_auto_selected` to check the selected version. Each call's `max_output_tokens` must be between 128 and 4096.
+
+Before any calls, new studies write `paired-scenario-quality-v1` into `auto_plan.json` as `selection_policy`. Pair each practice task with `default` on the same task and repetition: tabular tasks use raw holdout AUC, while speedup tasks use holdout scores clipped to [0,1]. Average the three paired differences per task, then average within each scenario. Selection first compares the worse of the two scenario improvements, then the mean improvement across both scenarios, then audited total research cost. The existing `mean_score` and `score_per_currency` remain diagnostic fields and no longer select winners in new studies. Independent audits use the old policy for historical reports without `selection_policy`; historical conclusions are not rewritten.
+
+Every model call has `usage_status=reported` or `unknown`. A response without complete token usage is a failure even if it contains text; unknown usage is not zero cost. Once usage is unknown, the current task immediately stops further model requests and does not retry that call. A completed run containing unknown usage has both `cost_complete=false` and `exact_token_accounting=false` in its run report and is ineligible for self-research selection. On an interrupted failure, inner `self_research_report.json` and outer `auto_self_research_report.json` preserve `status=partial`, completed runs, failures, a known-cost lower bound and sequence numbers for unknown usage, with `selection=null`. The original exception is still raised; partial reports cannot admit a candidate to validation or the exam.
+
+Automatic research has no overall monetary cap, but each inner task still has a positive budget and a 90% hard gate; it must not be described as having unbudgeted inner tasks. Formal self-research requires real prices, API credentials and a frozen bank. TEST-only runs use a development manifest and TEST prices and establish only that the mechanism works. The selected configuration must still pass the batch workflow's single validation admission before entering a formal exam.
+
+## Batch orchestration across three repetitions
+
+`evaluation.batch.execute_batch` accepts `project_root`, an exclusive `batch_dir`, B's harness, per-task `baseline_solutions`, per-configuration `agent_configs`, `prices_path`, `model`, `code_commit`, and optional `run_validation`, `run_exam` and `test_only_budget`. It returns `batch_report/1`; `reports` are grouped by `practice`, `validation` and `exam`. Each item is a `run_report/1` verified against the ledger, experiment tree and holdout, ready for the figures module. Each run also saves `report.json`; the batch directory saves `plan.json` and `batch_report.json`.
+
+Each configuration runs repetitions 1–3, starting from an empty library and practicing in bank order each time. The practice libraries of `naive/default` do not enter the exam, preserving the empty-library controls. The `default_lib/tuned_lib` libraries are separately copied into frozen validation and exam snapshots. Validation first compares `default_lib` with `tuned_lib`; a lower score or no reduction in mean cost excludes `tuned_lib` from the exam. Formal validation and exam each use a global one-shot attempt marker for the same bank version; failures are not automatically rerun.
+
+TEST-only mode permits scripted roles and temporary budgets, but the underlying manifest must have `phase=dev`. A batch report's `logical_phase` describes workflow position only, not a formal validation or exam result. Formal mode rejects TEST prices, scripted roles, unfrozen or incomplete banks, missing budgets and missing API credentials. A formal exam also requires four configurations with distinguishable settings. Each formal repetition checks that Git HEAD equals `code_commit` and that the checkout is clean. Store outputs in ignored `batches/` or `runs/`. This entry point does not perform self-research's uncapped exploration with formal prices.
+
+Figure generation reads exam reports from the same batch's `batch_report`, re-audits all six validation runs and recalculates admission. Admission yields four configurations × three repetitions; rejection yields the other three configurations × three repetitions, explicitly states that the tuned version did not enter the exam and does not calculate its break-even point. The command is:
+
+```bash
+python3 -m evaluation.figures --batch-dir batches/<batch> --auto-study-dir batches/<self-study> --output batches/<batch>/study.html
+```
+
+`auto-study-dir` re-audits every practice `run_report` and the `proposal_ledger`, verifies that the selected self-research configuration matches the tuned validation/exam manifests in path and hash, and includes failed proposal costs in break-even calculations. TEST development results carry a prominent watermark and cannot be presented as formal exam results.
+
+`ledger.py` implements `ledger/1`: one append-only ledger per task or run, with four disjoint token buckets: `input`, `cached_input`, `output` and `reasoning`. A missing price table or mismatched hash raises an error.
+
+`evaluation.manifest.create_manifest` seals the tasks, configuration, model, prices, library version and hard cap before a run starts. `evaluation.quote.make_quote_callback` hooks into A's `TaskRunner.on_initial_plan` and writes a `quote` before the first experiment; where historical predicted/actual pairs exist, it corrects by median error and records the basis. Batch history uses only complete audited reports from earlier tasks in the same run and scenario, avoiding mixtures across configurations or repetitions. The first task has no history and retains its uncalibrated original quote.
+
+`evaluation.orchestrate.execute_task` is the single-task A+B+C entry point: B supplies the development baseline and scoring, A runs the main loop, and C receives the quote, one-shot holdout, `task_end`, sealed replay and cost reconciliation. Holdout runs only within the brief `RA_EVAL=1` window when C calls B; candidate processes do not inherit the variable. `finish_run` writes `run_end` and `ended_ts` only when every task has completed exactly once.
+
+`evaluation.report` extracts task/run reports with sequence-numbered evidence from the ledger, experiment tree and holdout files. `evaluation.compare.compare_configurations` implements the original three-repetition criterion: each configuration has repetitions 1, 2 and 3, all three differences point in the same direction, and the mean gap exceeds within-configuration variation before it reports `better`; otherwise it reports `no_clear_difference`.
+
+`evaluation.finalize.finish_task` evaluates a private copy of the best node's `solution.py` (`holdout_candidate/<node>/`) on the holdout exactly once. Before and after scoring, it verifies that the original file still exists and its SHA-256 matches the sealed record. Scorer exceptions, missing or changed files, or invalid responses from B produce `holdout_score.json` with `score: null` and `task_end.holdout_failed: true`, without crashing the run; the one-shot marker remains and no retry occurs. The baseline (`n0000`) receives a separate reference score on the same holdout in `baseline_holdout.json`; `task_end` includes `baseline_holdout_score`, `baseline_holdout_raw` and `holdout_raw_lift`. Task reports from `evaluation.report` include `holdout_failed`, `holdout_raw_lift`, `budget_violation` and `budget_excess`; run reports aggregate `holdout_failures` and `budget_violations`. In formal token mode, exceeding a task budget is recorded as a violation; inconsistent ledger units or an invalid budget cause rejection. `evaluation.comparable.comparable_reports` excludes holdout-failed tasks from all runs in the same comparison group and lists the exclusions. `admit_complete` returns a claim of `incomplete` for missing runs (the comparison logic in `compare.py` is unchanged). `execute_batch` isolates individual run failures in `failed_runs/skipped_runs` within `batch_report.json` while other runs continue; it always writes a final batch report with `status: complete|partial`.
+
+`evaluation.admission.admit_configuration` is the validation admission gate: a candidate must score at least as well as the default in each of three paired runs and have lower mean cost to return `admitted`. It is separate from score-only `compare_configurations`, avoiding admission of a higher-scoring but more expensive configuration as a replacement.
+
+Local `tests/fixtures/prices_test_only.json` and `test_only_budget` are only for integration checks without API credentials. Their currency is `TEST`, and manifests permit only `dev`. The root `config/prices.json` remains unfilled and cannot support formal runs. Formal exams require C to provide real prices, the model and budgets, and freeze the library.
+
+---
+
+<a id="中文"></a>
+
 # C 线评估模块
 
 ## 自选 token 预算的内部研究口径

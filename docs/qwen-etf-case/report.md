@@ -1,3 +1,90 @@
+# Qwen ETF experiment: no candidate improved on the original signal
+
+[English](#english) · [中文](#中文)
+
+<a id="english"></a>
+
+Across two planning rounds, Qwen proposed four directions and executed and scored three candidates. All three underperformed the original five-session momentum rule. The Agent then chose to stop and retained the original signal, `n0000`. The fourth direction, scaling five-session momentum by ten-session volatility, was not executed and is not counted as a tested result. [Planning and stopping decisions](research-decisions.json) preserve that distinction. **This experiment provides no evidence that Qwen improved the strategy.**
+
+The original signal returned +6.07% net in the holdout, versus -12.47% for daily equal weighting, a difference of +18.54 percentage points. The Agent-selected signal and the original signal have identical daily evidence, so the improvement over the original is **0.00 percentage points**. This performance belongs to the original rule and cannot be attributed to a model-generated strategy improvement.
+
+## Frozen protocol and scope
+
+- Run: `qwen-etf-dev-20261117-05`; development status: `dev_complete`; holdout status: `scored`.
+- Protocol: [v3 snapshot](protocols/qwen_etf_comparison_v3.json), SHA-256: `62219b3c3ac0aa7130930e2aa2d814187430e54a94032c167beeef5d5b2caf10`.
+- Execution code commit: `e4dff91ae7226543e2e61c04df98b85b1ee9e675`; model: `qwen3.5-27b`.
+- Fixed ETFs: EEM, EFA, GLD, IEF, IWM, QQQ, SPY and TLT. Top 2, equally weighted at 50% each. The comparator holds all eight at 12.5% each, rebalanced daily.
+- Training data ends on 2014-12-29; development is 2015-01-05–2017-12-29 (754 sessions); holdout is 2020-01-06–2020-04-01 (61 sessions).
+- The 2018–2019 interval had already been exposed in the fixed-grid study and was quarantined from this selection and holdout evaluation.
+- Signals are generated after the t close, traded at the t+1 close and realize returns at t+2. One-way fees are 2 bps and slippage is 3 bps, including initial entry costs.
+- Budget: 40,000 TOKENS; maximum output per call: 6,000 tokens; wall-clock limit: 3,600 seconds; request timeout: 600 seconds; no automatic retry of an individual request.
+- The v1 wall-clock/request limits were 900/180 seconds; v2 raised them to 3,600/600 seconds. V3 retained those settings and started from the user's terminal with updated credentials. There is one completed development repetition; all four earlier failures are retained and reported separately.
+- The dataset manifest and price CSV have SHA-256 values `85c27ca02f0df99fcd4759b13d7094189afa803b7997616cafe22e9c83b101a7` and `38f1025dfa0197c05fb8e631d1ac191fed831f5f6c3135ad2403e75983e069d5`, respectively. They identify different files.
+
+## All executed development results
+
+The development score is the net period return minus the daily equal-weight net period return; higher is better. The original rule also lagged equal weighting, but remained the highest-scoring accepted node under the frozen selection rule.
+
+| Node | Hypothesis | Status | Net period return | Excess over equal weight (percentage points) |
+| --- | --- | --- | ---: | ---: |
+| n0000 | Baseline | accepted | +4.20% | -22.29 |
+| n0001 | Extend momentum lookback window from 5 to 20 trading sessions. | rejected | +0.25% | -26.24 |
+| n0002 | Invert baseline signal to implement short-term reversal strategy. | rejected | +2.16% | -24.33 |
+| n0003 | Implement cross-sectional ranking of 5-day momentum across all symbols. | rejected | -10.82% | -37.32 |
+
+[Development terminal report](dev_report.json) · [Complete experiment tree](tree.jsonl) · [Frozen selection](selection.json) · [All node code and scores](evidence-index.json)
+
+## The single holdout evaluation
+
+| Strategy | Net period return | Maximum drawdown |
+| --- | ---: | ---: |
+| Agent-selected: original five-session momentum | +6.07% | 6.72% |
+| Original five-session momentum | +6.07% | 6.72% |
+| Daily equal weight | -12.47% | 20.96% |
+
+Each of the three holdout lines contains 61 observations of dates, positions, returns after costs and turnover, plus 62 equity values including the initial value. The first two lines have identical code and complete daily evidence. The [original holdout report](report.json) and [single-attempt marker](holdout-attempt.json) are preserved byte for byte. The candidate was not changed or scored again after evaluation.
+
+## Model calls and resources
+
+| Order | Role / purpose | Input | Cached input | Output | Reasoning | Total tokens | Seconds |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | planner / plan | 821 | 0 | 416 | 4,661 | 5,898 | 523.7 |
+| 2 | executor / code | 757 | 0 | 139 | 565 | 1,461 | 98.8 |
+| 3 | executor / code | 741 | 0 | 119 | 381 | 1,241 | 45.8 |
+| 4 | planner / plan | 961 | 0 | 391 | 4,451 | 5,803 | 366.2 |
+| 5 | executor / code | 734 | 0 | 182 | 826 | 1,742 | 126.3 |
+| 6 | planner / review | 760 | 0 | 112 | 774 | 1,646 | 57.7 |
+| Total | 6 calls, all successful with complete usage | 4,774 | 0 | 1,359 | 11,658 | 17,791 | — |
+
+The four token buckets are disjoint: reasoning tokens are not counted again as output. TOKENS measure resources; cash cost is unknown. The 17,791 tokens belong only to this successful development run and are not the total cost of all attempts, including earlier failures. [Per-call ledger](task-ledger.jsonl)
+
+## All earlier failures
+
+| Run | Verifiable failure class | Terminal status | Total tokens | Holdout scored |
+| --- | --- | --- | --- | --- |
+| qwen-etf-dev-20261117-01 | http_401 | failed | Unknown | No |
+| qwen-etf-dev-20261117-02 | http_401 | failed | Unknown | No |
+| qwen-etf-dev-20261117-03 | request_timeout_180_seconds | failed | Unknown | No |
+| qwen-etf-dev-20261117-04 | http_401 | failed | Unknown | No |
+
+None of the four failures returned trustworthy usage, so their total tokens remain unknown and cannot be treated as zero. Reporting only the successful run would omit these attempts. The `-04` attempt received 401 because the agent process still had old environment credentials; `-05` started from the same terminal in which the user had updated the credentials. The [failure summary and local ledger hashes](prior-attempts.json) retain each failure class, elapsed time, usage status and failure report.
+
+## Evidence and checks
+
+[evidence-index.json](evidence-index.json) maps original run paths to published-copy paths and SHA-256 values. The development report, selection, ledgers, tree, node code and scores, configuration, prompts and protocol snapshots can all be checked by hash. Report and source-code artifacts are exact copies; original `runs/` paths refer to local execution directories.
+
+Before the holdout was scored, admission checks verified successful development completion, complete usage, the highest accepted node, matching input and frozen-artifact hashes, and the absence of an earlier holdout attempt. After scoring, an independent check verified daily compounded returns, 5 bps costs, position turnover and summary metrics for all three lines; the arithmetic agreed. The data provenance manifest records sources and price hashes. Raw and normalized prices and raw model responses remain local and are excluded from the publication bundle. The bundle supports evidence review; rerunning the model may produce different candidates, and an already exposed interval cannot become unseen again.
+
+## Interpretation limits
+
+This is one exploratory development run followed by a single 61-session historical holdout observation. The interval includes the sharp market moves of early 2020 and cannot establish long-term stability, live execution or capacity; short-period annualized figures are not emphasized. The fixed surviving-ETF universe, retrospective price adjustments, closing-price fills and constant trading costs also limit extrapolation. See [data sources and rights](../etf-data-sources.md).
+
+The supported finding is that the audit trail completed real model calls and a single holdout evaluation while preserving the negative result: the model research did not improve the original signal.
+
+---
+
+<a id="中文"></a>
+
 # Qwen ETF 实验：未找到优于原始信号的候选
 
 Qwen 在两轮规划中提出四个方向，执行并评分三个候选，均未超过原始 5 日动量，随后主动停止，最终保留 `n0000` 原始信号。第四个“以 10 日波动率缩放 5 日动量”方向没有执行，不计入已测试结果。[规划与停止决策](research-decisions.json) 保留了这些区别。**本次没有证据表明 Qwen 改进了策略。**

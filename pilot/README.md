@@ -1,3 +1,41 @@
+[English](#english) · [中文](#中文)
+
+<a id="english"></a>
+
+# First real timing experiment
+
+This directory first checks whether A can pass a code-speedup candidate to real correctness checks and a timer. A subagent wrote the candidate after seeing only `task.json`, `original.py` and `profile.json`; A's `TaskRunner` invokes it through fixed role responses. There are no live `ModelClient` calls or real token costs here.
+
+Run:
+
+```bash
+python3 -m pilot.run --size 2500 --repetitions 7
+```
+
+Recheck an existing run with new seeds:
+
+```bash
+python3 -m pilot.confirm --run-dir runs/<pilot_run_id> --size 2500 --repetitions 7
+```
+
+The input contains 2,500 two-dimensional points. The original implementation and candidate are timed alternately, with seven repetitions each and the median reported. Checks cover empty input, a single point, duplicates, negative coordinates and new random inputs. The hidden reference is an independently written symmetric double loop originally intended for normalization. The candidate is faster than that reference, so conclusions use only the **raw speedup ratio** of the candidate against the original; the normalized score is not treated as an attainable upper bound.
+
+The `money=1.0` setting in this directory's `task.json` and the fixed role predictions are local control parameters for the existing A scheduler, not real prices or budgets. The scorer runs candidates in a subprocess, but this pilot does not yet have a production-grade file/network sandbox, anti-cheating checks or task-bank isolation. It demonstrates real computational speedup and integration with A's main loop, not generalization across tasks, reduced model cost or formal competition performance.
+
+The first run's individual timings, random seeds and source SHA-256 are archived in [results/first-run.json](results/first-run.json). Its full experiment tree, ledger and replay remain in the local, Git-ignored `runs/pilot-20261113-154027-6770/` directory.
+
+To check the experience loop across runs:
+
+```bash
+python3 -m pilot.evolution --size 1500 --repetitions 5
+```
+
+The first run's summarizer writes an experience from an accepted node. The second run's planner must retrieve that experience before it proposes a candidate, and cites it. After measured scoring, the library updates usage count, win rate and credibility. Both runs use scripted roles and the same candidate code. See the [integration report](自进化联调报告.md); this does not establish autonomous model learning or a performance improvement caused by experience.
+
+---
+
+<a id="中文"></a>
+
 # 第一次真实计时试验
 
 本目录只用于先验证 A 能否把一个代码提速候选交给真实的正确性检查和计时器。候选代码由一个子 agent 在只看到 task.json、original.py 与 profile.json 的情况下编写；A 的 TaskRunner 通过固定角色响应调用它。这里没有 live ModelClient 调用，也没有真实 token 成本。

@@ -221,13 +221,13 @@
     },
     {
       "path": "report.md",
-      "sha256": "241a6c9c197b936ed2466cbd68cec160fe10244edbb324ed7576eb03c9f1ffe3",
-      "bytes": 6690
+      "sha256": "ea6c5a76a11291eae5bd78ef7d43908b94d8aefa6d34c450887c8b1386300336",
+      "bytes": 14827
     },
     {
       "path": "README.md",
-      "sha256": "fe35532818c09cd46d3facd9a79cca81de9f485a1089953be5817a05eebb0256",
-      "bytes": 363
+      "sha256": "caf0cb81f9786e66aad4d086b6154a316fffa51102fa5a4f3ace254a0f2643b4",
+      "bytes": 910
     }
   ],
   "raw_prices_published": false,

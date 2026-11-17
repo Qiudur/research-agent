@@ -1,4 +1,81 @@
-# Qwen ETF 对照实验
+# Qwen ETF comparison｜Qwen ETF 对照实验
+
+[English](#english) · [中文](#中文)
+
+<a id="english"></a>
+
+## English
+
+This Qwen-only comparison is separate from the fixed-grid case. It fixes `qwen3.5-27b`, the repository gateway, eight ETFs, Top-2 allocation, 2 bps fees and 3 bps slippage. Qwen proposes and revises signals only on development data; an independent finalizer scores the sealed interval once after development ends.
+
+The fixed-grid case already exposed 2018–2019, so that interval is quarantined here. This experiment's sealed interval was 2020-01-06 through 2020-04-01, covering 61 common trading days. It supports only a short exploratory out-of-sample observation, not a claim of stable or tradable performance.
+
+## Results
+
+`runs/qwen-etf-dev-20261117-05` completed development, and its sole sealed evaluation finished with status `scored`. All three candidates actually executed and scored by Qwen were rejected; the highest accepted node remained `n0000`, the original five-session momentum signal. The selected and original signals both returned **+6.07%** net with **6.72%** maximum drawdown. Daily equal weight returned **−12.47%** net with **20.96%** maximum drawdown. Excess return over equal weight was **18.54 percentage points**, but improvement over the original signal was **0**: this experiment provides no evidence that Qwen found a better signal.
+
+The successful development run recorded six model calls, with four disjoint token buckets: input **4,774**, cached_input **0**, output **1,359** and reasoning **11,658**, totaling **17,791**. This excludes unknown usage from earlier failed calls; it is neither the cost of all attempts nor a cash expense.
+
+[Results and negative results](qwen-etf-case/report.md) · [Evidence index](qwen-etf-case/evidence-index.json)
+
+## Frozen inputs
+
+- Current protocol: [config/qwen_etf_comparison_v3.json](../config/qwen_etf_comparison_v3.json), ID `qwen-etf-comparison-v3-shell-credential`; original [v1](../config/qwen_etf_comparison.json) and [v2](../config/qwen_etf_comparison_v2.json) remain available.
+- Dataset manifest: `runs/etf-qwen-data-v1/manifest.json`, extending the fixed Kaggle v2 source snapshot through 2020-04-01. Price CSV files remain in the ignored local `runs/` directory.
+- Snapshot provenance, adjusted-price semantics and rights limitations follow the [data-source notes](etf-data-sources.md).
+- Run budget: 40,000 TOKENS, maximum output 6,000 tokens, wall-clock limit 3,600 seconds and per-request timeout 600 seconds. TOKENS measures resources, not cash prices.
+- Fixed comparisons are daily equal weight and the original five-session momentum in the task package. The sealed report records the Qwen-selected signal, original momentum and equal weight.
+
+## Earlier failures and protocol revisions
+
+| Run | Protocol | Terminal failure | Token usage |
+| --- | --- | --- | --- |
+| `qwen-etf-dev-20261117-01` | v1 | HTTP 401 authentication failure | Unknown |
+| `qwen-etf-dev-20261117-02` | v1 | HTTP 401 authentication failure | Unknown |
+| `qwen-etf-dev-20261117-03` | v1 | Planning request reached the 180-second timeout | Unknown |
+| `qwen-etf-dev-20261117-04` | v2 | Tool process used stale environment credentials; HTTP 401 | Unknown |
+
+These failed calls returned no trustworthy usage and were recorded as `unknown_usage`, not zero consumption. None produced a selection record or opened the sealed period. Before seeing sealed results, v2 increased the request timeout from 180 to 600 seconds and the wall-clock limit from 900 to 3,600 seconds. V3 kept those parameters and started from the user's terminal with updated credentials. The successful `-05` and four failures are reported separately; they are not five valid repetitions from which a winner was selected.
+
+## Preflight and execution
+
+The following preserves this experiment's v3 parameters. The 2020 interval has now been scored; replaying these parameters cannot create an unseen out-of-sample experiment. A new study needs another preregistered interval that has not yet been opened.
+
+Preflight does not access the network, read the API key, create a run directory or call a model:
+
+```bash
+PYTHON=.venv/bin/python
+$PYTHON -m quant_research.run --project-root . --mode qwen \
+  --protocol config/qwen_etf_comparison_v3.json \
+  --dataset-manifest runs/etf-qwen-data-v1/manifest.json \
+  --train-end 2014-12-29 --dev-start 2015-01-05 \
+  --dev-end 2017-12-29 --holdout-start 2020-01-06 \
+  --top-k 2 --fee-bps 2 --slippage-bps 3 \
+  --budget-tokens 40000 --max-output-tokens 6000 \
+  --wall-seconds 3600 --request-timeout-seconds 600 \
+  --preflight-only
+```
+
+After preflight, set the API key in the current terminal using hidden input. Then run the same command without `--preflight-only` and add a fresh `--run-dir runs/qwen-etf-dev-<timestamp>`. A live run requires a clean committed working tree. Do not store the key in configuration or Git.
+
+Successful development generates `dev_report.json` and `selection.json` before opening the sealed interval. Failure retains a failure report and produces no selection. Run the following only after development completes, usage is complete and the selection record passes verification:
+
+```bash
+$PYTHON -m quant_research.finalize_cli \
+  --run-dir runs/qwen-etf-dev-<timestamp> --evaluate-sealed-once
+```
+
+`final/report.json` retains the selection, Qwen candidate, original five-session momentum, equal weight, costs, daily equity, model ledger and input hashes. Success or failure consumes the run's sole sealed attempt; a failed attempt must not be rerun in another directory under the same protocol to select a favorable result.
+
+## Interpretation limits
+
+This study contains one completed Qwen repetition and supports only an exploratory comparison. Development scores are not out-of-sample results, and a 61-day historical backtest is not live performance. A claim of stability would require another preregistered, unopened interval and an aggregation rule fixed before inspecting results.
+
+---
+
+<a id="中文"></a>
+
+## 中文
 
 这是一项独立于固定网格案例的 Qwen-only 对照。它固定使用 `qwen3.5-27b`、仓库网关、8 只 ETF、Top-2、2 bps 手续费和 3 bps 滑点。Qwen 只在开发区间提出和改进信号，开发结束后由独立 finalizer 对封存区间评分一次。
 

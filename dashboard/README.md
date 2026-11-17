@@ -1,3 +1,51 @@
+[English](#english) · [中文](#中文)
+
+<a id="english"></a>
+
+# Run dashboard (read-only)
+
+Generate a single HTML page from `run/1`, `ledger/1`, `node/1` and `libchange/1` files for offline viewing. Input files in the run directory are not modified. The page has no network dependencies and does not read `hidden/`, candidate source code or prompt bodies.
+
+```bash
+python3 -m dashboard.export \
+  --run-dir runs/<run_id> \
+  --output /tmp/research-agent-dashboard.html
+```
+
+If the library lives outside the run directory, add `--library-root <path>`. To export the completed historical pilot:
+
+```bash
+python3 -m dashboard.export \
+  --run-dir runs/pilot-20261113-154027-6770 \
+  --output /tmp/research-agent-pilot-dashboard.html
+```
+
+The dashboard uses the last complete experiment-tree snapshot for each `node_id`. It displays the experiment tree, development-score trend, budget/spending, model tokens and cache usage, three timing categories, quotes and task-end reconciliation, library status/changes and ledger events. Monetary amounts are shown only when the price-file SHA-256 matches the manifest, all four price categories exist for the model, and the ledger provides valid spending evidence; otherwise they are “unknown.” Test prices are labeled as tests. Historical pilots without a manifest can display their trees, but the local control budget `1.0` is not presented as real money.
+
+Read-only verification:
+
+```bash
+python3 -m unittest discover -s dashboard/tests -v
+```
+
+A live, local, read-only dashboard can refresh every second. Each request rereads the ledger and experiment tree without writing to the run directory:
+
+```bash
+python3 -m dashboard.serve --run-dir runs/<run_id> --port 8765
+```
+
+To compare two existing runs side by side (empty library on the left, trained library on the right):
+
+```bash
+python3 -m dashboard.serve --run-dir runs/<empty_library_run> --other-run-dir runs/<trained_library_run> --port 8765
+```
+
+Open the local address printed by the server in a browser. The service listens only on localhost; the side-by-side view is a live demonstration and is not written into formal research reports. A screen recording must still be made from an actual demonstration run.
+
+---
+
+<a id="中文"></a>
+
 # 运行看板（只读）
 
 从 `run/1`、`ledger/1`、`node/1` 和 `libchange/1` 文件生成可离线打开的单个 HTML 页面。输入运行目录中的文件不会被修改，页面没有网络依赖，也不读取 `hidden/`、候选源码或提示词正文。

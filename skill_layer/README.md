@@ -1,3 +1,39 @@
+[English](#english) · [中文](#中文)
+
+<a id="english"></a>
+
+# Skill layer (M4)
+
+The public interface is in `library.skills`; the existing `Library` storage schema is unchanged:
+
+```python
+from library.skills import promote_candidates, promote_to_skill, load_skill_verified, demote_skill
+
+groups = promote_candidates(lib)                 # e.g. [["exp-0001"]]
+skill_id = promote_to_skill(
+    lib, groups[0],
+    body="# Steps\n...",
+    summary="One-sentence summary",
+)
+text = load_skill_verified(lib, skill_id)        # Load full text only after selecting a skill
+```
+
+Promotion must meet both `skill_min_credibility` and `skill_min_tasks` in `config/agent.json`. “Effective on different tasks” is not just a count of `sources` or `effect.wins`: each win needs a winning `record_use` increment in the library change history. Its node in `runs/<run_id>/tasks/<task_id>/tree.jsonl` must ultimately be `accepted`, cite the experience, have no cheating flags and show a score gain above measured variation. At least two distinct `task_id` values are required; two repetitions of the same task do not count. Historical records missing an experiment tree or library snapshot are ineligible.
+
+`promote_candidates` lists only individually qualified experiences, avoiding unverified merging of experiences with different conditions. `promote_to_skill` requires a human to supply the body and summary explicitly; it does not generate them autonomously from a fixed script or model output. Promotion uses `Library.put(op="promote")` to write a versioned snapshot and change evidence containing the source nodes. The body is stored in `skills/skl-XXXX.md`, with a SHA-256 in the entry. Normally, `Library.brief()` shows only summaries; `load_skill_verified()` reads the full text and checks its hash.
+
+Explicit demotion requires a reason and evidence. Demoted skills are no longer retrieved or loaded. Retirement after three subsequent unsuccessful uses remains the responsibility of `Library.record_use()` under the existing thresholds. If the number of skills exceeds `max_skills`, the available skill with the lowest credibility is evicted. A frozen library rejects both promotion and demotion.
+
+```bash
+python3 -m unittest discover -s skill_layer/tests -v
+```
+
+Limitations: the historical pilot's experience has only one use on one task, so it is not promoted. Evidence verification depends on the integrity of local experiment trees and library-version files; formal reports still require manifests, sealed replays and B/C validation admission. This module does not demonstrate gains across tasks and does not include M5 promotion of tool code.
+
+---
+
+<a id="中文"></a>
+
 # 技能层（M4）
 
 公开接口位于 `library.skills`，不修改现有 `Library` 的存储 schema：
