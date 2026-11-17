@@ -392,6 +392,24 @@ def finalize_holdout(harness: QuantHarness, selection_path: Path, output_dir: Pa
         if (_sha(private) != marker["candidate_sha256"]
                 or _sha(candidate) != marker["candidate_sha256"]):
             raise ValueError("Candidate changed during sealed scoring")
+        # Score the frozen n0000/original signal under the same sandbox and
+        # cost assumptions. The development score is relative to equal weight,
+        # so this extra line is required for a fair Qwen-vs-original comparison.
+        original = run_dir / "tasks" / task_id / "nodes" / "n0000" / "solution.py"
+        original_descriptor = selected["node_artifacts"]["n0000"]["solution"]
+        if (not isinstance(original_descriptor, dict)
+                or original_descriptor.get("sha256") != _sha(original)):
+            raise ValueError("Frozen original baseline changed during sealed scoring")
+        original_private_dir = output_dir / "original"
+        original_private_dir.mkdir(exist_ok=False)
+        original_private = original_private_dir / "solution.py"
+        shutil.copyfile(original, original_private)
+        if _sha(original_private) != original_descriptor["sha256"]:
+            raise ValueError("Private original baseline copy failed integrity check")
+        original_result = _score_candidate(harness, original_private)
+        if (_sha(original_private) != original_descriptor["sha256"]
+                or _sha(original) != original_descriptor["sha256"]):
+            raise ValueError("Original baseline changed during sealed scoring")
         baseline = run_backtest(
             harness.panel, equal_weight_signal,
             first_result_date=harness.splits.holdout[0],
@@ -400,7 +418,10 @@ def finalize_holdout(harness: QuantHarness, selection_path: Path, output_dir: Pa
             slippage_bps=harness.slippage_bps)
         report["holdout"] = {
             "net_excess_return": candidate_result.metrics["total_return"] - baseline.metrics["total_return"],
-            "candidate": dict(candidate_result.metrics), "equal_weight": dict(baseline.metrics),
+            "net_excess_return_vs_original": candidate_result.metrics["total_return"] - original_result.metrics["total_return"],
+            "candidate": dict(candidate_result.metrics),
+            "original": dict(original_result.metrics),
+            "equal_weight": dict(baseline.metrics),
             "observations": len(candidate_result.return_dates)}
         report["status"] = "scored"
     except Exception as exc:

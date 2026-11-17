@@ -26,6 +26,8 @@
 
 [案例结论与复现](docs/etf-case-study/README.md) · [完整报告](docs/etf-case-study/report.md) · [逐日 JSON 证据](docs/etf-case-study/study.json)
 
+Qwen 对照实验已单独注册，但尚未调用模型；新的 2020-01-06—2020-04-01 封存区间与运行步骤见 [Qwen ETF 对照协议和手册](docs/qwen-etf-comparison.md)。
+
 ## 无密钥复现
 
 ### 真实 ETF 基线案例

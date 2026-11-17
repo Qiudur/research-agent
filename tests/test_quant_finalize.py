@@ -211,6 +211,11 @@ class QuantFinalizeTests(unittest.TestCase):
         self.assertEqual(result["selected_origin"], "research_candidate")
         self.assertEqual(result["holdout"]["observations"], len(self.harness.splits.holdout))
         self.assertIn("equal_weight", result["holdout"])
+        self.assertIn("original", result["holdout"])
+        self.assertAlmostEqual(
+            result["holdout"]["net_excess_return_vs_original"],
+            result["holdout"]["candidate"]["total_return"]
+            - result["holdout"]["original"]["total_return"])
         self.assertEqual(result["assumptions"]["fee_bps"], 2.0)
         self.assertEqual(result["provenance"]["dataset_csv_sha256"], self.harness.panel.csv_sha256)
         self.assertEqual(result["provenance"]["tree_sha256"], self.selection["tree_sha256"])
